@@ -1,0 +1,24 @@
+---
+import { links } from "../data/site";
+
+const follow = [{ label: "Twitch", href: links.twitch }, ...links.socials, { label: "Community", href: links.community }];
+---
+
+<footer class="mx-4 mt-6 grid gap-10 border-t border-ink py-10 md:mx-12 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)]">
+  <div class="flex flex-col gap-3">
+    <div class="text-xl font-bold tracking-tight">40 for 40</div>
+    <p class="m-0 max-w-sm text-sm/relaxed text-body text-pretty">40 apps, 40 days, built in public in London. A community, not a startup.</p>
+  </div>
+  <div class="flex flex-col gap-2 font-mono text-xs">
+    <div class="tracking-wide text-muted">FOLLOW ALONG</div>
+    {follow.map(({ label, href }) => (
+      <a href={href} rel="noopener" class="text-ink hover:text-accent-deep">{label} ↗</a>
+    ))}
+  </div>
+  <div class="flex flex-col gap-2 font-mono text-xs">
+    <div class="tracking-wide text-muted">SAY HELLO</div>
+    <a href={`mailto:${links.email}`} class="text-ink hover:text-accent-deep">{links.email}</a>
+    <a href="/privacy" class="text-ink hover:text-accent-deep">Privacy notice</a>
+    <span class="mt-4 text-faint">All times are UK time.</span>
+  </div>
+</footer>

@@ -1,0 +1,37 @@
+---
+import SectionHead from "../SectionHead.astro";
+import { statusMeta, type Status } from "../../data/days";
+
+const beats: { time: string; status: Status; title: string; text: string }[] = [
+  { time: "09:00", status: "locked", title: "The box drops", text: "Today's box appears here, locked, with a pay button and a timer counting up from 9am." },
+  { time: "ASAP", status: "unlocked", title: "Someone unlocks it", text: "The first payment opens the box. The problem gets revealed and the day's guests walk in." },
+  { time: "ALL DAY", status: "building", title: "We build", text: "Guests and team build the app live on Twitch. Build along in the community if you fancy it." },
+  { time: "MIDDAY", status: "checkin", title: "Check-in", text: "Gut check. What works, what's on fire, what we're quietly cutting." },
+  { time: "17:00", status: "shipped", title: "It ships", text: "The app goes live with a link to try it, plus the demo recording." },
+];
+---
+
+<section id="how" class="mx-4 flex scroll-mt-4 flex-col gap-10 border-t border-ink py-14 md:mx-12 md:py-20">
+  <SectionHead eyebrow="HOW A DAY WORKS" title="9am to 5pm.<br />Five beats." />
+  <div class="flex flex-col gap-3">
+    <div class="hidden items-center lg:flex" aria-hidden="true">
+      <span class="h-3.5 w-0.5 bg-ink"></span><span class="h-0.5 flex-1 bg-ink"></span><span class="h-3.5 w-0.5 bg-ink"></span>
+    </div>
+    <ol class="m-0 grid list-none gap-6 p-0 sm:grid-cols-2 lg:grid-cols-5 lg:gap-5">
+      {beats.map(({ time, status, title, text }) => (
+        <li class="flex flex-col gap-2 border-l-2 border-ink pl-4 lg:border-l-0 lg:pl-0">
+          <div class="flex items-center justify-between font-mono text-[11px] font-medium text-muted">
+            <span>{time}</span>
+            <span class="flex items-center gap-1.5"><span class:list={["size-1.5 rounded-full", statusMeta[status].dot]} />{statusMeta[status].label}</span>
+          </div>
+          <div class="text-xl leading-tight font-semibold tracking-tight">{title}</div>
+          <p class="m-0 text-sm leading-[1.45] text-body text-pretty">{text}</p>
+        </li>
+      ))}
+    </ol>
+  </div>
+  <p class="m-0 max-w-2xl rounded-lg bg-hover p-5 text-[15px] leading-normal text-body text-pretty">
+    <strong class="text-ink">Coming as a guest?</strong> Turn up at 9 with a problem or a curiosity. We pair you with the team, you steer, and by 5 you've shipped an app with your name on it. Nobody looks foolish. Well, apart from us.
+    <a href="/guest" class="font-semibold text-ink hover:text-accent-deep">Be a guest →</a>
+  </p>
+</section>

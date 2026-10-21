@@ -1,0 +1,22 @@
+---
+import SectionHead from "../SectionHead.astro";
+
+const points = [
+  "40 apps in 40 days, each one built from a real problem somebody sent in.",
+  "The catch: every day starts as a locked box. Nobody builds until someone pays to unlock it.",
+  "Built live on Twitch from London, 9am to 5pm UK time. Pull up a chair.",
+  "Special guests every day. Most have never vibe coded. That's the point.",
+];
+---
+
+<section class="flex flex-col gap-10 px-4 pb-14 md:px-12 md:pb-20">
+  <SectionHead eyebrow="WHAT IT IS" title="40 apps. 40 days.<br />One catch." />
+  <ol class="m-0 grid list-none grid-cols-1 border-t border-b border-t-ink border-b-line p-0 sm:grid-cols-2 lg:grid-cols-4">
+    {points.map((text, i) => (
+      <li class="flex flex-col gap-1.5 py-4.5 pr-5 pb-5">
+        <span class="font-mono text-[11px] font-medium text-muted">{String(i + 1).padStart(2, "0")}</span>
+        <span class="text-[15px] leading-[1.35] font-semibold text-pretty">{text}</span>
+      </li>
+    ))}
+  </ol>
+</section>

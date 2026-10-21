@@ -1,0 +1,58 @@
+---
+import Base from "../layouts/Base.astro";
+import { links } from "../data/site";
+
+const sections = [
+  {
+    title: "Who we are",
+    body: [`40 for 40 is a community project run from London. For anything about your data, email ${links.email}.`],
+  },
+  {
+    title: "What we collect",
+    body: [
+      "What you type into our forms: your name, email, company or role, and the note, problem or availability you send.",
+      "When you pay, Stripe collects your card and billing details. We never see your card number. We receive your name or company, the amount, and how you chose to be credited.",
+    ],
+  },
+  {
+    title: "Why we use it",
+    body: [
+      "To reply to you, plan the 40 days, credit you on the day you backed (unless you chose anonymous) and send receipts. Our lawful bases under UK GDPR are your consent and our legitimate interest in running the project.",
+      "Guest names and photos only appear on the site with written consent.",
+    ],
+  },
+  {
+    title: "Who we share it with",
+    body: ["Stripe for payments, and the email and spreadsheet tools we use to read your messages. We don't sell your data or share it with advertisers."],
+  },
+  {
+    title: "Cookies",
+    body: ["This site sets no cookies of its own. The Twitch player only loads if you press play, and Twitch then sets its own cookies."],
+  },
+  {
+    title: "How long we keep it",
+    body: ["Form submissions are deleted 12 months after the project ends. Payment records are kept as long as the law requires."],
+  },
+  {
+    title: "Your rights",
+    body: [
+      `You can ask to see, correct or delete your data, or object to how we use it, by emailing ${links.email}. If you're unhappy with our answer you can complain to the Information Commissioner's Office at ico.org.uk.`,
+    ],
+  },
+];
+---
+
+<Base title="Privacy notice | 40 for 40" description="How 40 for 40 handles your data.">
+  <article class="mx-auto flex max-w-3xl flex-col gap-10 px-4 py-12 md:px-12 md:py-18">
+    <div class="flex flex-col gap-3">
+      <div class="font-mono text-xs font-medium tracking-wider text-muted">PRIVACY NOTICE</div>
+      <h1 class="m-0 text-5xl leading-[0.95] font-bold tracking-tight md:text-6xl">The boring but important bit.</h1>
+    </div>
+    {sections.map(({ title, body }) => (
+      <section class="flex flex-col gap-3 border-t border-line pt-5">
+        <h2 class="m-0 text-xl font-semibold tracking-tight">{title}</h2>
+        {body.map((text) => <p class="m-0 text-base leading-relaxed text-body text-pretty">{text}</p>)}
+      </section>
+    ))}
+  </article>
+</Base>

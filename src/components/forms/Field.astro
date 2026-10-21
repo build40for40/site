@@ -1,0 +1,35 @@
+---
+interface Props {
+  label: string;
+  name: string;
+  type?: "text" | "email" | "textarea" | "select";
+  required?: boolean;
+  options?: readonly { value: string; label: string }[];
+  hint?: string;
+  maxlength?: number;
+  autocomplete?: string;
+}
+
+const { label, name, type = "text", required = false, options = [], hint, maxlength, autocomplete } = Astro.props;
+const id = `field-${name}`;
+const hintId = hint ? `${id}-hint` : undefined;
+const control =
+  "w-full rounded-lg border border-line bg-white px-3.5 py-3 font-sans text-base text-ink outline-none placeholder:text-faint focus:border-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
+---
+
+<div class="flex flex-col gap-1.5">
+  <label for={id} class="font-mono text-[11px] font-medium tracking-wide text-muted">
+    {label.toUpperCase()}{!required && <span class="text-faint"> (OPTIONAL)</span>}
+  </label>
+  {type === "textarea" ? (
+    <textarea id={id} name={name} required={required} maxlength={maxlength} aria-describedby={hintId} rows="5" class:list={[control, "resize-y"]} />
+  ) : type === "select" ? (
+    <select id={id} name={name} required={required} aria-describedby={hintId} class:list={[control, "cursor-pointer"]}>
+      <option value="">Pick one</option>
+      {options.map((option) => <option value={option.value}>{option.label}</option>)}
+    </select>
+  ) : (
+    <input id={id} name={name} type={type} required={required} maxlength={maxlength} autocomplete={autocomplete} aria-describedby={hintId} class={control} />
+  )}
+  {hint && <p id={hintId} class="m-0 text-xs text-muted">{hint}</p>}
+</div>

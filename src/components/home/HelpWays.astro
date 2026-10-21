@@ -1,0 +1,35 @@
+---
+import SectionHead from "../SectionHead.astro";
+
+const asks = [
+  { type: "tools", title: "AI tools and tokens", text: "Credits for ElevenLabs, Vercel, Seedance, Higgsfield, Supabase, OpenAI, Anthropic and friends. 40 apps eat a lot of tokens." },
+  { type: "guests", title: "Guest intros", text: "Know a CEO, a nurse, a NASA engineer or a very online nan? Introduce us." },
+  { type: "cto", title: "CTO for a day", text: "Lend us a senior engineer for a day. They get the fun bits and none of the meetings." },
+  { type: "sponsor", title: "Sponsor a day", text: "Pick a day or a theme that matches what you care about. Your name goes on the day page." },
+];
+---
+
+<section id="help" class="mx-4 flex scroll-mt-4 flex-col gap-10 border-t border-ink py-14 md:mx-12 md:py-20">
+  <SectionHead eyebrow="WAYS YOU CAN HELP" title="What we need.<br />Office space first." />
+  <ul class="m-0 grid list-none gap-3 p-0 md:grid-cols-2 lg:grid-cols-4">
+    <li class="md:col-span-2 lg:row-span-2">
+      <a href="/help?type=office" class="group flex h-full flex-col justify-between gap-8 rounded-[10px] bg-ink p-6 text-night-text no-underline md:p-9">
+        <div class="flex flex-col gap-4">
+          <div class="font-mono text-xs font-medium tracking-wider text-live">NEED NUMBER ONE</div>
+          <div class="text-4xl leading-[0.98] font-bold tracking-tight md:text-5xl">A room in London to code and film in.</div>
+          <p class="m-0 max-w-md text-[15px] leading-[1.45] text-night-sub text-pretty">40 days from 2 November. Desks, wifi, decent light and somewhere to point a camera. Your space gets a shout-out on every stream.</p>
+        </div>
+        <span class="self-start rounded-full bg-accent px-5.5 py-3 text-[15px] font-semibold text-white group-hover:bg-accent-deep">Offer a space →</span>
+      </a>
+    </li>
+    {asks.map(({ type, title, text }) => (
+      <li>
+        <a href={`/help?type=${type}`} class="group flex h-full flex-col gap-2 rounded-[10px] border border-line bg-white p-5 text-ink no-underline hover:border-ink">
+          <span class="text-lg leading-tight font-semibold">{title}</span>
+          <span class="text-sm leading-[1.45] text-body text-pretty">{text}</span>
+          <span class="mt-auto pt-3 font-mono text-xs font-medium group-hover:text-accent-deep">Offer this →</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</section>

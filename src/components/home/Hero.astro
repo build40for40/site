@@ -1,0 +1,35 @@
+---
+import Countdown from "../Countdown.vue";
+import { dayLabel, days, isLive, statusMeta } from "../../data/days";
+
+const live = days.find((d) => isLive(d.status));
+const shipped = days.filter((d) => d.status === "shipped").length;
+const backed = days.filter((d) => d.backers.length).length;
+---
+
+<section class="grid gap-10 px-4 pt-12 pb-12 md:px-12 md:pt-18 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-end lg:gap-12">
+  <div class="flex flex-col gap-5">
+    <div class="font-mono text-xs font-medium tracking-wider text-accent-deep">
+      {live ? `● LIVE · DAY ${dayLabel(live.day)} IS ${statusMeta[live.status].label} NOW` : "● 40 APPS · 40 DAYS · FROM 2 NOV 2026"}
+    </div>
+    <h1 class="m-0 text-6xl leading-[0.92] font-bold tracking-[-0.045em] sm:text-7xl lg:text-[84px]">Making stuff<br />is fun<br />again.</h1>
+  </div>
+  <div class="flex flex-col gap-6">
+    <p class="m-0 text-[17px] leading-normal text-body text-pretty">
+      40 apps in 40 days, built live on Twitch with special guests who have never vibe coded. Every day stays locked until someone pays to start it. Day 1 is Monday 2 November 2026.
+    </p>
+    <Countdown client:load />
+    <div class="flex flex-col gap-2">
+      <div class="flex justify-between font-mono text-xs font-medium">
+        <span>{shipped} / {days.length} SHIPPED</span><span class="text-muted">{backed} backed</span>
+      </div>
+      <div class="flex gap-[3px]" aria-hidden="true">
+        {days.map((d) => <span class:list={["h-2.5 flex-1 rounded-xs", d.status === "locked" ? "bg-empty" : statusMeta[d.status].dot]} />)}
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-3">
+      <a href="#help" class="rounded-full bg-accent px-5.5 py-3 text-[15px] font-semibold text-white no-underline hover:bg-accent-deep">Help us →</a>
+      <a href="#watch" class="rounded-full border border-ink px-5.5 py-3 text-[15px] font-semibold text-ink no-underline hover:bg-ink hover:text-white">Watch</a>
+    </div>
+  </div>
+</section>
