@@ -35,8 +35,20 @@ export const helpTypes = [
 export const involvement = [
   { value: "kind", label: "Help in Kind - Office space, AI credits, I can cater an IRL event!" },
   { value: "marketing", label: "Marketing - I’ll spread the word" },
-  { value: "sponsor", label: "Sponsor a Project" },
   { value: "guest", label: "Be a guest" },
+  { value: "sponsor", label: "Sponsor a Project" },
+] as const;
+
+// Each link is a Stripe Payment Link. Empty links skip checkout and go to the thanks page.
+export const sponsorAmounts = [
+  { value: "40", label: "40¢", link: "" },
+  { value: "400", label: "$4", link: "" },
+  { value: "4000", label: "$40", link: "" },
+  { value: "40000", label: "$400", link: "" },
+  { value: "400000", label: "$4,000", link: "" },
+  { value: "4000000", label: "$40,000", link: "" },
+  { value: "40000000", label: "$400,000", link: "" },
+  { value: "400000000", label: "$4,000,000", link: "" },
 ] as const;
 
 export const guests = [
@@ -52,7 +64,7 @@ export const team = [
 ];
 
 export const money = (amount: number) =>
-  new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(amount);
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
 
 export const initials = (name: string) =>
   name.replace(/^Dr\.?\s+/, "").split(/\s+/).map((part) => part[0]).join("").slice(0, 2);

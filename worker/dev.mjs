@@ -13,6 +13,8 @@ export default function workerDev() {
         server.middlewares.use(async (req, res, next) => {
           if (!req.url?.startsWith("/api/")) return next();
           try {
+            // Without this, edits to modules the Worker imports (like src/data/site.ts) are missed until a restart.
+            server.environments.ssr.moduleGraph.invalidateAll();
             const { default: worker } = await server.ssrLoadModule("/worker/index.ts");
             const headers = Object.entries(req.headers).flatMap(([name, value]) =>
               value === undefined ? [] : [[name, Array.isArray(value) ? value.join(", ") : value]],

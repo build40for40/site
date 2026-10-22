@@ -29,4 +29,12 @@
   --color-locked: #b9b4aa;
   --color-paused: #8b867c;
   --color-empty: #dcd8cf;
+
+  --animate-pop: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  @keyframes pop {
+    40% {
+      transform: scale(1.4);
+    }
+  }
 }

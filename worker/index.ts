@@ -1,4 +1,4 @@
-import { TOTAL_DAYS, helpTypes, involvement } from "../src/data/site";
+import { TOTAL_DAYS, helpTypes, involvement, sponsorAmounts } from "../src/data/site";
 
 interface Field {
   name: string;
@@ -20,6 +20,7 @@ const forms: Record<string, Field[]> = {
     email,
     { name: "problem", max: 1000 },
     { name: "involved", options: involvement.map((option) => option.value), multiple: true },
+    { name: "sponsor", options: sponsorAmounts.map((amount) => amount.value) },
   ],
   help: [
     name,
@@ -103,10 +104,19 @@ export default {
     if (typeof values === "string") return text(values, 400);
 
     if (form === "join") {
+      // An amount only counts while Sponsor is ticked, since unticking hides the amounts but keeps the choice.
+      const sponsoring = [values.involved ?? []].flat().includes("sponsor");
+      const amount = sponsoring ? sponsorAmounts.find(({ value }) => value === values.sponsor) : undefined;
+      if (!sponsoring) delete values.sponsor;
+
       const key = `join:${values.email}`;
       const previous = await env.FORMS.get<Record<string, unknown>>(key, "json");
       await env.FORMS.put(key, JSON.stringify({ joinedAt: now, ...previous, ...values, updatedAt: now }));
-      return thanks;
+
+      if (!amount?.link) return thanks;
+      const checkout = new URL(amount.link);
+      checkout.searchParams.set("prefilled_email", String(values.email));
+      return Response.redirect(checkout.href, 303);
     }
 
     await env.FORMS.put(`${form}:${now}:${crypto.randomUUID()}`, JSON.stringify({ submittedAt: now, ...values }));

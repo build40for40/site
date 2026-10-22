@@ -1,6 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import { involvement } from "../data/site";
+import SponsorAmounts from "../components/forms/SponsorAmounts.astro";
 
 const input =
   "w-full rounded-none border border-ink bg-white px-3 py-2 text-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
@@ -9,18 +10,12 @@ const input =
 <Base title="Join us | 40 for 40">
   <article class="flex max-w-2xl flex-col gap-10 px-8 py-10 text-xl leading-snug text-pretty md:px-9 md:text-2xl">
     <header class="flex items-start justify-between gap-6">
-      <h1 class="text-4xl leading-tight font-semibold tracking-tight md:text-5xl">Join us, fill out form ⤵️</h1>
+      <h1 class="text-4xl leading-tight font-semibold tracking-tight md:text-5xl">We’d like to get to know you</h1>
       <a href="/" aria-label="Close and go back" class="-mr-2 shrink-0 px-2 text-4xl leading-tight text-ink hover:opacity-60 md:text-5xl">✕</a>
     </header>
 
     <form method="post" action="/api/forms/join" class="flex flex-col gap-10 [&_label]:font-semibold">
       <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden" />
-
-      <div class="flex flex-col gap-3">
-        <label for="join-name">Name (Optional)</label>
-        <p id="join-name-hint">But helpful for shoutouts and to get to know you.</p>
-        <input id="join-name" name="name" type="text" maxlength="200" autocomplete="name" aria-describedby="join-name-hint" class={input} />
-      </div>
 
       <div class="flex flex-col gap-3">
         <label for="join-email">Email <span aria-hidden="true">*</span></label>
@@ -29,23 +24,37 @@ const input =
       </div>
 
       <div class="flex flex-col gap-3">
+        <label for="join-name">Name (Optional)</label>
+        <p id="join-name-hint">But helpful for shoutouts and to get to know you.</p>
+        <input id="join-name" name="name" type="text" maxlength="200" autocomplete="name" aria-describedby="join-name-hint" class={input} />
+      </div>
+
+      <div class="flex flex-col gap-3">
         <label for="join-problem">What’s a problem you (or someone you know) have? (Optional)</label>
         <p id="join-problem-hint">General problem (I’m feeling lost) to something specific (I want help my mom map all of the health clinics in Cape Town). We’ll use these problems as our challenge prompts to build a website/app/game/etc. in a day.</p>
         <textarea id="join-problem" name="problem" rows="4" maxlength="1000" aria-describedby="join-problem-hint" class:list={[input, "resize-y"]}></textarea>
       </div>
 
-      <fieldset class="flex flex-col gap-3">
+      <fieldset class="group/involved flex flex-col gap-3">
         <legend class="mb-3 font-semibold">Want to get involved?</legend>
         {involvement.map(({ value, label }) => (
-          <label class="flex cursor-pointer items-start gap-3 font-normal!">
-            <input type="checkbox" name="involved" value={value} class="mt-1.5 size-5 shrink-0 accent-ink" />
-            <span>{label}</span>
-          </label>
+          <div>
+            <label class="flex cursor-pointer items-start gap-3 font-normal!">
+              <input
+                type="checkbox"
+                name="involved"
+                value={value}
+                class:list={["mt-1.5 size-5 shrink-0 accent-ink", value === "sponsor" && "motion-safe:checked:animate-pop"]}
+              />
+              <span>{label}</span>
+            </label>
+            {value === "sponsor" && <SponsorAmounts />}
+          </div>
         ))}
       </fieldset>
 
       <div class="flex items-center gap-6">
-        <button type="submit" class="cursor-pointer rounded-none border border-ink bg-ink px-4 py-2 font-semibold text-white hover:bg-white hover:text-ink">Join</button>
+        <button type="submit" class="cursor-pointer rounded-none border border-ink bg-ink px-4 py-2 font-semibold text-white hover:bg-white hover:text-ink">Submit</button>
         <a href="/" class="underline hover:opacity-60">Back</a>
       </div>
     </form>
