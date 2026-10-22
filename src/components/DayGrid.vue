@@ -28,7 +28,7 @@ function onBackdrop(event: MouseEvent) {
   <div class="flex flex-col gap-8 md:flex-row md:items-end md:justify-between md:gap-10">
     <div class="flex flex-col gap-3">
       <div class="font-mono text-xs font-medium tracking-wider text-night-muted">THE 40 DAYS</div>
-      <h2 class="m-0 text-4xl leading-[0.95] font-bold tracking-tight md:text-[56px]">40 apps. 40 days.<br />No unlock, no build.</h2>
+      <h1 class="m-0 text-4xl leading-[0.95] font-bold tracking-tight md:text-[56px]">40 apps. 40 days.<br />No unlock, no build.</h1>
     </div>
     <div class="flex flex-col gap-3 md:items-end">
       <div class="text-5xl leading-none font-bold tracking-tight md:text-[64px]">
@@ -70,7 +70,7 @@ function onBackdrop(event: MouseEvent) {
 
   <div class="-mx-4 mt-10 flex flex-col gap-3 border-t border-night-line px-4 pt-5 font-mono text-xs text-night-muted sm:flex-row sm:items-center sm:justify-between md:-mx-12 md:px-12">
     <span v-if="topBacker">Top backer: {{ topBacker.name }} · {{ money(topBacker.total) }} across {{ topBacker.days }} {{ topBacker.days === 1 ? "day" : "days" }}</span>
-    <a href="/help?type=sponsor" class="text-night-text hover:text-live">Sponsor a day →</a>
+    <a href="/help/offer?type=sponsor" class="text-night-text hover:text-live">Sponsor a day →</a>
   </div>
 
   <dialog

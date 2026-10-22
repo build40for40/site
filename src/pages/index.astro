@@ -1,24 +1,88 @@
 ---
 import Base from "../layouts/Base.astro";
-import Hero from "../components/home/Hero.astro";
-import Feeling from "../components/home/Feeling.astro";
-import WhatItIs from "../components/home/WhatItIs.astro";
-import DayCycle from "../components/home/DayCycle.astro";
-import TheDays from "../components/home/TheDays.astro";
-import HelpWays from "../components/home/HelpWays.astro";
-import Guests from "../components/home/Guests.astro";
-import Invest from "../components/home/Invest.astro";
-import Team from "../components/home/Team.astro";
+import Subscribe from "../components/forms/Subscribe.astro";
 ---
 
 <Base>
-  <Hero />
-  <Feeling />
-  <WhatItIs />
-  <DayCycle />
-  <TheDays />
-  <HelpWays />
-  <Guests />
-  <Invest />
-  <Team />
+  <article class="flex max-w-2xl flex-col gap-12 px-8 py-10 text-xl leading-snug text-pretty md:px-9 md:text-2xl [&_h2]:border-b [&_h2]:border-ink [&_h2]:pb-2 [&_h2]:font-semibold [&_h3]:mt-2 [&_h3]:font-semibold [&>section]:flex [&>section]:flex-col [&>section]:gap-6">
+    <header class="flex flex-col gap-3">
+      <h1 class="text-4xl leading-tight font-semibold tracking-tight md:text-5xl">40 for 40</h1>
+      <p>The joy of just <strong class="font-semibold">making stuff</strong> again.</p>
+    </header>
+
+    <section>
+      <h2>Anyone else feeling this?</h2>
+      <p>Twenty minutes ago, you felt unstoppable. You’d just built something you couldn’t have made a year ago. You didn’t even type. You Wispr’d it like Al Capone in a smoky jazz club.</p>
+      <p class="font-semibold italic">Hell yes!</p>
+      <p>Let’s go on LinkedIn and show everyone my… then it hits you.</p>
+      <p class="font-semibold italic">Oh shit.</p>
+      <p>A teenager’s built an algo arbitrage bot on Kalshi making $36k/mo. At this rate, they’ll be podcasting on 20VC before I’ve finished my… OMG, did he just raise a $50 million Seed round?</p>
+      <p>How does that make sense?</p>
+      <p>That’s what the world feels like right now.</p>
+      <p>40 for 40 is the counterweight to all of this uncertainty.</p>
+    </section>
+
+    <section>
+      <h2>What it is</h2>
+      <ul class="flex list-disc flex-col gap-2 pl-6">
+        <li><strong class="font-semibold">40 apps in 40 days:</strong> like a hackathon in public</li>
+        <li><strong class="font-semibold">Live:</strong> Streamed on Twitch, daily shorts on socials</li>
+        <li><strong class="font-semibold">How to participate:</strong> Watch, Interact, or Build with us. Heck, if you want to come down to our studio, let’s make that happen.</li>
+      </ul>
+      <p>This is a community and we’re going to bring the fun back to building</p>
+      <p class="font-semibold italic">November 2, 2026 - 40 for 40 begins.</p>
+    </section>
+<!--
+    <section>
+      <h2>Damn, this sounds tight. Can I invest?</h2>
+      <p>No. We aren’t a startup.<br />See below.</p>
+    </section>
+
+    <section>
+      <h2>For humans</h2>
+      <p>The AI startup and investment world is at an all-time fever pitch. Instinct &gt; Muse &gt; Instinct again &gt; Dots — IFYKYK.</p>
+      <p>You know what used to be cool? A billion dollars.<br />You know what’s cool now? $10 billion.</p>
+      <p>40 for 40 is the complete opposite of that.</p>
+      <p>AI feels like it’s for the small elite. We want to prove it’s for everyone else too, so we’re bringing special guests from every demographic and every walk of life. Especially if they've never vibe coded.</p>
+
+      <p>This isn’t just I build, you watch. That’s been done before.<br />This is I build, you build, we build… together.</p>
+      <p>This is a community and we’re going to bring the fun back to building again by doing this together.</p>
+
+      <p class="font-semibold">November 2, 2026 - 40 for 40 begins.</p>
+      <p class="font-semibold">Join us.</p>
+    </section>
+
+    <section>
+      <h2>How it works</h2>
+
+      <h3>Beat 1: Unlocking the day</h3>
+      <p>9am and the team (and community) sees a new problem, inside a locked virtual box, just waiting to be solved. But here’s the catch, the box doesn’t unlock until we get the first paying customer, a sponsor, presales.</p>
+      <p>Did you ask your mom? Did you ask your brother? Did you ask your LinkedIn? Get yourself out there and talk to people!</p>
+      <p>Lesson: Founders often take so long to build before speaking to users. Founders still spend 6 months building only to realize they can’t even get their first 10 users.</p>
+
+      <h3>Beat 2: Problem to solve</h3>
+      <p>It’s nearly 10am and we finally have our sponsor, but just like a hackathon, don’t just jump straight into building. What’s the problem we’re solving? Are we all aligned?</p>
+      <p>Lesson: Communication, team drift, and alignment.</p>
+
+      <h3>Beat 3: The Day’s Challenges</h3>
+      <p>Some days I’ll be polishing the idea, other days I’m in charge of design. And there are some days I’ll have to take my child to the hospital because of her medical needs, and the team will need to adjust.</p>
+      <p>Lesson: That’s the point. Life throws you curve balls, but by working together and a good attitude, we’ll ship something fun.</p>
+
+      <h3>Beat 4: The Checkin</h3>
+      <p>As we head into the afternoon slump, we need to think about shipping. Do we need to cut our favorite feature? Do we actually need to pivot? Tension builds in the room.</p>
+      <p>Lesson: Like in life, you can’t have everything. What’s the MVP and be okay with that.</p>
+
+      <h3>Beat 5: Hell yesss or Hell noooo?</h3>
+      <p>4:55pm, did you commit to GitHub?<br />4:58pm, can you add one last feature? Lawrence, you always do that!<br />5pm… let’s all see it live.</p>
+    </section>
+-->
+    <div class="sticky bottom-0 border-t border-ink bg-white pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div class="flex items-center gap-3">
+        <img src="/logo.svg" alt="40 for 40" width="64" height="64" class="size-14 shrink-0 md:size-16" />
+        <div class="min-w-0 flex-1">
+          <Subscribe />
+        </div>
+      </div>
+    </div>
+  </article>
 </Base>

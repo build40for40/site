@@ -32,6 +32,13 @@ export const helpTypes = [
   { value: "other", label: "Something else" },
 ] as const;
 
+export const involvement = [
+  { value: "kind", label: "Help in Kind - Office space, AI credits, I can cater an IRL event!" },
+  { value: "marketing", label: "Marketing - I’ll spread the word" },
+  { value: "sponsor", label: "Sponsor a Project" },
+  { value: "guest", label: "Be a guest" },
+] as const;
+
 export const guests = [
   { name: "Judith Buttigieg", role: "Special guest", photo: "" },
   { name: "Nic Roope", role: "Special guest", photo: "" },

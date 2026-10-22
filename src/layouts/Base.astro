@@ -1,8 +1,6 @@
 ---
 import { Font } from "astro:assets";
 import "../styles/global.css";
-import SiteHeader from "../components/SiteHeader.astro";
-import SiteFooter from "../components/SiteFooter.astro";
 
 interface Props {
   title?: string;
@@ -17,7 +15,7 @@ const url = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang="en-GB" class="scroll-smooth [&:has(dialog[open])]:overflow-hidden">
+<html lang="en-US" class="scroll-smooth [&:has(dialog[open])]:overflow-hidden">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -31,16 +29,13 @@ const url = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:description" content={description} />
     <meta property="og:url" content={url} />
     <meta name="twitter:card" content="summary" />
-    <meta name="theme-color" content="#f7f6f2" />
+    <meta name="theme-color" content="#ffffff" />
     <Font cssVariable="--font-bricolage" preload />
     <Font cssVariable="--font-plex-mono" preload />
   </head>
-  <body class="bg-paper font-sans text-ink antialiased">
-    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-white">Skip to content</a>
-    <SiteHeader />
-    <main id="main">
+  <body class="bg-white font-sans text-ink antialiased">
+    <main id="main" class="*:first:border-t-0">
       <slot />
     </main>
-    <SiteFooter />
   </body>
 </html>

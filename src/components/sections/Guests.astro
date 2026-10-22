@@ -5,7 +5,7 @@ import { guests } from "../../data/site";
 ---
 
 <section id="guests" class="mx-4 flex scroll-mt-4 flex-col gap-10 border-t border-ink py-14 md:mx-12 md:py-20">
-  <SectionHead eyebrow="WHO YOU'LL MEET" title="Special guests.<br />Zero experience required." />
+  <SectionHead as="h1" eyebrow="WHO YOU'LL MEET" title="Special guests.<br />Zero experience required." />
   <ul class="m-0 grid list-none grid-cols-2 gap-x-4 gap-y-8 p-0 lg:grid-cols-4">
     {guests.map((guest) => <Person {...guest} />)}
     <li class="col-span-2 flex flex-col justify-between gap-6 rounded-[10px] bg-hover p-6 lg:col-span-1">

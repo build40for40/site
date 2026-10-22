@@ -1,0 +1,16 @@
+---
+import StreamEmbed from "../StreamEmbed.vue";
+import { links } from "../../data/site";
+---
+
+<section class="px-4 py-12 md:px-12 md:py-18">
+  <div class="mx-auto flex max-w-5xl flex-col gap-5 rounded-[10px] bg-ink p-6 text-night-text md:p-9">
+    <h1 class="m-0 text-4xl leading-[0.98] font-bold tracking-tight md:text-5xl">Watch it live.</h1>
+    <p class="m-0 max-w-xl text-[15px] leading-[1.45] text-night-sub text-pretty">9am to 5pm UK, every day from 2 November, on Twitch. Or don't just watch: build along with us in the community.</p>
+    <StreamEmbed client:load />
+    <div class="flex flex-wrap gap-3 font-mono text-xs font-medium">
+      <a href={links.twitch} rel="noopener" class="rounded-full bg-night-text px-4 py-2.5 text-ink no-underline hover:bg-white">Open Twitch ↗</a>
+      <a href={links.community} rel="noopener" class="rounded-full border border-night-muted px-4 py-2.5 text-night-text no-underline hover:border-night-text">Join the community ↗</a>
+    </div>
+  </div>
+</section>

@@ -1,5 +1,23 @@
 {
   "name": "40for40",
-  "pages_build_output_dir": "./dist",
-  "compatibility_date": "2026-10-01"
+  "account_id": "9b4d3e616e55585a0ae844f424717b43",
+  "compatibility_date": "2026-10-01",
+  "main": "./worker/index.ts",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "kv_namespaces": [
+    {
+      "binding": "FORMS",
+      "id": "98733a0b3bf3420c953899b74c0f13c8"
+    }
+  ],
+  "routes": [
+    { "pattern": "build40for40.com", "custom_domain": true },
+    { "pattern": "www.build40for40.com", "custom_domain": true }
+  ],
+  "workers_dev": true,
+  "preview_urls": true
 }

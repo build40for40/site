@@ -1,6 +1,6 @@
-# 40for40.app
+# build40for40.com
 
-Static Astro site with Vue islands, deployed to Cloudflare Pages. See README.md for commands and deploys.
+Static Astro site with Vue islands, served by a Cloudflare Worker as static assets. The Worker in `worker/` handles `/api/*`, and forms are saved to Workers KV. See README.md for commands and deploys.
 
 ## Conventions
 
@@ -14,5 +14,7 @@ Static Astro site with Vue islands, deployed to Cloudflare Pages. See README.md 
 ## Development
 
 Start the dev server in the background with `npx astro dev --background`, and manage it with `astro dev stop`, `astro dev status` and `astro dev logs`.
+
+Run wrangler as `npm run wrangler -- <args>`, never `npx wrangler`: the script runs as the `40for40` auth profile and drops the global Cloudflare credentials in the shell, which would otherwise win.
 
 Astro docs: https://docs.astro.build. Check the relevant guide before working on routing, framework components, content collections or styling.

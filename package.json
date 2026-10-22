@@ -8,9 +8,11 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview",
+    "preview": "astro build && wrangler dev",
     "astro": "astro",
-    "deploy": "astro build && wrangler pages deploy"
+    "deploy": "astro build && env -u CLOUDFLARE_API_KEY -u CLOUDFLARE_EMAIL wrangler --profile 40for40 deploy",
+    "wrangler": "env -u CLOUDFLARE_API_KEY -u CLOUDFLARE_EMAIL wrangler --profile 40for40",
+    "types": "wrangler types worker/worker-configuration.d.ts"
   },
   "dependencies": {
     "@astrojs/vue": "^7.1.2",

@@ -3,11 +3,12 @@ import { defineConfig, fontProviders } from 'astro/config';
 
 import vue from '@astrojs/vue';
 import tailwindcss from '@tailwindcss/vite';
+import workerDev from './worker/dev.mjs';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://40for40.app',
-  integrations: [vue()],
+  site: 'https://build40for40.com',
+  integrations: [vue(), workerDev()],
 
   fonts: [
     {

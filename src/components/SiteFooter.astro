@@ -4,10 +4,15 @@ import { links } from "../data/site";
 const follow = [{ label: "Twitch", href: links.twitch }, ...links.socials, { label: "Community", href: links.community }];
 ---
 
-<footer class="mx-4 mt-6 grid gap-10 border-t border-ink py-10 md:mx-12 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)]">
-  <div class="flex flex-col gap-3">
+<footer class="mx-4 mt-6 grid gap-10 border-t border-ink py-10 grid-cols-2 md:mx-12 sm:grid-cols-3 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+  <div class="col-span-2 flex flex-col gap-3 sm:col-span-3 md:col-span-1">
     <div class="text-xl font-bold tracking-tight">40 for 40</div>
     <p class="m-0 max-w-sm text-sm/relaxed text-body text-pretty">40 apps, 40 days, built in public in London. A community, not a startup.</p>
+  </div>
+  <div class="flex flex-col gap-2 font-mono text-xs">
+    <div class="tracking-wide text-muted">WHO'S WHO</div>
+    <a href="/team" class="text-ink hover:text-accent-deep">The team</a>
+    <a href="/guests" class="text-ink hover:text-accent-deep">Guests</a>
   </div>
   <div class="flex flex-col gap-2 font-mono text-xs">
     <div class="tracking-wide text-muted">FOLLOW ALONG</div>

@@ -1,4 +1,4 @@
-# 40for40.app
+# build40for40.com
 
 40 for 40 is 40 apps in 40 days, built live on Twitch from London with special guests who have never vibe coded. It starts on 2 November 2026. Each day's box stays locked until someone pays to unlock it. It's a community, not a startup: nobody can invest, and it isn't raising.
 
@@ -30,35 +30,56 @@ Before Day 1, its job is to get people to help, in this priority order: office s
 
 ## Status
 
-The R1 UI is built. Forms and payments are stubbed, and day data in `src/data/days.ts` is mock data. Still to come: form handling, Stripe with auto-unlock, the admin screen, day pages, the app gallery, OG images and analytics. Open questions include prices, VAT and the receiving entity.
+The R1 UI is built. Forms are saved to Workers KV, payments are stubbed, and day data in `src/data/days.ts` is mock data. Still to come: Stripe with auto-unlock, the admin screen, day pages, the app gallery, OG images and analytics. Open questions include prices, VAT and the receiving entity.
 
 ## Stack
 
-Astro 7 + Vue 3 islands + Tailwind 4, built as a static site for Cloudflare Pages.
+Astro 7 + Vue 3 islands + Tailwind 4, built as a static site and served as static assets by a Cloudflare Worker. The Worker in `worker/` only handles `/api/*`.
 
 ```sh
 npm install
 npm run dev      # localhost:4321
 npm run build    # outputs dist/
-npm run deploy   # build + wrangler pages deploy
+npm run preview  # build + the Worker and a local KV on localhost:8787
+npm run types    # regenerate worker types after changing wrangler.jsonc
+npm run deploy   # build + wrangler deploy
+npm run wrangler -- deployments list
+```
+
+Locally, wrangler runs as the `40for40` auth profile. Run it through `npm run wrangler --`, never bare `npx wrangler`: the script drops any global `CLOUDFLARE_API_KEY` and `CLOUDFLARE_EMAIL`, which wrangler would otherwise use ahead of the profile. `account_id` in `wrangler.jsonc` makes wrangler refuse to act on any other account. To create the profile on a new machine:
+
+```sh
+env -u CLOUDFLARE_API_KEY -u CLOUDFLARE_EMAIL npx wrangler auth create 40for40
 ```
 
 ## Deploys
 
-GitHub Actions (`.github/workflows/deploy.yml`) builds every push and pull request. Pushes to `main` deploy to production, other branches get a preview URL. Deploys are skipped until these repo secrets exist:
+GitHub Actions (`.github/workflows/deploy.yml`) builds every push and pull request. Pushes to `main` deploy to production at `build40for40.com`. Pull requests upload a preview version at `<branch>-40for40.40for40.workers.dev`. Deploys are skipped until these repo secrets exist:
 
-- `CLOUDFLARE_ACCOUNT_ID`: from the Cloudflare dashboard sidebar.
-- `CLOUDFLARE_API_TOKEN`: a custom token with **Account > Cloudflare Pages > Edit**.
+- `CLOUDFLARE_ACCOUNT_ID`: the `account_id` in `wrangler.jsonc`.
+- `CLOUDFLARE_API_TOKEN`: a custom token on the 40for40 account with **Account > Workers Scripts > Edit**.
 
 ```sh
 gh secret set CLOUDFLARE_ACCOUNT_ID
 gh secret set CLOUDFLARE_API_TOKEN
 ```
 
-The first deploy creates the `40for40` Pages project. Then add `40for40.app` under the project's Custom domains. Response headers live in `public/_headers`; preview deploys on `*.pages.dev` are marked `noindex`.
+`build40for40.com` and `www.build40for40.com` are custom domains set in `wrangler.jsonc`, and Cloudflare manages their DNS records and certificates on deploy. Response headers live in `public/_headers`, and everything on `*.workers.dev` is marked `noindex`.
+
+## Forms
+
+Every form posts to `/api/forms/<form>` (`subscribe`, `join`, `help`, `guest`, `problem`). The Worker checks the fields, saves them to the `FORMS` KV namespace and redirects to `/thanks/`. The home page's Join box is the exception: it saves the email if it's valid, then sends everyone to the full form at `/join/` with whatever they typed already filled in. Each person who joins has one entry, keyed `join:<email>`. The Join box creates it, and the full form fills in the rest, keeping the original `joinedAt`. The other forms are keyed `<form>:<time>:<id>`, so a prefix list comes back oldest first. A hidden `website` field catches bots, which get the thanks page without being saved.
+
+`npm run dev` runs the Worker for `/api/*` with a local KV, and so does `npm run preview` (the built site on port 8787). Plain `astro preview` serves only the static files, so forms 404 there. To read real submissions:
+
+```sh
+npm run wrangler -- kv key list --binding FORMS --remote --prefix help:
+npm run wrangler -- kv key get --binding FORMS --remote "join:someone@example.com"
+```
 
 ## Where things live
 
 - Site config (start date, links, prices, guests, team): `src/data/site.ts`
 - Day data and statuses (mock data for now): `src/data/days.ts`
 - Theme tokens: `src/styles/global.css`
+- Form handling (fields, limits, storage): `worker/index.ts`

@@ -19,6 +19,7 @@ const { eyebrow, title, intro, action, submit } = Astro.props;
   </div>
   <form method="post" action={action} class="flex flex-col gap-5 rounded-[10px] border border-line bg-sheet p-5 md:p-8">
     <slot />
+    <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden" />
     <button type="submit" class="mt-2 cursor-pointer self-start rounded-full border-0 bg-accent px-5.5 py-3 text-[15px] font-semibold text-white hover:bg-accent-deep">{submit}</button>
     <p class="m-0 text-xs text-muted">We'll email you a confirmation. Details are only used to follow up, see our <a href="/privacy" class="text-ink hover:text-accent-deep">privacy notice</a>.</p>
   </form>
