@@ -41,14 +41,14 @@ export const involvement = [
 
 // Each link is a Stripe Payment Link. Empty links skip checkout and go to the thanks page.
 export const sponsorAmounts = [
-  { value: "40", label: "40¢", link: "" },
-  { value: "400", label: "$4", link: "" },
-  { value: "4000", label: "$40", link: "" },
-  { value: "40000", label: "$400", link: "" },
-  { value: "400000", label: "$4,000", link: "" },
-  { value: "4000000", label: "$40,000", link: "" },
-  { value: "40000000", label: "$400,000", link: "" },
-  { value: "400000000", label: "$4,000,000", link: "" },
+  { value: "40", label: "40p", link: "https://buy.stripe.com/bJe6oH7CCdCd4K74Vd7Zu00" },
+  { value: "400", label: "£4", link: "https://buy.stripe.com/dRm28r7CCbu5a4revN7Zu01" },
+  { value: "4000", label: "£40", link: "https://buy.stripe.com/3cIeVdaOOcy96Sfafx7Zu02" },
+  { value: "40000", label: "£400", link: "https://buy.stripe.com/dRm6oHaOOgOp90n87p7Zu03" },
+  { value: "400000", label: "£4,000", link: "https://buy.stripe.com/9B63cv8GGaq1gsPevN7Zu04" },
+  { value: "4000000", label: "£40,000", link: "https://buy.stripe.com/3cIcN56yy0PrgsP2N57Zu05" },
+  { value: "40000000", label: "£400,000", link: "https://buy.stripe.com/14A6oH2iicy9b8vafx7Zu06" },
+  { value: "400000000", label: "£4,000,000", link: "https://buy.stripe.com/00wcN5aOOdCd2BZ5Zh7Zu07" },
 ] as const;
 
 export const guests = [
@@ -64,7 +64,7 @@ export const team = [
 ];
 
 export const money = (amount: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
+  new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(amount);
 
 export const initials = (name: string) =>
   name.replace(/^Dr\.?\s+/, "").split(/\s+/).map((part) => part[0]).join("").slice(0, 2);
