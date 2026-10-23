@@ -40,7 +40,7 @@ Astro 7 + Vue 3 islands + Tailwind 4, built as a static site and served as stati
 npm install
 npm run dev      # localhost:4321
 npm run build    # outputs dist/
-npm run preview  # build + the Worker with a local D1 and KV on localhost:8787
+npm run preview  # build + the Worker with a local D1 on localhost:8787
 npm run types    # regenerate worker types after changing wrangler.jsonc
 npm run deploy   # build + wrangler deploy
 npm run wrangler -- deployments list
@@ -72,13 +72,12 @@ Every form posts to `/api/forms/<form>` (`subscribe`, `join`, `help`, `guest`, `
 
 ### Data
 
-Join and problem answers live in the `40for40` D1 database, with the schema in `worker/migrations/`:
+Everything lives in the `40for40` D1 database, with the schema in `worker/migrations/`:
 
 - **`people`:** one row per email. The Join box creates it, and later forms fill in or change answers without clearing ones they leave out, keeping the original `joined_at`. `involved` is a JSON array and `sponsor` is the amount in pence picked before checkout.
 - **`problems`:** one row per problem submitted, so a second problem from the same person never replaces the first.
-- **`payments`:** one row per completed Stripe Checkout Session. Nothing writes to it until the Stripe webhook exists.
-
-The hidden `help` and `guest` forms still save to the `FORMS` KV namespace, keyed `<form>:<time>:<id>`.
+- **`payments`:** one row per paid Stripe Checkout Session, written by the webhook.
+- **`help_offers`** and **`guest_applications`:** one row per submission of the hidden help and guest forms.
 
 To change the schema, add a numbered `.sql` file to `worker/migrations/`. `npm run db:migrate` applies it to the local database, and deploys (`npm run deploy` and CI) apply it to production first.
 
@@ -86,14 +85,15 @@ To change the schema, add a numbered `.sql` file to `worker/migrations/`. `npm r
 
 Ticking Sponsor on the full form shows the amounts in `sponsorAmounts` in `src/data/site.ts`. Picking one only records it. On Submit, the Worker saves the answers and redirects to that amount's Stripe Payment Link with the email prefilled, and with `client_reference_id` set to the problem's id when they submitted one. The amount is dropped if Sponsor was unticked, and an empty link goes to `/thanks/` instead. In Stripe, every link sells the one Sponsor product at one of its GBP prices (lookup keys `sponsor_<pence>`), with `sponsor` metadata set to the same value, and sends people back to `/thanks/` after paying. Each amount has a live `link` and a sandbox `testLink`: only `build40for40.com` and its subdomains use the live one, so local dev servers and workers.dev previews check out in the sandbox (pay with a test card such as `4242 4242 4242 4242`).
 
+Stripe sends `checkout.session.completed` and `checkout.session.async_payment_succeeded` to `/api/stripe/webhook` on the live account. The Worker checks the signature against the `STRIPE_WEBHOOK_SECRET` Worker secret, then saves paid sessions to `payments` with the payer's email and the problem from `client_reference_id`. Stripe retries failed deliveries, and a repeat of the same session is ignored. To replace the secret, roll it in the Stripe dashboard and run `npm run wrangler -- secret put STRIPE_WEBHOOK_SECRET`.
+
 ### Running and reading forms
 
-`npm run dev` runs the Worker for `/api/*` with a local D1 and KV, and so does `npm run preview` (the built site on port 8787). Run `npm run db:migrate` once first to create the local tables. Plain `astro preview` serves only the static files, so forms 404 there. To read real submissions:
+`npm run dev` runs the Worker for `/api/*` with a local D1, and so does `npm run preview` (the built site on port 8787). Before the first run, create the local tables with `npm run db:migrate` and copy `.dev.vars.example` to `.dev.vars`. Stripe can't reach a local server, so to test the webhook locally, set any `STRIPE_WEBHOOK_SECRET` in `.dev.vars` and sign test events with it. Plain `astro preview` serves only the static files, so forms 404 there. To read real submissions:
 
 ```sh
 npm run wrangler -- d1 execute 40for40 --remote --command "SELECT * FROM people ORDER BY joined_at"
-npm run wrangler -- d1 execute 40for40 --remote --command "SELECT * FROM problems ORDER BY created_at"
-npm run wrangler -- kv key list --binding FORMS --remote --prefix help:
+npm run wrangler -- d1 execute 40for40 --remote --command "SELECT * FROM payments ORDER BY paid_at"
 ```
 
 ## Where things live

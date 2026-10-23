@@ -16,12 +16,6 @@
       "migrations_dir": "worker/migrations"
     }
   ],
-  "kv_namespaces": [
-    {
-      "binding": "FORMS",
-      "id": "98733a0b3bf3420c953899b74c0f13c8"
-    }
-  ],
   "routes": [
     { "pattern": "build40for40.com", "custom_domain": true },
     { "pattern": "www.build40for40.com", "custom_domain": true }

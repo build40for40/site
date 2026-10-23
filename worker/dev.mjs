@@ -1,7 +1,7 @@
 import { Readable } from "node:stream";
 import { getPlatformProxy } from "wrangler";
 
-// Runs the Worker behind `astro dev` for /api/*, with the same local KV as `wrangler dev`.
+// Runs the Worker behind `astro dev` for /api/*, with the same local D1 and secrets as `wrangler dev`.
 export default function workerDev() {
   return {
     name: "worker-dev",

@@ -88,9 +88,78 @@ const upsertPerson = (db: D1Database, { email, name, involved, sponsor, now }: P
     )
     .bind(email, name, involved, sponsor, now);
 
+const encoder = new TextEncoder();
+
+// https://docs.stripe.com/webhooks#verify-manually
+async function verifyStripe(body: string, header: string | null, secret: string) {
+  const parts = (header ?? "").split(",").map((part) => part.split("="));
+  const timestamp = Number(parts.find(([key]) => key === "t")?.[1]);
+  const signatures = parts.filter(([key, value]) => key === "v1" && /^[0-9a-f]{64}$/.test(value ?? "")).map(([, value]) => value);
+  if (!signatures.length || !(Math.abs(Date.now() / 1000 - timestamp) <= 300)) return false;
+
+  const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+  for (const signature of signatures) {
+    const bytes = new Uint8Array(signature.match(/../g)!.map((byte) => parseInt(byte, 16)));
+    if (await crypto.subtle.verify("HMAC", key, bytes, encoder.encode(`${timestamp}.${body}`))) return true;
+  }
+  return false;
+}
+
+interface CheckoutSessionEvent {
+  type: string;
+  created: number;
+  livemode: boolean;
+  data: {
+    object: {
+      id: string;
+      payment_status: string;
+      amount_total: number | null;
+      currency: string | null;
+      client_reference_id: string | null;
+      customer_details: { email: string | null } | null;
+    };
+  };
+}
+
+async function stripeWebhook(request: Request, env: Env) {
+  if (request.method !== "POST") return new Response("Method not allowed.", { status: 405, headers: { Allow: "POST" } });
+  if (!env.STRIPE_WEBHOOK_SECRET) return text("Webhook secret isn't set.", 500);
+
+  const body = await request.text();
+  if (!(await verifyStripe(body, request.headers.get("Stripe-Signature"), env.STRIPE_WEBHOOK_SECRET))) return text("Bad signature.", 400);
+
+  const event = JSON.parse(body) as CheckoutSessionEvent;
+  const session = event.data.object;
+  // Bank-style payments complete unpaid and confirm later with async_payment_succeeded.
+  const paid =
+    event.type === "checkout.session.async_payment_succeeded" ||
+    (event.type === "checkout.session.completed" && session.payment_status === "paid");
+  if (!paid) return text("Ignored.", 200);
+
+  // Stripe retries and can send an event twice, so a repeat is a no-op. A problem id from another database becomes null.
+  await env.DB.prepare(
+    `INSERT INTO payments (id, email, problem_id, amount, currency, livemode, paid_at)
+     VALUES (?1, ?2, (SELECT id FROM problems WHERE id = ?3), ?4, ?5, ?6, ?7)
+     ON CONFLICT (id) DO NOTHING`,
+  )
+    .bind(
+      session.id,
+      session.customer_details?.email?.toLowerCase() ?? null,
+      session.client_reference_id,
+      session.amount_total ?? 0,
+      session.currency ?? "",
+      event.livemode ? 1 : 0,
+      new Date(event.created * 1000).toISOString(),
+    )
+    .run();
+  return text("Saved.", 200);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (/^\/api\/stripe\/webhook\/?$/.test(url.pathname)) return stripeWebhook(request, env);
+
     const form = url.pathname.match(/^\/api\/forms\/([a-z]+)\/?$/)?.[1];
     const fields = form && Object.hasOwn(forms, form) ? forms[form] : undefined;
     if (!form || !fields) return text("Not found.", 404);
@@ -125,44 +194,55 @@ export default {
 
     if (typeof values === "string") return text(values, 400);
 
-    if (form === "join" || form === "problem") {
-      // An amount only counts while Sponsor is ticked, since unticking hides the amounts but keeps the choice.
-      const sponsoring = [values.involved ?? []].flat().includes("sponsor");
-      const amount = sponsoring ? sponsorAmounts.find(({ value }) => value === values.sponsor) : undefined;
-      const problemId = values.problem ? crypto.randomUUID() : undefined;
+    // An amount only counts while Sponsor is ticked, since unticking hides the amounts but keeps the choice.
+    const sponsoring = [values.involved ?? []].flat().includes("sponsor");
+    const amount = sponsoring ? sponsorAmounts.find(({ value }) => value === values.sponsor) : undefined;
+    const id = crypto.randomUUID();
+    const problemId = values.problem ? id : undefined;
+    const json = (value: string | string[] | undefined) => (value ? JSON.stringify(value) : null);
 
-      await env.DB.batch([
-        upsertPerson(env.DB, {
-          email: String(values.email),
-          name: values.name ? String(values.name) : null,
-          involved: values.involved ? JSON.stringify(values.involved) : null,
-          sponsor: amount ? Number(amount.value) : null,
-          now,
-        }),
-        ...(problemId
-          ? [
-              env.DB.prepare("INSERT INTO problems (id, email, problem, affects, created_at) VALUES (?1, ?2, ?3, ?4, ?5)").bind(
+    const record =
+      form === "help"
+        ? env.DB.prepare("INSERT INTO help_offers (id, email, company, type, note, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)").bind(
+            id,
+            values.email,
+            values.company ?? null,
+            values.type,
+            values.note ?? null,
+            now,
+          )
+        : form === "guest"
+          ? env.DB.prepare(
+              "INSERT INTO guest_applications (id, email, role, nominated_by, bring, availability, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            ).bind(id, values.email, values.role, values.nominated_by ?? null, values.bring, json(values.availability), now)
+          : problemId
+            ? env.DB.prepare("INSERT INTO problems (id, email, problem, affects, created_at) VALUES (?1, ?2, ?3, ?4, ?5)").bind(
                 problemId,
                 values.email,
                 values.problem,
                 values.affects ?? null,
                 now,
-              ),
-            ]
-          : []),
-      ]);
+              )
+            : undefined;
 
-      // Only the real domain takes real money: localhost and workers.dev previews use the sandbox.
-      const live = url.hostname === "build40for40.com" || url.hostname.endsWith(".build40for40.com");
-      const link = live ? amount?.link : amount?.testLink;
-      if (!link) return thanks;
-      const checkout = new URL(link);
-      checkout.searchParams.set("prefilled_email", String(values.email));
-      if (problemId) checkout.searchParams.set("client_reference_id", problemId);
-      return Response.redirect(checkout.href, 303);
-    }
+    await env.DB.batch([
+      upsertPerson(env.DB, {
+        email: String(values.email),
+        name: values.name ? String(values.name) : null,
+        involved: json(values.involved),
+        sponsor: amount ? Number(amount.value) : null,
+        now,
+      }),
+      ...(record ? [record] : []),
+    ]);
 
-    await env.FORMS.put(`${form}:${now}:${crypto.randomUUID()}`, JSON.stringify({ submittedAt: now, ...values }));
-    return thanks;
+    // Only the real domain takes real money: localhost and workers.dev previews use the sandbox.
+    const live = url.hostname === "build40for40.com" || url.hostname.endsWith(".build40for40.com");
+    const link = live ? amount?.link : amount?.testLink;
+    if (!link) return thanks;
+    const checkout = new URL(link);
+    checkout.searchParams.set("prefilled_email", String(values.email));
+    if (problemId) checkout.searchParams.set("client_reference_id", problemId);
+    return Response.redirect(checkout.href, 303);
   },
 } satisfies ExportedHandler<Env>;
