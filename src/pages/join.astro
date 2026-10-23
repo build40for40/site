@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import { involvement } from "../data/site";
 import SponsorAmounts from "../components/forms/SponsorAmounts.astro";
+import SubmitButton from "../components/forms/SubmitButton.astro";
 
 const input =
   "w-full rounded-none border border-ink bg-white px-3 py-2 text-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
@@ -54,7 +55,7 @@ const input =
       </fieldset>
 
       <div class="flex items-center gap-6">
-        <button type="submit" class="cursor-pointer rounded-none border border-ink bg-ink px-4 py-2 font-semibold text-white hover:bg-white hover:text-ink">Submit</button>
+        <SubmitButton class="rounded-none border border-ink bg-ink px-4 py-2 font-semibold text-white hover:bg-white hover:text-ink">Submit</SubmitButton>
         <a href="/" class="underline hover:opacity-60">Back</a>
       </div>
     </form>
@@ -66,6 +67,15 @@ const input =
   const field = document.querySelector<HTMLInputElement>("#join-email");
   if (email && field && !field.value) field.value = email;
   if (location.hash) history.replaceState(null, "", location.pathname);
+
+  // Sponsors get redirected to Stripe Checkout, so warm up its connections while the form saves.
+  document.querySelector("form[action='/api/forms/join']")?.addEventListener("submit", ({ currentTarget }) => {
+    const form = currentTarget as HTMLFormElement;
+    if (!form.querySelector("[name=involved][value=sponsor]:checked") || !form.querySelector("[name=sponsor]:checked")) return;
+    for (const href of ["https://buy.stripe.com", "https://js.stripe.com", "https://merchant-ui-api.stripe.com"]) {
+      document.head.append(Object.assign(document.createElement("link"), { rel: "preconnect", href }));
+    }
+  });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") location.href = "/";
   });

@@ -1,0 +1,32 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<button type="submit" data-submit class:list={["group relative cursor-pointer aria-busy:cursor-wait", className]}>
+  <span class="group-aria-busy:invisible"><slot /></span>
+  <span class="absolute inset-0 hidden items-center justify-center group-aria-busy:flex">
+    <span class="size-4 animate-spin rounded-full border-2 border-current border-r-transparent"></span>
+    <span class="sr-only">Sending</span>
+  </span>
+</button>
+
+<script>
+  document.addEventListener("submit", ({ submitter }) => {
+    if (!(submitter instanceof HTMLButtonElement) || !submitter.hasAttribute("data-submit")) return;
+    submitter.disabled = true;
+    submitter.ariaBusy = "true";
+  });
+
+  // Back from the next page restores this one from the back/forward cache, mid-submit.
+  addEventListener("pageshow", ({ persisted }) => {
+    if (!persisted) return;
+    for (const button of document.querySelectorAll<HTMLButtonElement>("[data-submit]")) {
+      button.disabled = false;
+      button.ariaBusy = null;
+    }
+  });
+</script>

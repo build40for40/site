@@ -1,3 +1,7 @@
+---
+import SubmitButton from "./SubmitButton.astro";
+---
+
 <form method="post" action="/api/forms/subscribe" class="flex max-w-md">
   <label for="subscribe-email" class="sr-only">Email</label>
   <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden" />
@@ -9,5 +13,5 @@
     placeholder="Your email"
     class="min-w-0 flex-1 rounded-none border border-ink bg-white px-3 py-2 text-ink outline-none placeholder:text-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
   />
-  <button type="submit" class="cursor-pointer rounded-none border border-l-0 border-ink bg-ink px-4 py-2 font-semibold text-white hover:bg-white hover:text-ink">Join</button>
+  <SubmitButton class="rounded-none border border-l-0 border-ink bg-ink px-4 py-2 font-semibold text-white hover:bg-white hover:text-ink">Join</SubmitButton>
 </form>
