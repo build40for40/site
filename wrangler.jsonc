@@ -8,6 +8,14 @@
     "binding": "ASSETS",
     "run_worker_first": ["/api/*"]
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "40for40",
+      "database_id": "e683bf8b-511d-4172-b694-3c2f47b9a8be",
+      "migrations_dir": "worker/migrations"
+    }
+  ],
   "kv_namespaces": [
     {
       "binding": "FORMS",

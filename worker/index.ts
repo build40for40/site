@@ -67,6 +67,27 @@ function parse(fields: Field[], data: FormData) {
   return values;
 }
 
+interface Person {
+  email: string;
+  name: string | null;
+  involved: string | null;
+  sponsor: number | null;
+  now: string;
+}
+
+// A later form fills in or changes answers but never clears one it left out.
+const upsertPerson = (db: D1Database, { email, name, involved, sponsor, now }: Person) =>
+  db
+    .prepare(
+      `INSERT INTO people (email, name, involved, sponsor, joined_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?5)
+       ON CONFLICT (email) DO UPDATE SET
+         name = coalesce(excluded.name, name),
+         involved = coalesce(excluded.involved, involved),
+         sponsor = coalesce(excluded.sponsor, sponsor),
+         updated_at = excluded.updated_at`,
+    )
+    .bind(email, name, involved, sponsor, now);
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -94,8 +115,9 @@ export default {
     // Join works with or without an email: save valid ones, then carry whatever was typed to the full form.
     if (form === "subscribe") {
       if (typeof values !== "string" && values.email) {
-        const key = `join:${values.email}`;
-        if (!(await env.FORMS.get(key))) await env.FORMS.put(key, JSON.stringify({ joinedAt: now, updatedAt: now, ...values }));
+        await env.DB.prepare("INSERT INTO people (email, joined_at, updated_at) VALUES (?1, ?2, ?2) ON CONFLICT DO NOTHING")
+          .bind(values.email, now)
+          .run();
       }
       const typed = String(data.get("email") ?? "").trim();
       return Response.redirect(new URL(typed ? `/join/#email=${encodeURIComponent(typed)}` : "/join/", url).href, 303);
@@ -103,15 +125,32 @@ export default {
 
     if (typeof values === "string") return text(values, 400);
 
-    if (form === "join") {
+    if (form === "join" || form === "problem") {
       // An amount only counts while Sponsor is ticked, since unticking hides the amounts but keeps the choice.
       const sponsoring = [values.involved ?? []].flat().includes("sponsor");
       const amount = sponsoring ? sponsorAmounts.find(({ value }) => value === values.sponsor) : undefined;
-      if (!sponsoring) delete values.sponsor;
+      const problemId = values.problem ? crypto.randomUUID() : undefined;
 
-      const key = `join:${values.email}`;
-      const previous = await env.FORMS.get<Record<string, unknown>>(key, "json");
-      await env.FORMS.put(key, JSON.stringify({ joinedAt: now, ...previous, ...values, updatedAt: now }));
+      await env.DB.batch([
+        upsertPerson(env.DB, {
+          email: String(values.email),
+          name: values.name ? String(values.name) : null,
+          involved: values.involved ? JSON.stringify(values.involved) : null,
+          sponsor: amount ? Number(amount.value) : null,
+          now,
+        }),
+        ...(problemId
+          ? [
+              env.DB.prepare("INSERT INTO problems (id, email, problem, affects, created_at) VALUES (?1, ?2, ?3, ?4, ?5)").bind(
+                problemId,
+                values.email,
+                values.problem,
+                values.affects ?? null,
+                now,
+              ),
+            ]
+          : []),
+      ]);
 
       // Only the real domain takes real money: localhost and workers.dev previews use the sandbox.
       const live = url.hostname === "build40for40.com" || url.hostname.endsWith(".build40for40.com");
@@ -119,6 +158,7 @@ export default {
       if (!link) return thanks;
       const checkout = new URL(link);
       checkout.searchParams.set("prefilled_email", String(values.email));
+      if (problemId) checkout.searchParams.set("client_reference_id", problemId);
       return Response.redirect(checkout.href, 303);
     }
 

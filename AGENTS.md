@@ -1,6 +1,6 @@
 # build40for40.com
 
-Static Astro site with Vue islands, served by a Cloudflare Worker as static assets. The Worker in `worker/` handles `/api/*`, and forms are saved to Workers KV. See README.md for commands and deploys.
+Static Astro site with Vue islands, served by a Cloudflare Worker as static assets. The Worker in `worker/` handles `/api/*`, and forms are saved to D1 (the hidden help and guest forms still use Workers KV). See README.md for commands and deploys.
 
 ## Conventions
 

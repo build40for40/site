@@ -10,9 +10,10 @@
     "build": "astro build",
     "preview": "astro build && wrangler dev",
     "astro": "astro",
-    "deploy": "astro build && env -u CLOUDFLARE_API_KEY -u CLOUDFLARE_EMAIL wrangler --profile 40for40 deploy",
+    "deploy": "astro build && npm run wrangler -- d1 migrations apply 40for40 --remote && npm run wrangler -- deploy",
     "wrangler": "env -u CLOUDFLARE_API_KEY -u CLOUDFLARE_EMAIL wrangler --profile 40for40",
-    "types": "wrangler types worker/worker-configuration.d.ts"
+    "types": "wrangler types worker/worker-configuration.d.ts --env-file /dev/null",
+    "db:migrate": "npm run wrangler -- d1 migrations apply 40for40 --local"
   },
   "dependencies": {
     "@astrojs/vue": "^7.1.2",

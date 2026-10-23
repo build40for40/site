@@ -30,7 +30,7 @@ Before Day 1, its job is to get people to help, in this priority order: office s
 
 ## Status
 
-The R1 UI is built. Forms are saved to Workers KV, payments are stubbed, and day data in `src/data/days.ts` is mock data. Still to come: Stripe with auto-unlock, the admin screen, day pages, the app gallery, OG images and analytics. Open questions include prices, VAT and the receiving entity.
+The R1 UI is built. Forms are saved to D1, sponsors pay through Stripe Payment Links, and day data in `src/data/days.ts` is mock data. Still to come: Stripe with auto-unlock, the admin screen, day pages, the app gallery, OG images and analytics. Open questions include prices, VAT and the receiving entity.
 
 ## Stack
 
@@ -40,7 +40,7 @@ Astro 7 + Vue 3 islands + Tailwind 4, built as a static site and served as stati
 npm install
 npm run dev      # localhost:4321
 npm run build    # outputs dist/
-npm run preview  # build + the Worker and a local KV on localhost:8787
+npm run preview  # build + the Worker with a local D1 and KV on localhost:8787
 npm run types    # regenerate worker types after changing wrangler.jsonc
 npm run deploy   # build + wrangler deploy
 npm run wrangler -- deployments list
@@ -68,13 +68,32 @@ gh secret set CLOUDFLARE_API_TOKEN
 
 ## Forms
 
-Every form posts to `/api/forms/<form>` (`subscribe`, `join`, `help`, `guest`, `problem`). The Worker checks the fields, saves them to the `FORMS` KV namespace and redirects to `/thanks/`. The home page's Join box is the exception: it saves the email if it's valid, then sends everyone to the full form at `/join/` with whatever they typed already filled in. Each person who joins has one entry, keyed `join:<email>`. The Join box creates it, and the full form fills in the rest, keeping the original `joinedAt`. The other forms are keyed `<form>:<time>:<id>`, so a prefix list comes back oldest first. Ticking Sponsor on the full form shows the amounts in `sponsorAmounts` in `src/data/site.ts`. Picking one only records it. On Submit, the Worker saves the chosen `sponsor` amount with the answers and redirects to that amount's Stripe Payment Link with the email prefilled. The amount is dropped if Sponsor was unticked, and an empty link goes to `/thanks/` instead. In Stripe, every link sells the one Sponsor product at one of its GBP prices (lookup keys `sponsor_<pence>`), with `sponsor` metadata set to the same value, and sends people back to `/thanks/` after paying. Each amount has a live `link` and a sandbox `testLink`: only `build40for40.com` and its subdomains use the live one, so local dev servers and workers.dev previews check out in the sandbox (pay with a test card such as `4242 4242 4242 4242`). A hidden `website` field catches bots, which get the thanks page without being saved.
+Every form posts to `/api/forms/<form>` (`subscribe`, `join`, `help`, `guest`, `problem`). The Worker checks the fields, saves them and redirects to `/thanks/`. The home page's Join box is the exception: it saves the email if it's valid, then sends everyone to the full form at `/join/` with whatever they typed already filled in. A hidden `website` field catches bots, which get the thanks page without being saved.
 
-`npm run dev` runs the Worker for `/api/*` with a local KV, and so does `npm run preview` (the built site on port 8787). Plain `astro preview` serves only the static files, so forms 404 there. To read real submissions:
+### Data
+
+Join and problem answers live in the `40for40` D1 database, with the schema in `worker/migrations/`:
+
+- **`people`:** one row per email. The Join box creates it, and later forms fill in or change answers without clearing ones they leave out, keeping the original `joined_at`. `involved` is a JSON array and `sponsor` is the amount in pence picked before checkout.
+- **`problems`:** one row per problem submitted, so a second problem from the same person never replaces the first.
+- **`payments`:** one row per completed Stripe Checkout Session. Nothing writes to it until the Stripe webhook exists.
+
+The hidden `help` and `guest` forms still save to the `FORMS` KV namespace, keyed `<form>:<time>:<id>`.
+
+To change the schema, add a numbered `.sql` file to `worker/migrations/`. `npm run db:migrate` applies it to the local database, and deploys (`npm run deploy` and CI) apply it to production first.
+
+### Sponsoring
+
+Ticking Sponsor on the full form shows the amounts in `sponsorAmounts` in `src/data/site.ts`. Picking one only records it. On Submit, the Worker saves the answers and redirects to that amount's Stripe Payment Link with the email prefilled, and with `client_reference_id` set to the problem's id when they submitted one. The amount is dropped if Sponsor was unticked, and an empty link goes to `/thanks/` instead. In Stripe, every link sells the one Sponsor product at one of its GBP prices (lookup keys `sponsor_<pence>`), with `sponsor` metadata set to the same value, and sends people back to `/thanks/` after paying. Each amount has a live `link` and a sandbox `testLink`: only `build40for40.com` and its subdomains use the live one, so local dev servers and workers.dev previews check out in the sandbox (pay with a test card such as `4242 4242 4242 4242`).
+
+### Running and reading forms
+
+`npm run dev` runs the Worker for `/api/*` with a local D1 and KV, and so does `npm run preview` (the built site on port 8787). Run `npm run db:migrate` once first to create the local tables. Plain `astro preview` serves only the static files, so forms 404 there. To read real submissions:
 
 ```sh
+npm run wrangler -- d1 execute 40for40 --remote --command "SELECT * FROM people ORDER BY joined_at"
+npm run wrangler -- d1 execute 40for40 --remote --command "SELECT * FROM problems ORDER BY created_at"
 npm run wrangler -- kv key list --binding FORMS --remote --prefix help:
-npm run wrangler -- kv key get --binding FORMS --remote "join:someone@example.com"
 ```
 
 ## Where things live
@@ -82,4 +101,4 @@ npm run wrangler -- kv key get --binding FORMS --remote "join:someone@example.co
 - Site config (start date, links, prices, guests, team): `src/data/site.ts`
 - Day data and statuses (mock data for now): `src/data/days.ts`
 - Theme tokens: `src/styles/global.css`
-- Form handling (fields, limits, storage): `worker/index.ts`
+- Form handling (fields, limits, storage): `worker/index.ts`, with the database schema in `worker/migrations/`

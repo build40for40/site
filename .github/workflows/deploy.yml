@@ -39,7 +39,9 @@ jobs:
         with:
           apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
+          command: |
+            d1 migrations apply 40for40 --remote
+            deploy
 
       # Preview aliases must be a lowercase DNS label short enough to sit before "-40for40".
       - name: Name the preview
