@@ -113,8 +113,11 @@ export default {
       const previous = await env.FORMS.get<Record<string, unknown>>(key, "json");
       await env.FORMS.put(key, JSON.stringify({ joinedAt: now, ...previous, ...values, updatedAt: now }));
 
-      if (!amount?.link) return thanks;
-      const checkout = new URL(amount.link);
+      // Only the real domain takes real money: localhost and workers.dev previews use the sandbox.
+      const live = url.hostname === "build40for40.com" || url.hostname.endsWith(".build40for40.com");
+      const link = live ? amount?.link : amount?.testLink;
+      if (!link) return thanks;
+      const checkout = new URL(link);
       checkout.searchParams.set("prefilled_email", String(values.email));
       return Response.redirect(checkout.href, 303);
     }

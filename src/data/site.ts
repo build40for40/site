@@ -39,16 +39,16 @@ export const involvement = [
   { value: "sponsor", label: "Sponsor a Project" },
 ] as const;
 
-// Each link is a Stripe Payment Link. Empty links skip checkout and go to the thanks page.
+// Stripe Payment Links: `link` is live, `testLink` is the sandbox. Empty links skip checkout and go to the thanks page.
 export const sponsorAmounts = [
-  { value: "40", label: "40p", link: "https://buy.stripe.com/bJe6oH7CCdCd4K74Vd7Zu00" },
-  { value: "400", label: "£4", link: "https://buy.stripe.com/dRm28r7CCbu5a4revN7Zu01" },
-  { value: "4000", label: "£40", link: "https://buy.stripe.com/3cIeVdaOOcy96Sfafx7Zu02" },
-  { value: "40000", label: "£400", link: "https://buy.stripe.com/dRm6oHaOOgOp90n87p7Zu03" },
-  { value: "400000", label: "£4,000", link: "https://buy.stripe.com/9B63cv8GGaq1gsPevN7Zu04" },
-  { value: "4000000", label: "£40,000", link: "https://buy.stripe.com/3cIcN56yy0PrgsP2N57Zu05" },
-  { value: "40000000", label: "£400,000", link: "https://buy.stripe.com/14A6oH2iicy9b8vafx7Zu06" },
-  { value: "400000000", label: "£4,000,000", link: "https://buy.stripe.com/00wcN5aOOdCd2BZ5Zh7Zu07" },
+  { value: "40", label: "40p", link: "https://buy.stripe.com/bJe6oH7CCdCd4K74Vd7Zu00", testLink: "https://buy.stripe.com/test_14AbJ09Aygvl4cvbmLdfG00" },
+  { value: "400", label: "£4", link: "https://buy.stripe.com/dRm28r7CCbu5a4revN7Zu01", testLink: "https://buy.stripe.com/test_5kQcN49Ay4MDgZh9eDdfG01" },
+  { value: "4000", label: "£40", link: "https://buy.stripe.com/3cIeVdaOOcy96Sfafx7Zu02", testLink: "https://buy.stripe.com/test_dRm14m1424MDeR9aiHdfG02" },
+  { value: "40000", label: "£400", link: "https://buy.stripe.com/dRm6oHaOOgOp90n87p7Zu03", testLink: "https://buy.stripe.com/test_eVqeVc8wu6UL6kD62rdfG03" },
+  { value: "400000", label: "£4,000", link: "https://buy.stripe.com/9B63cv8GGaq1gsPevN7Zu04", testLink: "https://buy.stripe.com/test_28E00i4gecf5fVd2QfdfG04" },
+  { value: "4000000", label: "£40,000", link: "https://buy.stripe.com/3cIcN56yy0PrgsP2N57Zu05", testLink: "https://buy.stripe.com/test_6oU00ifYWend6kDbmLdfG05" },
+  { value: "40000000", label: "£400,000", link: "https://buy.stripe.com/14A6oH2iicy9b8vafx7Zu06", testLink: "https://buy.stripe.com/test_eVqcN41422EvcJ19eDdfG06" },
+  { value: "400000000", label: "£4,000,000", link: "https://buy.stripe.com/00wcN5aOOdCd2BZ5Zh7Zu07", testLink: "https://buy.stripe.com/test_fZu28q5kicf5gZhduTdfG07" },
 ] as const;
 
 export const guests = [
