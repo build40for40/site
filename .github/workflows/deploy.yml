@@ -32,6 +32,9 @@ jobs:
       - run: npm ci
 
       - run: npm run build
+        env:
+          PUBLIC_POSTHOG_PROJECT_TOKEN: ${{ secrets.PUBLIC_POSTHOG_PROJECT_TOKEN }}
+          PUBLIC_POSTHOG_HOST: ${{ vars.PUBLIC_POSTHOG_HOST }}
 
       # Secrets are absent until they're added to the repo, and on pull requests from forks.
       - name: Deploy to production

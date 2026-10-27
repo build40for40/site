@@ -1,5 +1,6 @@
 ---
 import { Font } from "astro:assets";
+import PostHog from "../components/posthog.astro";
 import "../styles/global.css";
 
 interface Props {
@@ -32,6 +33,7 @@ const url = new URL(Astro.url.pathname, Astro.site);
     <meta name="theme-color" content="#ffffff" />
     <Font cssVariable="--font-bricolage" preload />
     <Font cssVariable="--font-plex-mono" />
+    <PostHog />
   </head>
   <body class="bg-white font-sans text-ink antialiased">
     <main id="main" class="*:first:border-t-0">

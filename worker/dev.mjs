@@ -7,7 +7,7 @@ export default function workerDev() {
     name: "worker-dev",
     hooks: {
       "astro:server:setup": async ({ server }) => {
-        const { env, dispose } = await getPlatformProxy();
+        const { env, ctx, dispose } = await getPlatformProxy();
         server.httpServer?.once("close", dispose);
 
         server.middlewares.use(async (req, res, next) => {
@@ -26,7 +26,7 @@ export default function workerDev() {
               body: hasBody ? Readable.toWeb(req) : undefined,
               duplex: "half",
             });
-            const response = await worker.fetch(request, env);
+            const response = await worker.fetch(request, env, ctx);
             res.writeHead(response.status, Object.fromEntries(response.headers));
             res.end(Buffer.from(await response.arrayBuffer()));
           } catch (error) {

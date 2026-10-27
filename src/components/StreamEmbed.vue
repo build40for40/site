@@ -7,6 +7,7 @@ const src = ref("");
 function load() {
   const params = new URLSearchParams({ channel: links.twitchChannel, parent: location.hostname, muted: "true" });
   src.value = `https://player.twitch.tv/?${params}`;
+  window.posthog?.capture("stream_loaded");
 }
 </script>
 

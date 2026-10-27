@@ -85,6 +85,30 @@ const upsertPerson = (db: D1Database, { email, name, involved, now }: Person) =>
     )
     .bind(email, name, involved, now);
 
+async function capture(env: Env, event: string, distinctId: string, properties: Record<string, unknown>) {
+  if (!env.PUBLIC_POSTHOG_PROJECT_TOKEN) return;
+  await fetch(new URL("/i/v0/e/", env.PUBLIC_POSTHOG_HOST), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      api_key: env.PUBLIC_POSTHOG_PROJECT_TOKEN,
+      event,
+      distinct_id: distinctId,
+      properties: { $process_person_profile: false, ...properties },
+      timestamp: new Date().toISOString(),
+    }),
+  });
+}
+
+// PostHog hashes these into the same daily visitor id as the browser's cookieless events.
+const cookieless = (request: Request) => ({
+  $cookieless_mode: true,
+  $ip: request.headers.get("CF-Connecting-IP"),
+  $raw_user_agent: request.headers.get("User-Agent"),
+  $host: new URL(request.url).host,
+  $timezone: request.cf?.timezone,
+});
+
 const encoder = new TextEncoder();
 
 // https://docs.stripe.com/webhooks#verify-manually
@@ -118,7 +142,7 @@ interface CheckoutSessionEvent {
   };
 }
 
-async function stripeWebhook(request: Request, env: Env) {
+async function stripeWebhook(request: Request, env: Env, ctx: ExecutionContext) {
   if (request.method !== "POST") return new Response("Method not allowed.", { status: 405, headers: { Allow: "POST" } });
   if (!env.STRIPE_WEBHOOK_SECRET) return text("Webhook secret isn't set.", 500);
 
@@ -134,7 +158,7 @@ async function stripeWebhook(request: Request, env: Env) {
   if (!paid) return text("Ignored.", 200);
 
   // Stripe retries and can send an event twice, so a repeat is a no-op. A problem id from another database becomes null.
-  await env.DB.prepare(
+  const { meta } = await env.DB.prepare(
     `INSERT INTO payments (id, email, problem_id, amount, currency, livemode, paid_at)
      VALUES (?1, ?2, (SELECT id FROM problems WHERE id = ?3), ?4, ?5, ?6, ?7)
      ON CONFLICT (id) DO NOTHING`,
@@ -149,13 +173,19 @@ async function stripeWebhook(request: Request, env: Env) {
       new Date(event.created * 1000).toISOString(),
     )
     .run();
+  // Stripe calls from its own servers, so this can't be tied to the visitor's cookieless id.
+  if (meta.changes) {
+    ctx.waitUntil(
+      capture(env, "payment_completed", session.id, { amount: session.amount_total ?? 0, currency: session.currency, livemode: event.livemode }),
+    );
+  }
   return text("Saved.", 200);
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    if (/^\/api\/stripe\/webhook\/?$/.test(url.pathname)) return stripeWebhook(request, env);
+    if (/^\/api\/stripe\/webhook\/?$/.test(url.pathname)) return stripeWebhook(request, env, ctx);
 
     const form = url.pathname.match(/^\/api\/forms\/([a-z]+)\/?$/)?.[1];
     const fields = form && Object.hasOwn(forms, form) ? forms[form] : undefined;
@@ -177,6 +207,8 @@ export default {
 
     const values = parse(fields, data);
     const now = new Date().toISOString();
+    const track = (event: string, properties: Record<string, unknown>) =>
+      ctx.waitUntil(capture(env, event, "$posthog_cookieless", { ...cookieless(request), ...properties }));
 
     // Join works with or without an email: save valid ones, then carry whatever was typed to the full form.
     if (form === "subscribe") {
@@ -184,6 +216,7 @@ export default {
         await env.DB.prepare("INSERT INTO people (email, joined_at, updated_at) VALUES (?1, ?2, ?2) ON CONFLICT DO NOTHING")
           .bind(values.email, now)
           .run();
+        track("form_saved", { form_type: form });
       }
       const typed = String(data.get("email") ?? "").trim();
       return Response.redirect(new URL(typed ? `/join/#email=${encodeURIComponent(typed)}` : "/join/", url).href, 303);
@@ -228,6 +261,7 @@ export default {
       }),
       ...(record ? [record] : []),
     ]);
+    track("form_saved", { form_type: form, involvement: values.involved });
 
     return thanks;
   },
