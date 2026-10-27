@@ -1,0 +1,128 @@
+---
+import Base from "../layouts/Base.astro";
+
+const stat = "flex flex-col gap-1 border border-line bg-sheet p-4";
+---
+
+<Base title="Signups | 40 for 40" analytics={false}>
+  <article class="flex max-w-3xl flex-col gap-10 px-4 py-10 md:px-9">
+    <header class="flex flex-col gap-2">
+      <p class="m-0 font-mono text-sm tracking-wide text-muted uppercase">Team only</p>
+      <h1 class="m-0 text-4xl leading-tight font-semibold tracking-tight md:text-5xl">Who’s in, and what they want built</h1>
+      <p id="status" class="m-0 text-body" role="status">Loading…</p>
+    </header>
+
+    <dl class="m-0 grid grid-cols-3 gap-3">
+      <div class={stat}>
+        <dt class="text-sm text-muted">Signups</dt>
+        <dd id="count-people" class="m-0 text-3xl font-semibold md:text-4xl">–</dd>
+      </div>
+      <div class={stat}>
+        <dt class="text-sm text-muted">This week</dt>
+        <dd id="count-week" class="m-0 text-3xl font-semibold md:text-4xl">–</dd>
+      </div>
+      <div class={stat}>
+        <dt class="text-sm text-muted">Ideas</dt>
+        <dd id="count-problems" class="m-0 text-3xl font-semibold md:text-4xl">–</dd>
+      </div>
+    </dl>
+
+    <section class="flex flex-col gap-4" aria-labelledby="ideas-heading">
+      <h2 id="ideas-heading" class="m-0 text-2xl font-semibold">Ideas</h2>
+      <p id="ideas-empty" class="m-0 hidden text-body">No ideas yet.</p>
+      <ol id="ideas" class="m-0 flex list-none flex-col gap-3 p-0"></ol>
+    </section>
+
+    <section class="flex flex-col gap-4" aria-labelledby="people-heading">
+      <h2 id="people-heading" class="m-0 text-2xl font-semibold">Signups</h2>
+      <p id="people-empty" class="m-0 hidden text-body">Nobody yet.</p>
+      <ol id="people" class="m-0 flex list-none flex-col divide-y divide-line border-y border-line p-0"></ol>
+    </section>
+  </article>
+
+  <template id="idea">
+    <li class="flex flex-col gap-2 border border-line bg-sheet p-4">
+      <p data-problem class="m-0 text-lg leading-snug break-words whitespace-pre-line text-ink"></p>
+      <p data-affects class="m-0 hidden text-body"></p>
+      <p data-who class="m-0 text-sm break-all text-muted"></p>
+    </li>
+  </template>
+
+  <template id="person">
+    <li class="flex flex-col gap-1 py-3">
+      <div class="flex flex-wrap items-baseline justify-between gap-x-4">
+        <span data-email class="font-semibold break-all"></span>
+        <span data-joined class="text-sm text-muted"></span>
+      </div>
+      <span data-details class="text-sm text-body"></span>
+    </li>
+  </template>
+</Base>
+
+<script>
+  import { UK_TZ, involvement } from "../data/site";
+
+  interface Person {
+    email: string;
+    name: string | null;
+    involved: string | null;
+    joined_at: string;
+  }
+  interface Problem {
+    problem: string;
+    affects: string | null;
+    created_at: string;
+    email: string;
+    name: string | null;
+  }
+
+  const when = (iso: string) =>
+    new Intl.DateTimeFormat("en-GB", { timeZone: UK_TZ, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+  const involvedLabel = (value: string) => involvement.find((option) => option.value === value)?.label.split(" - ")[0] ?? value;
+  const byId = (id: string) => document.getElementById(id)!;
+
+  // Everything here was typed by the public, so it only ever goes in as text.
+  function fill<T>(list: string, empty: string, template: string, rows: T[], set: (row: T, find: (key: string) => HTMLElement) => void) {
+    byId(empty).classList.toggle("hidden", rows.length > 0);
+    const item = byId(template) as HTMLTemplateElement;
+    byId(list).replaceChildren(
+      ...rows.map((row) => {
+        const node = item.content.firstElementChild!.cloneNode(true) as HTMLElement;
+        set(row, (key) => node.querySelector<HTMLElement>(`[data-${key}]`)!);
+        return node;
+      }),
+    );
+  }
+
+  try {
+    // From the origin, since a page opened as https://user:pass@host can't fetch relative URLs.
+    const response = await fetch(new URL("/admin/data.json", location.origin), { cache: "no-store" });
+    if (!response.ok) throw new Error(await response.text());
+    const { people, problems } = (await response.json()) as { people: Person[]; problems: Problem[] };
+
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    byId("count-people").textContent = String(people.length);
+    byId("count-week").textContent = String(people.filter((person) => Date.parse(person.joined_at) > weekAgo).length);
+    byId("count-problems").textContent = String(problems.length);
+
+    fill("ideas", "ideas-empty", "idea", problems, (idea, find) => {
+      find("problem").textContent = idea.problem;
+      if (idea.affects) {
+        find("affects").textContent = `Affects: ${idea.affects}`;
+        find("affects").classList.remove("hidden");
+      }
+      find("who").textContent = [idea.name, idea.email, when(idea.created_at)].filter(Boolean).join(" · ");
+    });
+
+    fill("people", "people-empty", "person", people, (person, find) => {
+      find("email").textContent = person.email;
+      find("joined").textContent = when(person.joined_at);
+      const involved: string[] = person.involved ? JSON.parse(person.involved) : [];
+      find("details").textContent = [person.name, involved.map(involvedLabel).join(", ")].filter(Boolean).join(" · ");
+    });
+
+    byId("status").textContent = `Updated ${when(new Date().toISOString())}. Refresh for the latest.`;
+  } catch (error) {
+    byId("status").textContent = `Couldn’t load the data: ${error instanceof Error ? error.message : error}`;
+  }
+</script>

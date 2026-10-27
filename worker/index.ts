@@ -182,10 +182,53 @@ async function stripeWebhook(request: Request, env: Env, ctx: ExecutionContext) 
   return text("Saved.", 200);
 }
 
+// Basic auth against the ADMIN_PASSWORD secret, any username. Previews share the production database, so they're locked too.
+async function adminAllowed(request: Request, env: Env) {
+  if (!env.ADMIN_PASSWORD) return false;
+  const [scheme, encoded] = (request.headers.get("Authorization") ?? "").split(" ");
+  if (scheme !== "Basic" || !encoded) return false;
+  let password: string;
+  try {
+    password = atob(encoded).split(":").slice(1).join(":");
+  } catch {
+    return false;
+  }
+  const [given, expected] = await Promise.all(
+    [password, env.ADMIN_PASSWORD].map(async (value) => crypto.subtle.digest("SHA-256", encoder.encode(value))),
+  );
+  return crypto.subtle.timingSafeEqual(given, expected);
+}
+
+const adminData = async (db: D1Database) => {
+  const [people, problems] = await db.batch([
+    db.prepare("SELECT email, name, involved, joined_at FROM people ORDER BY joined_at DESC"),
+    db.prepare(
+      `SELECT problems.problem, problems.affects, problems.created_at, problems.email, people.name
+       FROM problems LEFT JOIN people USING (email) ORDER BY problems.created_at DESC`,
+    ),
+  ]);
+  return { people: people.results, problems: problems.results };
+};
+
+async function admin(request: Request, env: Env, url: URL) {
+  const headers = { "Cache-Control": "private, no-store", "X-Robots-Tag": "noindex" };
+  if (!env.ADMIN_PASSWORD) return new Response("ADMIN_PASSWORD isn't set.", { status: 503, headers });
+  if (!(await adminAllowed(request, env))) {
+    return new Response("Password, please.", { status: 401, headers: { ...headers, "WWW-Authenticate": 'Basic realm="40 for 40 admin", charset="UTF-8"' } });
+  }
+  if (/^\/admin\/data\.json$/.test(url.pathname)) return Response.json(await adminData(env.DB), { headers });
+
+  const page = await env.ASSETS.fetch(request);
+  const response = new Response(page.body, page);
+  for (const [name, value] of Object.entries(headers)) response.headers.set(name, value);
+  return response;
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (/^\/api\/stripe\/webhook\/?$/.test(url.pathname)) return stripeWebhook(request, env, ctx);
+    if (/^\/admin(\/|$)/.test(url.pathname)) return admin(request, env, url);
 
     const form = url.pathname.match(/^\/api\/forms\/([a-z]+)\/?$/)?.[1];
     const fields = form && Object.hasOwn(forms, form) ? forms[form] : undefined;
