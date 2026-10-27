@@ -1,7 +1,7 @@
 import { Readable } from "node:stream";
 import { getPlatformProxy } from "wrangler";
 
-// Runs the Worker behind `astro dev` for /api/*, with the same local D1 and secrets as `wrangler dev`.
+// Runs the Worker behind `astro dev` for /api/* and the admin data, with the same local D1 and secrets as `wrangler dev`.
 export default function workerDev() {
   return {
     name: "worker-dev",
@@ -11,7 +11,7 @@ export default function workerDev() {
         server.httpServer?.once("close", dispose);
 
         server.middlewares.use(async (req, res, next) => {
-          if (!req.url?.startsWith("/api/")) return next();
+          if (!req.url?.startsWith("/api/") && !req.url?.startsWith("/admin/data.json")) return next();
           try {
             // Without this, edits to modules the Worker imports (like src/data/site.ts) are missed until a restart.
             server.environments.ssr.moduleGraph.invalidateAll();

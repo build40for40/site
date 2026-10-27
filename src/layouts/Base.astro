@@ -6,10 +6,13 @@ import "../styles/global.css";
 interface Props {
   title?: string;
   description?: string;
+  // Off for pages showing people's details, so autocapture never sends them to PostHog.
+  analytics?: boolean;
 }
 
 const {
   title = "40 for 40: 40 apps in 40 days, built in public",
+  analytics = true,
   description = "40 apps in 40 days, built live with guests who have never vibe coded. Every day stays locked until someone pays to start it. From 2 November 2026.",
 } = Astro.props;
 const url = new URL(Astro.url.pathname, Astro.site);
@@ -33,7 +36,7 @@ const url = new URL(Astro.url.pathname, Astro.site);
     <meta name="theme-color" content="#ffffff" />
     <Font cssVariable="--font-bricolage" preload />
     <Font cssVariable="--font-plex-mono" />
-    <PostHog />
+    {analytics && <PostHog />}
   </head>
   <body class="bg-white font-sans text-ink antialiased">
     <main id="main" class="*:first:border-t-0">

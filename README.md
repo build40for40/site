@@ -30,7 +30,7 @@ Before Day 1, its job is to get people to help, in this priority order: office s
 
 ## Status
 
-The R1 UI is built. Forms are saved to D1, sponsors pay through Stripe Payment Links, and day data in `src/data/days.ts` is mock data. Still to come: Stripe with auto-unlock, the admin screen, day pages, the app gallery and OG images. Open questions include prices, VAT and the receiving entity.
+The R1 UI is built. Forms are saved to D1, sponsors pay through Stripe Payment Links, and day data in `src/data/days.ts` is mock data. `/admin/` lists signups and submitted problems for the team. Still to come: Stripe with auto-unlock, editing days from the admin screen, day pages, the app gallery and OG images. Open questions include prices, VAT and the receiving entity.
 
 ## Stack
 
@@ -95,6 +95,16 @@ Stripe sends `checkout.session.completed` and `checkout.session.async_payment_su
 npm run wrangler -- d1 execute 40for40 --remote --command "SELECT * FROM people ORDER BY joined_at"
 npm run wrangler -- d1 execute 40for40 --remote --command "SELECT * FROM payments ORDER BY paid_at"
 ```
+
+### Admin
+
+`/admin/` shows how many people have signed up, each submitted problem with who sent it, and every signup. The Worker guards `/admin` and everything under it with a browser password prompt: any username, and the password in the `ADMIN_PASSWORD` Worker secret. With no secret set it answers 503, so it never opens by accident. Preview versions read the production database, so they ask for the same password. The page loads its data from `/admin/data.json` and doesn't load PostHog, so nobody's details reach analytics.
+
+```sh
+npm run wrangler -- secret put ADMIN_PASSWORD
+```
+
+Locally, set `ADMIN_PASSWORD` in `.dev.vars`.
 
 ## Where things live
 
