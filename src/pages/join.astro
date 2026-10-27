@@ -1,7 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
 import { involvement } from "../data/site";
-import SponsorAmounts from "../components/forms/SponsorAmounts.astro";
 import SubmitButton from "../components/forms/SubmitButton.astro";
 
 const input =
@@ -36,7 +35,7 @@ const input =
         <textarea id="join-problem" name="problem" rows="4" maxlength="1000" aria-describedby="join-problem-hint" class:list={[input, "resize-y"]}></textarea>
       </div>
 
-      <fieldset class="group/involved flex flex-col gap-3">
+      <fieldset class="flex flex-col gap-3">
         <legend class="mb-3 font-semibold">Want to get involved?</legend>
         {involvement.map(({ value, label }) => (
           <div>
@@ -49,7 +48,6 @@ const input =
               />
               <span>{label}</span>
             </label>
-            {value === "sponsor" && <SponsorAmounts />}
           </div>
         ))}
       </fieldset>
@@ -68,14 +66,6 @@ const input =
   if (email && field && !field.value) field.value = email;
   if (location.hash) history.replaceState(null, "", location.pathname);
 
-  // Sponsors get redirected to Stripe Checkout, so warm up its connections while the form saves.
-  document.querySelector("form[action='/api/forms/join']")?.addEventListener("submit", ({ currentTarget }) => {
-    const form = currentTarget as HTMLFormElement;
-    if (!form.querySelector("[name=involved][value=sponsor]:checked") || !form.querySelector("[name=sponsor]:checked")) return;
-    for (const href of ["https://buy.stripe.com", "https://js.stripe.com", "https://merchant-ui-api.stripe.com"]) {
-      document.head.append(Object.assign(document.createElement("link"), { rel: "preconnect", href }));
-    }
-  });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") location.href = "/";
   });
