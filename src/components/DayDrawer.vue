@@ -47,6 +47,15 @@ const checkoutUrl = computed(() => {
 });
 
 const payLabel = computed(() => `${verbs[kind.value]} day ${props.day.day} for ${money(payOptions[kind.value].amount)} →`);
+
+function trackCheckout() {
+  window.posthog?.capture("checkout_started", {
+    source: "day",
+    day_number: props.day.day,
+    payment_kind: kind.value,
+    credit_preference: credit.value.toLowerCase(),
+  });
+}
 </script>
 
 <template>
@@ -133,7 +142,7 @@ const payLabel = computed(() => `${verbs[kind.value]} day ${props.day.day} for $
         </div>
       </fieldset>
 
-      <a :href="checkoutUrl" class="mt-1 rounded-full bg-accent p-3 text-center text-sm font-semibold text-white no-underline hover:bg-accent-deep">{{ payLabel }}</a>
+      <a :href="checkoutUrl" class="mt-1 rounded-full bg-accent p-3 text-center text-sm font-semibold text-white no-underline hover:bg-accent-deep" @click="trackCheckout">{{ payLabel }}</a>
       <p class="m-0 text-center font-mono text-[11px] text-muted">Secure checkout by Stripe. No account needed.</p>
     </div>
   </div>

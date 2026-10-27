@@ -12,6 +12,7 @@ const sections = [
     body: [
       "What you type into our forms: your name, email, company or role, and the note, problem or availability you send.",
       "When you pay, Stripe collects your card and billing details. We never see your card number. We receive your name or company, the amount, and how you chose to be credited.",
+      "Anonymous stats on how the site is used: pages viewed, buttons clicked, forms sent and payments made. They include which boxes you ticked, but never your name, email or anything you wrote.",
     ],
   },
   {
@@ -19,15 +20,19 @@ const sections = [
     body: [
       "To reply to you, plan the 40 days, credit you on the day you backed (unless you chose anonymous) and send receipts. Our lawful bases under UK GDPR are your consent and our legitimate interest in running the project.",
       "Guest names and photos only appear on the site with written consent.",
+      "The anonymous stats tell us which bits of the site work, under our legitimate interest in running it.",
     ],
   },
   {
     title: "Who we share it with",
-    body: ["Stripe for payments, and the email and spreadsheet tools we use to read your messages. We don't sell your data or share it with advertisers."],
+    body: ["Stripe for payments, PostHog (hosted in the EU) for the anonymous stats, and the email and spreadsheet tools we use to read your messages. We don't sell your data or share it with advertisers."],
   },
   {
     title: "Cookies",
-    body: ["This site sets no cookies of its own. The Twitch player only loads if you press play, and Twitch then sets its own cookies."],
+    body: [
+      "This site sets no cookies of its own and stores nothing in your browser. PostHog counts visitors without cookies, using a one-way scramble of your IP address and browser that resets every day, so it can't recognise you from one day to the next.",
+      "The Twitch player only loads if you press play, and Twitch then sets its own cookies.",
+    ],
   },
   {
     title: "How long we keep it",
