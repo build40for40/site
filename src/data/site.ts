@@ -22,6 +22,15 @@ export const involvement = [
   { value: "sponsor", label: "Sponsor a Project" },
 ] as const;
 
+export const helpTypes = [
+  { value: "office", label: "Office space" },
+  { value: "tools", label: "AI tools and tokens" },
+  { value: "guests", label: "Guest intros" },
+  { value: "cto", label: "CTO for a day" },
+  { value: "sponsor", label: "Sponsor a day" },
+  { value: "other", label: "Something else" },
+] as const;
+
 export const money = (amount: number) =>
   new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(amount);
 
