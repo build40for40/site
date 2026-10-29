@@ -1,5 +1,3 @@
-export type SearchEffect = "spring" | "impulse" | "wake" | "attract" | "gravity";
-
 export const poolConfig = {
   physics: {
     enabled: true,
@@ -16,24 +14,14 @@ export const poolConfig = {
     rainStaggerMs: 90,
     rainSpeed: 6,
     // Spring stiffness and damping are per kilogram, so big and small ideas feel the same.
-    drag: { stiffness: 150, damping: 20, threshold: 6, longPressMs: 260 },
-    // Share of the way to a new size covered each step, and how fast a held idea turns upright.
-    growRate: 0.12,
+    hover: { stiffness: 30, damping: 9 },
+    // How fast a hovering idea turns upright.
     upright: 8,
-    // Velocities in metres per second.
-    jolt: { share: 0.3, max: 12, strength: 4, gapMs: 70 },
-  },
-  motion: {
-    tiltStrength: 1.6,
-    maxGravity: 40,
-    smoothing: 0.15,
-    shake: { threshold: 18, hits: 3, windowMs: 600, cooldownMs: 1500, impulse: 6, maxImpulse: 14 },
   },
   search: {
-    effect: "spring" as SearchEffect,
-    debounceMs: 250,
+    debounceMs: 400,
     timeoutMs: 2500,
-    minQueryLength: 2,
+    minLength: 12,
     shortlist: 20,
     // Levels for the classifier's relevance score, lowest first. Each describes a situation, not a degree.
     relevanceLevels: [
@@ -44,14 +32,8 @@ export const poolConfig = {
     ],
     minRelevance: 0.34,
     cacheSeconds: 600,
-    effects: {
-      // Matches grow to `grow` times their size and leave the pile `wave` at a time, best first. `label` is the room
-      // above each one for its match percentage.
-      spring: { stiffness: 40, damping: 10, gap: 8, grow: 2, label: 18, rows: 2, wave: 3, waveGapMs: 70 },
-      impulse: { strength: 9 },
-      attract: { strength: 60, durationMs: 2500 },
-      gravity: { scale: -0.4 },
-    },
+    // Room above a risen idea for its match percentage.
+    label: 18,
   },
   artwork: {
     version: 2,

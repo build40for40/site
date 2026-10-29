@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 import { initializePhysics, type PhysicsController } from "./physics";
 
 const W = 400;
@@ -31,9 +31,6 @@ function setup(width = W, height = H) {
   return { container, add, size, controller };
 }
 
-const pointer = (target: EventTarget, type: string, pointerType: string, clientX: number, clientY: number) =>
-  target.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerType, pointerId: pointerType === "mouse" ? 1 : 2, clientX, clientY, button: 0 }));
-
 describe("bodies", () => {
   test("fall under gravity and rest on the floor", () => {
     const { add, controller } = setup();
@@ -52,91 +49,6 @@ describe("bodies", () => {
     const low = controller.bodyState("low")!;
     const high = controller.bodyState("high")!;
     expect(Math.abs(low.y - high.y) + Math.abs(low.x - high.x)).toBeGreaterThan(TILE.height * 0.8);
-  });
-
-  test("slide sideways when gravity tilts", () => {
-    const { add, controller } = setup();
-    add("a", { x: 100, y: 300 });
-    controller.setGravity({ x: 20, y: 5 });
-    controller.advance(3);
-    expect(controller.bodyState("a")!.x).toBeGreaterThan(W - TILE.width);
-  });
-
-  test("roll when they're circles", () => {
-    const { container, controller } = setup();
-    const element = document.createElement("li");
-    container.append(element);
-    controller.registerBody("ball", element, { shape: "circle", width: 60, height: 60, spawn: { x: 60, y: H - 30 } });
-    controller.setGravity({ x: 20, y: 20 });
-    let turned = 0;
-    for (let i = 0; i < 60; i++) {
-      const before = controller.bodyState("ball")!.angle;
-      controller.advance(1 / 60);
-      turned += Math.atan2(Math.sin(controller.bodyState("ball")!.angle - before), Math.cos(controller.bodyState("ball")!.angle - before));
-    }
-    expect(controller.bodyState("ball")!.y).toBeCloseTo(H - 30, -1);
-    expect(Math.abs(turned)).toBeGreaterThan(Math.PI);
-  });
-
-  test("grow to a new size and back", () => {
-    const { add, controller } = setup();
-    const element = add("a", { x: 200, y: 200 });
-    controller.advance(0.1);
-    controller.setBodyScale("a", 2);
-    controller.advance(1);
-    expect(element.style.width).toBe("200px");
-    controller.setBodyScale("a", 1);
-    controller.advance(1);
-    expect(element.style.width).toBe("");
-  });
-
-  test("turn upright once something pulls them out of the pile", () => {
-    const { add, controller } = setup();
-    add("a", { x: 200, y: 200 });
-    controller.applyImpulse("a", { x: 0, y: 0 });
-    controller.advance(0.1);
-    controller.setBodyTarget("a", { x: 200, y: 100 });
-    controller.advance(2);
-    expect(Math.abs(controller.bodyState("a")!.angle)).toBeLessThan(0.01);
-  });
-
-  test("pass through each other while pulled out, but not through the pile", () => {
-    const { add, controller } = setup();
-    const a = add("a", { x: 120, y: 100 });
-    add("b", { x: 280, y: 100 });
-    add("pile", { x: 200, y: H - 30 });
-    controller.advance(2);
-    controller.setBodyTarget("a", { x: 200, y: 100 });
-    controller.setBodyTarget("b", { x: 200, y: 100 });
-    controller.advance(3);
-    expect(Math.abs(controller.bodyState("a")!.x - controller.bodyState("b")!.x)).toBeLessThan(TILE.width / 4);
-    expect(a.dataset.arrived).toBe("");
-    controller.setBodyTarget("a", { x: 200, y: H - 30 });
-    controller.advance(2);
-    expect(Math.abs(controller.bodyState("a")!.y - controller.bodyState("pile")!.y)).toBeGreaterThan(TILE.height * 0.8);
-  });
-
-  test("a jolt throws a few ideas in the pile, and back to back jolts don't add up", () => {
-    const { add, controller } = setup();
-    for (let i = 0; i < 8; i++) add(`p${i}`, { x: 50 + (i % 4) * 100, y: H - 30 - Math.floor(i / 4) * 62 });
-    controller.advance(4);
-    const moving = () => Array.from({ length: 8 }, (_, i) => controller.bodyState(`p${i}`)!).filter((b) => Math.hypot(b.vx, b.vy) > 50).length;
-    expect(moving()).toBe(0);
-    vi.spyOn(Math, "random").mockReturnValue(0.9);
-    controller.jolt(1);
-    controller.jolt(1);
-    vi.restoreAllMocks();
-    expect(moving()).toBe(3);
-  });
-
-  test("never go faster than the cap", () => {
-    const { add, controller } = setup();
-    add("a", { x: 200, y: 200 });
-    controller.advance(0.1);
-    controller.applyImpulse("a", { x: 500, y: 0 });
-    controller.advance(1 / 60);
-    const { vx, vy } = controller.bodyState("a")!;
-    expect(Math.hypot(vx, vy)).toBeLessThanOrEqual(30 * 50 + 1);
   });
 
   test("rain in one after another", () => {
@@ -166,106 +78,39 @@ describe("bodies", () => {
     expect(controller.bodyState("one")!.y - controller.bodyState("two")!.y).toBeGreaterThan(TILE.height * 0.9);
   });
 
-  test("stay inside when the pool shrinks", () => {
-    const { add, size, controller } = setup();
-    add("a", { x: 350, y: 300 });
-    controller.advance(1);
-    size.width = 200;
-    controller.resize();
-    controller.advance(1);
-    expect(controller.bodyState("a")!.x).toBeLessThanOrEqual(200 - TILE.width / 2 + 1);
-  });
-
-  test("spring towards a target and fall back when it's cleared", () => {
+  test("hover at a height, turn upright, and drop back when it's cleared", () => {
     const { add, controller } = setup();
-    add("a", { x: 200, y: 340 });
+    const element = add("a", { x: 200, y: H - 30 });
     controller.advance(1);
-    controller.setBodyTarget("a", { x: 100, y: 60 });
+    controller.setBodyHover("a", 100);
     controller.advance(3);
     const held = controller.bodyState("a")!;
-    expect(Math.hypot(held.x - 100, held.y - 60)).toBeLessThan(5);
-    controller.setBodyTarget("a", null);
+    expect(held.y).toBeCloseTo(100, -1);
+    expect(Math.abs(held.angle)).toBeLessThan(0.01);
+    expect(element.dataset.arrived).toBe("");
+    controller.setBodyHover("a", null);
     controller.advance(3);
     expect(controller.bodyState("a")!.y).toBeGreaterThan(H - TILE.height);
+    expect(element.dataset.arrived).toBeUndefined();
   });
-});
 
-describe("pointer", () => {
-  test("the mouse passes over ideas without pushing them", () => {
-    const { container, add, controller } = setup();
-    add("a", { x: 200, y: H - 30 });
-    controller.enablePointerInteraction(true);
+  test("stay inside when the pool shrinks, hovering or not", () => {
+    const { add, size, controller } = setup();
+    add("a", { x: 350, y: H - 30 });
+    add("b", { x: 100, y: H - 30 });
     controller.advance(1);
-    const before = controller.bodyState("a")!.x;
-    for (let x = 60; x <= 340; x += 10) {
-      pointer(container, "pointermove", "mouse", x, H - 30);
-      controller.advance(1 / 30);
+    controller.setBodyHover("b", 40);
+    controller.advance(2);
+    size.width = 200;
+    size.height = 150;
+    controller.resize();
+    controller.advance(2);
+    for (const id of ["a", "b"]) {
+      const { x, y } = controller.bodyState(id)!;
+      expect(x).toBeLessThanOrEqual(200 - TILE.width / 2 + 1);
+      expect(y).toBeLessThanOrEqual(150 - TILE.height / 2 + 1);
+      expect(y).toBeGreaterThanOrEqual(TILE.height / 2 - 1);
     }
-    expect(controller.bodyState("a")!.x).toBeCloseTo(before, 0);
-  });
-
-  test("dragging moves an idea, and letting go throws it", () => {
-    const { container, add, controller } = setup();
-    const element = add("a", { x: 100, y: H - 30 });
-    controller.enablePointerInteraction(true);
-    controller.advance(1);
-    const button = element.querySelector("button")!;
-    pointer(button, "pointerdown", "mouse", 100, H - 30);
-    for (let i = 1; i <= 10; i++) {
-      pointer(container, "pointermove", "mouse", 100 + i * 20, H - 30 - i * 20);
-      controller.advance(1 / 60);
-    }
-    expect(element.dataset.dragging).toBe("");
-    controller.advance(0.3);
-    const held = controller.bodyState("a")!;
-    expect(held.y).toBeLessThan(H - 100);
-    for (let i = 1; i <= 6; i++) {
-      pointer(container, "pointermove", "mouse", 300 - i * 25, 170);
-      controller.advance(1 / 60);
-    }
-    pointer(container, "pointerup", "mouse", 150, 170);
-    expect(element.dataset.dragging).toBeUndefined();
-    controller.advance(1 / 60);
-    expect(controller.bodyState("a")!.vx).toBeLessThan(-100);
-  });
-
-  test("a drag doesn't count as a click, a tap does", () => {
-    const { container, add, controller } = setup();
-    const element = add("a", { x: 100, y: H - 30 });
-    controller.enablePointerInteraction(true);
-    const button = element.querySelector("button")!;
-    let clicks = 0;
-    button.addEventListener("click", () => clicks++);
-
-    pointer(button, "pointerdown", "mouse", 100, H - 30);
-    pointer(container, "pointermove", "mouse", 160, H - 60);
-    pointer(container, "pointerup", "mouse", 160, H - 60);
-    button.click();
-    expect(clicks).toBe(0);
-
-    pointer(button, "pointerdown", "mouse", 100, H - 30);
-    pointer(button, "pointerup", "mouse", 101, H - 30);
-    button.click();
-    expect(clicks).toBe(1);
-  });
-
-  test("a vertical swipe on a phone is left to scroll the page", () => {
-    const { container, add, controller } = setup();
-    const element = add("a", { x: 100, y: H - 30 });
-    controller.enablePointerInteraction(true);
-    pointer(element.querySelector("button")!, "pointerdown", "touch", 100, H - 30);
-    pointer(container, "pointermove", "touch", 102, H - 120);
-    expect(element.dataset.dragging).toBeUndefined();
-    pointer(container, "pointercancel", "touch", 102, H - 120);
-  });
-
-  test("a sideways swipe on a phone grabs the idea", () => {
-    const { container, add, controller } = setup();
-    const element = add("a", { x: 100, y: H - 30 });
-    controller.enablePointerInteraction(true);
-    pointer(element.querySelector("button")!, "pointerdown", "touch", 100, H - 30);
-    pointer(container, "pointermove", "touch", 150, H - 34);
-    expect(element.dataset.dragging).toBe("");
   });
 });
 
@@ -276,6 +121,6 @@ test("destroy cleans up every idea and listener", () => {
   controller.destroy();
   expect(element.style.transform).toBe("");
   expect(element.dataset.bodyId).toBeUndefined();
-  expect(() => pointer(container, "pointermove", "mouse", 10, 10)).not.toThrow();
+  expect(() => container.dispatchEvent(new FocusEvent("focusin"))).not.toThrow();
   controller.destroy();
 });

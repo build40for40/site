@@ -8,14 +8,7 @@ const physics = () => ({
   initializePhysics: () => ({
     registerBody: (id: string) => bodies.registered.push(id),
     unregisterBody: (id: string) => bodies.unregistered.push(id),
-    enablePointerInteraction() {},
-    enableDeviceMotion() {},
-    setBodyTarget() {},
-    setBodyGravityScale() {},
-    setBodyScale() {},
-    jolt() {},
-    applyImpulse() {},
-    wake() {},
+    setBodyHover() {},
     destroy() {},
   }),
 });
@@ -28,6 +21,7 @@ const pages: Record<string, unknown> = {
 };
 
 let reducedMotion = false;
+let tall = true;
 let wrapper: VueWrapper | undefined;
 
 beforeEach(() => {
@@ -38,13 +32,14 @@ beforeEach(() => {
   vi.resetModules();
   vi.doMock("../pool/physics", physics);
   reducedMotion = false;
+  tall = true;
   localStorage.clear();
   vi.stubGlobal("fetch", async (url: string) => {
     const { pathname, searchParams } = new URL(url, "http://localhost");
     if (pathname === "/api/problems") return Response.json(pages[searchParams.get("offset")!]);
     return new Response("", { status: 404 });
   });
-  vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce") ? reducedMotion : false, addEventListener() {}, removeEventListener() {} }));
+  vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce") ? reducedMotion : query.includes("min-height") ? tall : false, addEventListener() {}, removeEventListener() {} }));
   vi.stubGlobal(
     "IntersectionObserver",
     class {
@@ -83,7 +78,8 @@ async function board() {
 }
 
 const pool = (w: VueWrapper) => w.find("section[aria-labelledby=pool-title] ul");
-const poolTitles = (w: VueWrapper) => pool(w).findAll("button").map((b) => b.attributes("title"));
+const poolTitles = (w: VueWrapper) => pool(w).findAll("button").map((b) => b.attributes("aria-label")!.match(/: (.+),/)![1]);
+const stacked = () => document.documentElement.hasAttribute("data-pool-stacked");
 
 describe("the problems pool", () => {
   test("shows every idea that didn't make the days, as bodies once it's on screen", async () => {
@@ -93,30 +89,19 @@ describe("the problems pool", () => {
     expect(pool(w).classes()).toContain("relative");
   });
 
-  test("clicking an idea opens it in the day box", async () => {
-    const w = await board();
-    await pool(w).find("button[aria-label^='In the pool']").trigger("click");
-    expect(w.find("#day-box h2").text()).toBe("Idea 34");
-  });
-
   test("sponsoring moves an idea into the days and bumps the last one into the pool", async () => {
     const w = await board();
     await vi.waitFor(() => expect(bodies.registered).toHaveLength(10));
-    await pool(w).find("button[title='Idea 40']").trigger("click");
+    w.findComponent({ name: "DayBox" }).vm.$emit("pick", "pool-idea-34", 25);
+    await flushPromises();
     await w.findAll("#day-box button").find((b) => b.text() === "£100")!.trigger("click");
     await w.find("#sponsor-button").trigger("click");
     await flushPromises();
 
-    expect(poolTitles(w)).not.toContain("Idea 40");
+    expect(poolTitles(w)).not.toContain("Idea 34");
     expect(poolTitles(w)).toContain("Idea 33");
-    await vi.waitFor(() => expect(bodies.unregistered).toEqual(["idea-40"]));
+    await vi.waitFor(() => expect(bodies.unregistered).toEqual(["idea-34"]));
     expect(bodies.registered.at(-1)).toBe("idea-33");
-  });
-
-  test("search announces matches without relying on motion", async () => {
-    const w = await board();
-    await w.find("#pool-search").setValue("Idea 37");
-    await vi.waitFor(() => expect(w.find("[role=status]").text()).toMatch(/ideas? match/), { timeout: 2000 });
   });
 
   test("is laid out for physics from the start, with ideas hidden until they drop in", async () => {
@@ -131,6 +116,16 @@ describe("the problems pool", () => {
     const w = await board();
     await vi.waitFor(() => expect(pool(w).classes()).toContain("flex-wrap"));
     expect(pool(w).find("li").classes()).not.toContain("opacity-0");
+    expect(stacked()).toBe(true);
+  });
+
+  test("screens too short for a floor get the stacked page and the plain grid", async () => {
+    tall = false;
+    const w = await board();
+    expect(pool(w).classes()).toContain("flex-wrap");
+    expect(stacked()).toBe(true);
+    expect(bodies.registered).toHaveLength(0);
+    expect(w.text()).not.toContain("Motion on");
   });
 
   test("turning motion off leaves the plain grid", async () => {

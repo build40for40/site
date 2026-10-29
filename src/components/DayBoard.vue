@@ -136,7 +136,6 @@ const poolTiles = computed<PoolTile[]>(() =>
     problem: p.idea!.problem,
     seed: p.idea!.seed,
     label: tileLabel(p),
-    selected: p.key === selected.value.key,
   })),
 );
 
@@ -149,72 +148,79 @@ const tileSub = (e: Entry) => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 lg:gap-5">
-    <div class="-mt-1 flex items-center gap-2 font-mono text-xs font-medium tracking-wider uppercase" :class="kicker.tone">
-      <span class="size-[7px] shrink-0 rounded-full" :class="kicker.dot"></span>{{ kicker.text }}
+  <div class="flex flex-col floor:h-dvh">
+    <div class="floor:min-h-0 floor:flex-[2] floor:overflow-y-auto">
+      <div class="mx-auto flex max-w-[1600px] flex-col gap-3.5 px-4 pt-7 pb-8 lg:px-12 lg:pt-10">
+        <slot name="title" />
+        <div class="flex flex-col gap-4 lg:gap-5">
+          <div class="-mt-1 flex items-center gap-2 font-mono text-xs font-medium tracking-wider uppercase" :class="kicker.tone">
+            <span class="size-[7px] shrink-0 rounded-full" :class="kicker.dot"></span>{{ kicker.text }}
+          </div>
+
+          <section aria-label="About" class="grid gap-4.5 rounded-lg border border-night-line bg-night-panel px-4.5 pt-4.5 pb-5 min-[900px]:grid-cols-[minmax(0,1.3fr)_minmax(320px,1fr)] min-[900px]:items-end min-[900px]:gap-12 min-[900px]:px-6 min-[900px]:pt-5.5 min-[900px]:pb-6">
+            <slot />
+            <div class="flex min-w-0 flex-col gap-2">
+              <div class="flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-xs font-medium">
+                <span>{{ String(shippedCount).padStart(2, "0") }} / 40 SHIPPED</span>
+                <span class="text-night-muted">{{ upcoming }} upcoming<template v-if="pool.length"> · {{ pool.length }} in the pool</template></span>
+              </div>
+              <div class="flex gap-[3px]" aria-hidden="true">
+                <span v-for="d in board.days" :key="d.key" class="h-2.5 flex-1 rounded-xs" :class="[tones[d.status].dot, d.status === 'live' && 'motion-safe:animate-pulse']"></span>
+              </div>
+              <ul class="m-0 flex list-none flex-wrap gap-x-4 gap-y-1.5 p-0 font-mono text-[11px] text-night-muted">
+                <li v-for="item in legend" :key="item.label" class="flex items-center gap-1.5"><span class="size-[7px] rounded-full" :class="item.dot"></span>{{ item.label }}</li>
+              </ul>
+            </div>
+          </section>
+
+          <DayBox
+            :key="selected.key"
+            :aria-busy="loading"
+            :class="loading && 'opacity-60 motion-safe:animate-pulse'"
+            :entry="selected"
+            :days="board.days"
+            :pool="pool"
+            :today="board.today"
+            :is-today="board.isToday"
+            :now="now"
+            :amount="amount"
+            @sponsor="sponsorLocally"
+            @pick="pick"
+          />
+
+          <ul aria-label="The 40 days" :aria-busy="loading" class="m-0 hidden list-none grid-cols-5 gap-2.5 p-0 sm:grid">
+            <DayTile
+              v-for="d in board.days"
+              :key="d.key"
+              class="h-30"
+              :class="loading && 'opacity-60 motion-safe:animate-pulse'"
+              compact
+              :status="d.status"
+              :label="tileLabel(d)"
+              :selected="d.key === selected.key"
+              :today="d.day === board.today"
+              :number="d.day"
+              :title="d.status === 'guest' ? 'Guest day' : d.idea?.title"
+              :sub="tileSub(d)"
+              :sponsor-label="d.status === 'queued' ? `Sponsor ${d.idea?.title}` : undefined"
+              @select="select(d.key)"
+              @sponsor="select(d.key, 'sponsor-button')"
+            />
+          </ul>
+
+          <a
+            href="/join"
+            class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-lg border-[1.5px] border-dashed border-night-edge px-4 py-3.5 text-night-text no-underline hover:border-night-text hover:bg-night-panel focus-visible:border-night-text focus-visible:outline-none"
+          >
+            <span aria-hidden="true" class="font-mono text-xl leading-none text-night-muted">+</span>
+            <span class="text-base font-semibold">{{ submit.title }}</span>
+            <span class="font-mono text-[11px] leading-snug text-night-muted">{{ submit.sub }}</span>
+          </a>
+        </div>
+        <slot name="footer" />
+      </div>
     </div>
 
-    <section aria-label="About" class="grid gap-4.5 rounded-lg border border-night-line bg-night-panel px-4.5 pt-4.5 pb-5 min-[900px]:grid-cols-[minmax(0,1.3fr)_minmax(320px,1fr)] min-[900px]:items-end min-[900px]:gap-12 min-[900px]:px-6 min-[900px]:pt-5.5 min-[900px]:pb-6">
-      <slot />
-      <div class="flex min-w-0 flex-col gap-2">
-        <div class="flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-xs font-medium">
-          <span>{{ String(shippedCount).padStart(2, "0") }} / 40 SHIPPED</span>
-          <span class="text-night-muted">{{ upcoming }} upcoming<template v-if="pool.length"> · {{ pool.length }} in the pool</template></span>
-        </div>
-        <div class="flex gap-[3px]" aria-hidden="true">
-          <span v-for="d in board.days" :key="d.key" class="h-2.5 flex-1 rounded-xs" :class="[tones[d.status].dot, d.status === 'live' && 'motion-safe:animate-pulse']"></span>
-        </div>
-        <ul class="m-0 flex list-none flex-wrap gap-x-4 gap-y-1.5 p-0 font-mono text-[11px] text-night-muted">
-          <li v-for="item in legend" :key="item.label" class="flex items-center gap-1.5"><span class="size-[7px] rounded-full" :class="item.dot"></span>{{ item.label }}</li>
-        </ul>
-      </div>
-    </section>
-
-    <DayBox
-      :key="selected.key"
-      :aria-busy="loading"
-      :class="loading && 'opacity-60 motion-safe:animate-pulse'"
-      :entry="selected"
-      :days="board.days"
-      :pool="pool"
-      :today="board.today"
-      :is-today="board.isToday"
-      :now="now"
-      :amount="amount"
-      @sponsor="sponsorLocally"
-      @pick="pick"
-    />
-
-    <ul aria-label="The 40 days" :aria-busy="loading" class="m-0 grid list-none grid-cols-5 gap-1.5 p-0 sm:gap-2.5">
-      <DayTile
-        v-for="d in board.days"
-        :key="d.key"
-        class="aspect-square sm:aspect-auto sm:h-30"
-        :class="loading && 'opacity-60 motion-safe:animate-pulse'"
-        compact
-        :status="d.status"
-        :label="tileLabel(d)"
-        :selected="d.key === selected.key"
-        :today="d.day === board.today"
-        :number="d.day"
-        :title="d.status === 'guest' ? 'Guest day' : d.idea?.title"
-        :sub="tileSub(d)"
-        :sponsor-label="d.status === 'queued' ? `Sponsor ${d.idea?.title}` : undefined"
-        @select="select(d.key)"
-        @sponsor="select(d.key, 'sponsor-button')"
-      />
-      <li class="col-span-full">
-        <a
-          href="/join"
-          class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-lg border-[1.5px] border-dashed border-night-edge px-4 py-3.5 text-night-text no-underline hover:border-night-text hover:bg-night-panel focus-visible:border-night-text focus-visible:outline-none"
-        >
-          <span aria-hidden="true" class="font-mono text-xl leading-none text-night-muted">+</span>
-          <span class="text-base font-semibold">{{ submit.title }}</span>
-          <span class="font-mono text-[11px] leading-snug text-night-muted">{{ submit.sub }}</span>
-        </a>
-      </li>
-    </ul>
-
-    <ProblemsPool v-if="pool.length" :tiles="poolTiles" @select="select" />
+    <ProblemsPool v-if="loading || pool.length" class="floor:flex-1" :tiles="poolTiles" />
   </div>
 </template>

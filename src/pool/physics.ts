@@ -1,11 +1,14 @@
 import * as RAPIER from "@dimforge/rapier2d";
 import { poolConfig } from "./config";
-import { listenToMotion, tiltToGravity, type Tilt, type Vector } from "./motion";
+
+export interface Vector {
+  x: number;
+  y: number;
+}
 
 type Config = typeof poolConfig.physics & {
   autoStart?: boolean;
   autoPause?: boolean;
-  motion?: typeof poolConfig.motion;
 };
 
 interface BodyOptions {
@@ -19,14 +22,6 @@ interface BodyOptions {
   friction?: number;
   linearDamping?: number;
   angularDamping?: number;
-}
-
-interface TargetOptions {
-  mode?: "spring" | "force";
-  stiffness?: number;
-  damping?: number;
-  strength?: number;
-  durationMs?: number;
 }
 
 interface Pose {
@@ -43,8 +38,6 @@ interface Tracked {
   shape: "box" | "circle";
   width: number;
   height: number;
-  base: { width: number; height: number };
-  want?: number;
   mass: number;
   fixedSize: boolean;
   prev: Pose;
@@ -53,30 +46,13 @@ interface Tracked {
   pickSpawn: boolean;
   shown: boolean;
   drawn?: string;
-  sized?: number;
-  target?: { anchor?: RAPIER.RigidBody; joint?: RAPIER.ImpulseJoint; force?: Vector; strength: number; until: number };
-}
-
-interface Grab {
-  id: string;
-  pointerType: string;
-  startX: number;
-  startY: number;
-  timer?: ReturnType<typeof setTimeout>;
-  anchor?: RAPIER.RigidBody;
-  joint?: RAPIER.ImpulseJoint;
-  last: Vector;
+  hover?: number;
 }
 
 export type PhysicsController = ReturnType<typeof initializePhysics>;
 
-// The top 16 bits say what a collider is and the bottom 16 what it touches. Ideas pulled out of the pile still knock
-// the pile about, but pass through each other.
-const PILE = 0x0001_ffff;
-const MATCH = 0x0002_fffd;
-
 export function initializePhysics(container: HTMLElement, overrides: Partial<Config> = {}) {
-  const config: Config = { ...poolConfig.physics, autoStart: true, autoPause: true, motion: poolConfig.motion, ...overrides };
+  const config: Config = { ...poolConfig.physics, autoStart: true, autoPause: true, ...overrides };
   const scale = config.pxPerMeter;
   const toM = (px: number) => px / scale;
   const toPx = (m: number) => m * scale;
@@ -84,13 +60,10 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
   const world = new RAPIER.World({ x: config.gravity.x, y: config.gravity.y });
   world.timestep = config.timestep;
   const bodies = new Map<string, Tracked>();
-  const grabs = new Map<number, Grab>();
   const cleanups: (() => void)[] = [];
-  const baseGravity: Vector = { ...config.gravity };
   let size = { width: 0, height: 0 };
   let walls: RAPIER.RigidBody | undefined;
   let clock = 0;
-  let lastJolt = -Infinity;
 
   const maxV = config.maxSpeed;
 
@@ -126,14 +99,12 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
   const area = (t: Pick<Tracked, "shape" | "width" | "height">) =>
     t.shape === "circle" ? Math.PI * toM(Math.min(t.width, t.height) / 2) ** 2 : toM(t.width) * toM(t.height);
 
-  // Mass is set rather than worked out from density, so an idea that grows keeps its weight and its springs.
-  function makeCollider(t: Pick<Tracked, "shape" | "width" | "height" | "body" | "mass" | "target">, options: BodyOptions) {
+  function makeCollider(t: Pick<Tracked, "shape" | "width" | "height" | "body" | "mass">, options: BodyOptions) {
     const shape = t.shape === "circle" ? RAPIER.ColliderDesc.ball(toM(Math.min(t.width, t.height) / 2)) : RAPIER.ColliderDesc.cuboid(toM(t.width / 2), toM(t.height / 2));
     const desc = shape
       .setMass(t.mass)
       .setRestitution(options.restitution ?? config.body.restitution)
-      .setFriction(options.friction ?? config.body.friction)
-      .setCollisionGroups(t.target?.joint ? MATCH : PILE);
+      .setFriction(options.friction ?? config.body.friction);
     return world.createCollider(desc, t.body);
   }
 
@@ -149,10 +120,9 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     size = next;
     buildWalls();
     for (const t of bodies.values()) {
-      const grown = t.width !== t.base.width || t.want !== undefined;
-      if (!t.fixedSize && !grown && (t.element.offsetWidth !== t.width || t.element.offsetHeight !== t.height)) {
-        t.width = t.base.width = t.element.offsetWidth;
-        t.height = t.base.height = t.element.offsetHeight;
+      if (!t.fixedSize && (t.element.offsetWidth !== t.width || t.element.offsetHeight !== t.height)) {
+        t.width = t.element.offsetWidth;
+        t.height = t.element.offsetHeight;
         reshape(t);
       }
       clampInside(t);
@@ -165,43 +135,20 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     return { x: p.x, y: p.y, a: t.body.rotation() };
   }
 
-  let pointerOn = false;
-
-  function applyTargets() {
+  // Hovering ideas ride a vertical spring to their height, turning upright on the way. They still bump into the
+  // rest, so they shoulder their way out of the pile.
+  function hover() {
+    const { stiffness, damping } = config.hover;
     for (const t of bodies.values()) {
-      const target = t.target;
-      if (!target?.force) continue;
-      t.body.resetForces(false);
-      if (clock > target.until) {
-        t.target = undefined;
-        continue;
-      }
+      if (t.hover === undefined || !t.shown) continue;
       const p = t.body.translation();
-      const dx = target.force.x - p.x;
-      const dy = target.force.y - p.y;
-      const dist = Math.hypot(dx, dy) || 1;
-      const mass = t.body.mass();
-      t.body.addForce({ x: (dx / dist) * target.strength * mass, y: (dy / dist) * target.strength * mass }, true);
-    }
-  }
-
-  // Grown ideas ease towards their new size, and ideas held by a spring turn upright on the way.
-  function grow() {
-    for (const t of bodies.values()) {
-      if (t.target?.joint) {
-        t.body.setAngvel(-t.body.rotation() * config.upright, true);
-        const p = t.body.translation();
-        const a = t.target.anchor!.translation();
-        if (toPx(Math.hypot(p.x - a.x, p.y - a.y)) < t.base.width / 2) t.element.dataset.arrived = "";
-      }
-      if (t.want === undefined) continue;
-      let next = t.width + (t.want - t.width) * config.growRate;
-      if (Math.abs(t.want - next) < 0.5) next = t.want;
-      t.height *= next / t.width;
-      t.width = next;
-      reshape(t);
-      t.body.wakeUp();
-      if (next === t.want) t.want = undefined;
+      const v = t.body.linvel();
+      const y = Math.min(Math.max(t.hover, t.height / 2), size.height - t.height / 2);
+      t.body.resetForces(false);
+      t.body.addForce({ x: 0, y: t.mass * (stiffness * (toM(y) - p.y) - damping * v.y) }, true);
+      t.body.setAngvel(-t.body.rotation() * config.upright, true);
+      if (Math.abs(toPx(p.y) - y) < t.height / 2) t.element.dataset.arrived = "";
+      else delete t.element.dataset.arrived;
     }
   }
 
@@ -245,8 +192,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     for (const t of bodies.values()) t.prev = t.curr;
     clock += config.timestep * 1000;
     spawnDue();
-    applyTargets();
-    grow();
+    hover();
     world.step();
     clampVelocities();
     for (const t of bodies.values()) t.curr = snapshot(t);
@@ -255,12 +201,6 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
   function render(alpha: number) {
     for (const t of bodies.values()) {
       if (!t.shown) continue;
-      if (t.sized !== t.width) {
-        t.sized = t.width;
-        const grown = t.width !== t.base.width;
-        t.element.style.width = grown ? `${t.width.toFixed(1)}px` : "";
-        t.element.style.height = grown ? `${t.height.toFixed(1)}px` : "";
-      }
       const x = toPx(t.prev.x + (t.curr.x - t.prev.x) * alpha) - t.width / 2;
       const y = toPx(t.prev.y + (t.curr.y - t.prev.y) * alpha) - t.height / 2;
       const a = t.prev.a + (t.curr.a - t.prev.a) * alpha;
@@ -309,100 +249,13 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     frame = 0;
   }
 
-  // Pointer events: push with the mouse, drag and throw with mouse or touch.
-  const local = (e: PointerEvent): Vector => {
-    const rect = container.getBoundingClientRect();
-    return { x: toM(e.clientX - rect.left), y: toM(e.clientY - rect.top) };
-  };
-
-  function startDrag(pointerId: number, grab: Grab, at: Vector) {
-    const t = bodies.get(grab.id);
-    if (!t || grab.anchor) return;
-    clearTimeout(grab.timer);
-    const p = t.body.translation();
-    const angle = t.body.rotation();
-    const dx = at.x - p.x;
-    const dy = at.y - p.y;
-    const anchorPoint = { x: dx * Math.cos(-angle) - dy * Math.sin(-angle), y: dx * Math.sin(-angle) + dy * Math.cos(-angle) };
-    grab.anchor = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(at.x, at.y));
-    const m = t.body.mass();
-    grab.joint = world.createImpulseJoint(RAPIER.JointData.spring(0, config.drag.stiffness * m, config.drag.damping * m, { x: 0, y: 0 }, anchorPoint), grab.anchor, t.body, true);
-    t.body.wakeUp();
-    container.setPointerCapture?.(pointerId);
-    t.element.dataset.dragging = "";
-  }
-
-  function endGrab(pointerId: number) {
-    const grab = grabs.get(pointerId);
-    if (!grab) return;
-    clearTimeout(grab.timer);
-    grabs.delete(pointerId);
-    if (!grab.anchor) return;
-    if (grab.joint) world.removeImpulseJoint(grab.joint, true);
-    world.removeRigidBody(grab.anchor);
-    const t = bodies.get(grab.id);
-    if (t) delete t.element.dataset.dragging;
-    // The drag ends in a click on the same element, which must not open the idea.
-    const swallow = (e: Event) => {
-      e.preventDefault();
-      e.stopPropagation();
-    };
-    container.addEventListener("click", swallow, { capture: true, once: true });
-    setTimeout(() => container.removeEventListener("click", swallow, { capture: true }), 0);
-  }
-
-  const onPointerDown = (e: PointerEvent) => {
-    if (!pointerOn || e.button > 0) return;
-    const element = (e.target as Element | null)?.closest<HTMLElement>("[data-body-id]");
-    const id = element?.dataset.bodyId;
-    if (!id || !bodies.has(id)) return;
-    const at = local(e);
-    const grab: Grab = { id, pointerType: e.pointerType, startX: e.clientX, startY: e.clientY, last: at };
-    grabs.set(e.pointerId, grab);
-    // Touches only grab after a sideways move or a long press, so vertical swipes still scroll the page.
-    if (e.pointerType === "touch") grab.timer = setTimeout(() => startDrag(e.pointerId, grab, grab.last), config.drag.longPressMs);
-  };
-
-  const onPointerMove = (e: PointerEvent) => {
-    if (!pointerOn) return;
-    const grab = grabs.get(e.pointerId);
-    if (!grab) return;
-    const at = local(e);
-    grab.last = at;
-    if (grab.anchor) {
-      grab.anchor.setNextKinematicTranslation(at);
-      return;
-    }
-    const dx = e.clientX - grab.startX;
-    const dy = e.clientY - grab.startY;
-    const far = Math.hypot(dx, dy) > config.drag.threshold;
-    if (grab.pointerType === "touch" ? far && Math.abs(dx) > Math.abs(dy) : far) startDrag(e.pointerId, grab, at);
-  };
-
-  const onPointerEnd = (e: PointerEvent) => endGrab(e.pointerId);
-  const onTouchMove = (e: TouchEvent) => {
-    if ([...grabs.values()].some((g) => g.anchor)) e.preventDefault();
-  };
   const onFocusIn = (e: FocusEvent) => {
     const id = (e.target as Element | null)?.closest<HTMLElement>("[data-body-id]")?.dataset.bodyId;
     const t = id ? bodies.get(id) : undefined;
     if (t && !t.shown) t.spawnAt = clock;
   };
-
-  container.addEventListener("pointerdown", onPointerDown);
-  container.addEventListener("pointermove", onPointerMove);
-  container.addEventListener("pointerup", onPointerEnd);
-  container.addEventListener("pointercancel", onPointerEnd);
-  container.addEventListener("touchmove", onTouchMove, { passive: false });
   container.addEventListener("focusin", onFocusIn);
-  cleanups.push(() => {
-    container.removeEventListener("pointerdown", onPointerDown);
-    container.removeEventListener("pointermove", onPointerMove);
-    container.removeEventListener("pointerup", onPointerEnd);
-    container.removeEventListener("pointercancel", onPointerEnd);
-    container.removeEventListener("touchmove", onTouchMove);
-    container.removeEventListener("focusin", onFocusIn);
-  });
+  cleanups.push(() => container.removeEventListener("focusin", onFocusIn));
 
   if (config.autoPause) {
     const onVisibility = () => {
@@ -428,22 +281,6 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     cleanups.push(() => observer.disconnect());
   }
 
-  let stopMotion: (() => void) | undefined;
-  let latestTilt: Tilt | undefined;
-  let neutral: Tilt | undefined;
-
-  const removeTarget = (t: Tracked) => {
-    if (t.target?.joint) {
-      world.removeImpulseJoint(t.target.joint, true);
-      t.body.setGravityScale(1, true);
-    }
-    if (t.target?.anchor) world.removeRigidBody(t.target.anchor);
-    if (t.target?.force) t.body.resetForces(true);
-    t.target = undefined;
-    t.collider.setCollisionGroups(PILE);
-    delete t.element.dataset.arrived;
-  };
-
   size = measure();
   buildWalls();
 
@@ -460,7 +297,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
         .setAngularDamping(options.angularDamping ?? config.body.angularDamping)
         .setCcdEnabled(true);
       const body = world.createRigidBody(desc);
-      const tracked = { id, element, body, shape: options.shape ?? "box", width, height, base: { width, height }, fixedSize: options.width !== undefined } as Tracked;
+      const tracked = { id, element, body, shape: options.shape ?? "box", width, height, fixedSize: options.width !== undefined } as Tracked;
       tracked.mass = (options.density ?? config.body.density) * area(tracked);
       tracked.collider = makeCollider(tracked, options);
       tracked.prev = tracked.curr = snapshot(tracked);
@@ -478,124 +315,28 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     unregisterBody(id: string) {
       const t = bodies.get(id);
       if (!t) return;
-      for (const [pointerId, grab] of grabs) if (grab.id === id) endGrab(pointerId);
-      removeTarget(t);
       world.removeRigidBody(t.body);
       bodies.delete(id);
       t.element.style.transform = "";
       t.element.style.opacity = "";
-      t.element.style.width = "";
-      t.element.style.height = "";
       delete t.element.dataset.bodyId;
       delete t.element.dataset.arrived;
     },
 
-    setGravity(vector: Vector) {
-      world.gravity = { x: vector.x, y: vector.y };
-      for (const t of bodies.values()) t.body.wakeUp();
-    },
-
-    // Vectors are a change in velocity, in metres per second, so heavy and light ideas move alike.
-    applyImpulse(id: string, vector: Vector) {
-      const t = bodies.get(id);
-      if (!t?.shown) return;
-      const m = t.body.mass();
-      t.body.applyImpulse({ x: vector.x * m, y: vector.y * m }, true);
-    },
-
-    applyImpulseToAll(vector: Vector, { jitter = 0 } = {}) {
-      for (const t of bodies.values()) {
-        controller.applyImpulse(t.id, { x: vector.x + (Math.random() - 0.5) * jitter, y: vector.y + (Math.random() - 0.5) * jitter });
-      }
-    },
-
-    // Relative to the size the idea was registered at. The idea eases there over a few frames.
-    setBodyScale(id: string, scale: number) {
+    // The height is where the idea's centre settles, in pixels from the top. Null drops it back into the pile.
+    setBodyHover(id: string, y: number | null) {
       const t = bodies.get(id);
       if (!t) return;
-      const want = t.base.width * scale;
-      t.want = want === t.width ? undefined : want;
-    },
-
-    // Typing nudges a handful of ideas in the pile, harder the faster it goes. Bursts are spaced out so they can't
-    // add up to a throw.
-    jolt(power: number) {
-      if (clock - lastJolt < config.jolt.gapMs) return;
-      lastJolt = clock;
-      const strength = config.jolt.strength * Math.min(1, Math.max(0.1, power));
-      const pile = [...bodies.values()].filter((t) => t.shown && !t.target);
-      const count = Math.min(config.jolt.max, Math.ceil(pile.length * config.jolt.share));
-      for (let i = 0; i < count && pile.length; i++) {
-        const [t] = pile.splice(Math.floor(Math.random() * pile.length), 1);
-        controller.applyImpulse(t.id, { x: (Math.random() - 0.5) * 2 * strength, y: -Math.random() * strength });
-        t.body.setAngvel(t.body.angvel() + (Math.random() - 0.5) * strength, true);
-      }
-    },
-
-    wake(id: string) {
-      bodies.get(id)?.body.wakeUp();
-    },
-
-    setBodyGravityScale(id: string, gravityScale: number) {
-      bodies.get(id)?.body.setGravityScale(gravityScale, true);
-    },
-
-    // Targets are in pixels, and spring settings are per kilogram. Springs pull through a joint and forces push
-    // each step, so ideas keep colliding on the way.
-    setBodyTarget(id: string, target: Vector | null, options: TargetOptions = {}) {
-      const t = bodies.get(id);
-      if (!t) return;
-      removeTarget(t);
-      if (!target) return;
-      const at = { x: toM(target.x), y: toM(target.y) };
-      if ((options.mode ?? "spring") === "spring") {
-        const anchor = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(at.x, at.y));
-        const m = t.body.mass();
-        const spring = RAPIER.JointData.spring(0, (options.stiffness ?? 40) * m, (options.damping ?? 10) * m, { x: 0, y: 0 }, { x: 0, y: 0 });
-        const joint = world.createImpulseJoint(spring, anchor, t.body, true);
-        // Without this, gravity would leave the idea hanging below its target.
-        t.body.setGravityScale(0, true);
-        t.collider.setCollisionGroups(MATCH);
-        t.target = { anchor, joint, strength: 0, until: Infinity };
-      } else {
-        t.target = { force: at, strength: options.strength ?? 40, until: clock + (options.durationMs ?? 2000) };
-      }
-      t.body.wakeUp();
-    },
-
-    enablePointerInteraction(enabled: boolean) {
-      pointerOn = enabled;
-      if (!enabled) {
-        for (const pointerId of [...grabs.keys()]) endGrab(pointerId);
-      }
-    },
-
-    // Call only after requestMotionPermission() has said yes.
-    enableDeviceMotion(enabled: boolean) {
-      stopMotion?.();
-      stopMotion = undefined;
-      if (!enabled) {
-        controller.setGravity(baseGravity);
+      if (y === null) {
+        if (t.hover === undefined) return;
+        t.hover = undefined;
+        t.body.resetForces(false);
+        t.body.setGravityScale(1, true);
+        delete t.element.dataset.arrived;
         return;
       }
-      const g = Math.hypot(baseGravity.x, baseGravity.y);
-      stopMotion = listenToMotion({
-        onTilt(tilt, angle) {
-          latestTilt = tilt;
-          neutral ??= tilt;
-          controller.setGravity(tiltToGravity(tilt, neutral, angle, g, { strength: config.motion?.tiltStrength, max: config.motion?.maxGravity }));
-        },
-        onShake(size) {
-          for (const t of bodies.values()) {
-            const angle = Math.random() * Math.PI * 2;
-            controller.applyImpulse(t.id, { x: Math.cos(angle) * size, y: Math.sin(angle) * size - size / 2 });
-          }
-        },
-      });
-    },
-
-    calibrateDeviceMotion() {
-      if (latestTilt) neutral = latestTilt;
+      t.hover = y;
+      t.body.setGravityScale(0, true);
     },
 
     pause() {
@@ -609,6 +350,10 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     },
 
     resize,
+
+    get size() {
+      return { ...size };
+    },
 
     // Runs the simulation synchronously, for tests and for settling without a frame loop.
     advance(seconds: number) {
@@ -625,16 +370,10 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
       return { x: toPx(p.x), y: toPx(p.y), angle: t.body.rotation(), vx: toPx(v.x), vy: toPx(v.y), sleeping: t.body.isSleeping(), shown: t.shown };
     },
 
-    get gravity() {
-      return { ...world.gravity };
-    },
-
     destroy() {
       if (destroyed) return;
       destroyed = true;
       stopLoop();
-      stopMotion?.();
-      for (const pointerId of [...grabs.keys()]) endGrab(pointerId);
       for (const id of [...bodies.keys()]) controller.unregisterBody(id);
       for (const cleanup of cleanups) cleanup();
       world.free();
