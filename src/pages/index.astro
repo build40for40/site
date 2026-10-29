@@ -1,6 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import DayBoard from "../components/DayBoard.vue";
+import EmailBox from "../components/EmailBox.vue";
 import { history } from "../data/days";
 import { links } from "../data/site";
 
@@ -12,14 +13,28 @@ const footerLink = "text-night-muted underline-offset-3 hover:text-night-text";
     <h1 slot="title" class="m-0 text-[clamp(44px,6.4vw,84px)] leading-[0.92] font-bold tracking-[-0.045em]">
       <span class="whitespace-nowrap">40 apps.</span> <span class="whitespace-nowrap">40 days.</span>
     </h1>
-    <p class="m-0 max-w-[52ch] text-[19px] leading-[1.4] text-night-sub text-pretty">
-      Built in public, live with special guests. Every day stays locked until someone pays us to solve a problem.
-    </p>
-    <footer slot="footer" class="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-night-line pt-5 font-mono text-xs">
-      <a href={links.twitch} target="_blank" rel="noopener" class={footerLink}>Twitch</a>
-      <a href={links.community} target="_blank" rel="noopener" class={footerLink}>Discord</a>
-      <a href={`mailto:${links.email}`} class={footerLink}>{links.email}</a>
-      <a href="/privacy" class={footerLink}>Privacy notice</a>
-    </footer>
+    <div class="flex min-w-0 flex-col gap-5">
+      <p class="m-0 max-w-[52ch] text-[19px] leading-[1.4] text-night-sub text-pretty">
+        Built in public, live with special guests. Every day stays locked until someone pays us to solve a problem.
+      </p>
+      <div class="max-w-md">
+        <EmailBox intent="build" label="Want us to build your idea?" button="Let’s go" hint="Tell us the problem next. Takes a minute." />
+      </div>
+    </div>
+    <div slot="footer" class="mt-6 flex flex-col gap-6">
+      <section aria-label="Updates" class="grid gap-4 rounded-lg border border-night-line bg-night-panel px-4.5 py-5 md:grid-cols-[1fr_minmax(320px,28rem)] md:items-end md:gap-12 md:px-6">
+        <div class="flex flex-col gap-1.5">
+          <h2 class="m-0 text-2xl font-semibold tracking-tight">Not ready to sponsor?</h2>
+          <p class="m-0 max-w-[48ch] text-[15px] leading-snug text-night-sub text-pretty">Get what shipped each day, straight to your inbox. No spam, just apps.</p>
+        </div>
+        <EmailBox intent="updates" label="Your email" button="Sign me up" />
+      </section>
+      <footer class="flex flex-wrap gap-x-5 gap-y-2 border-t border-night-line pt-5 font-mono text-xs">
+        <a href={links.twitch} target="_blank" rel="noopener" class={footerLink}>Twitch</a>
+        <a href={links.community} target="_blank" rel="noopener" class={footerLink}>Discord</a>
+        <a href={`mailto:${links.email}`} class={footerLink}>{links.email}</a>
+        <a href="/privacy" class={footerLink}>Privacy notice</a>
+      </footer>
+    </div>
   </DayBoard>
 </Base>

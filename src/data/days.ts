@@ -14,10 +14,18 @@ export interface Idea {
   seed?: string;
 }
 
+export interface Short {
+  title: string;
+  platform: string;
+  url: string;
+}
+
 export interface ShippedIdea extends Idea {
   buildTime: string;
   appUrl: string;
   recordingUrl: string;
+  screenshot: string;
+  shorts: Short[];
 }
 
 export type DayStatus = "shipped" | "live" | "queued" | "guest" | "open";
@@ -29,6 +37,7 @@ export interface Day {
   status: DayStatus;
   idea?: Idea | ShippedIdea;
   rank?: number;
+  sponsors?: Sponsor[];
 }
 
 export interface PoolIdea {
@@ -66,7 +75,7 @@ export function clock(now: number): { today: number; phase: Phase; isToday: bool
   return next ? { today: next, phase: "before", isToday: false } : { today: TOTAL_DAYS, phase: "after", isToday: false };
 }
 
-export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, now: number) {
+export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, now: number, guestSponsors: Record<number, Sponsor[]> = {}) {
   const { today, phase, isToday } = clock(now);
   const ranked = ideas.toSorted((a, b) => raised(b) - raised(a));
   const days: Day[] = [];
@@ -77,7 +86,7 @@ export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, 
     const base = { key: `day-${day}`, day, date: dayDate(day) };
     const started = day < today || (day === today && phase !== "before");
     if (GUEST_DAYS.has(day)) {
-      days.push({ ...base, status: "guest" });
+      days.push({ ...base, status: "guest", sponsors: guestSponsors[day] ?? [] });
     } else if (started) {
       const idea = history[day] ?? ranked[next++];
       const status = day === today && phase === "live" ? "live" : "shipped";
@@ -93,7 +102,11 @@ export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, 
   return { today, phase, isToday, days, pool };
 }
 
-const firstNames = ["Maia", "Rohan", "Priya", "Ken", "Lena", "Sam", "Tom", "Jo", "Ayesha", "Dan", "Ellie", "Femi", "Grace", "Hugo", "Isla", "Kemi", "Leo", "Nina", "Omar", "Ravi", "Sofia", "Theo", "Wren", "Zara"];
+const names = [
+  "Maia Okafor", "Rohan Mehta", "Priya Shah", "Ken Watanabe", "Lena Fischer", "Sam Carter", "Tom Hughes", "Jo Bennett",
+  "Ayesha Khan", "Dan Murphy", "Ellie Parker", "Femi Adeyemi", "Grace Lin", "Hugo Laurent", "Isla Campbell", "Kemi Bello",
+  "Leo Russo", "Nina Kowalski", "Omar Haddad", "Ravi Patel", "Sofia Rossi", "Theo Clarke", "Wren Doyle", "Zara Ahmed",
+];
 
 function mockSponsors(total: number, count: number, seed: number): Sponsor[] {
   const n = Math.min(count, total);
@@ -102,14 +115,14 @@ function mockSponsors(total: number, count: number, seed: number): Sponsor[] {
   const sum = weights.reduce((a, b) => a + b, 0);
   const amounts = weights.map((w) => Math.max(1, Math.round((total * w) / sum)));
   amounts[0] += total - amounts.reduce((a, b) => a + b, 0);
-  return amounts.map((amount, i) => ({ name: i % 4 === 3 ? "Anonymous" : firstNames[(seed * 5 + i * 3) % firstNames.length], amount }));
+  return amounts.map((amount, i) => ({ name: i % 4 === 3 ? "Anonymous" : names[(seed * 5 + i * 3) % names.length], amount }));
 }
 
 const mockIdea = ([title, problem, total, count]: [string, string, number, number], id: number): Idea => ({
   id: `shipped-${id}`,
   title,
   problem,
-  owner: firstNames[(id * 7 + 2) % firstNames.length],
+  owner: names[(id * 7 + 2) % names.length],
   sponsors: mockSponsors(total, count, id),
 });
 
@@ -118,6 +131,12 @@ const mockShipped = (day: number, title: string, problem: string, total: number,
   buildTime,
   appUrl: "#",
   recordingUrl: "#",
+  screenshot: "/screenshots/mock-app.svg",
+  shorts: [
+    { title: "The idea in 30 seconds", platform: "TikTok", url: "#" },
+    { title: "The bit where it broke", platform: "Instagram", url: "#" },
+    { title: "Shipped with 2 minutes left", platform: "TikTok", url: "#" },
+  ],
 });
 
 export const history: Record<number, ShippedIdea> = {
@@ -163,6 +182,7 @@ export interface Entry {
   date?: string;
   idea?: Idea | ShippedIdea;
   rank?: number;
+  sponsors?: Sponsor[];
 }
 
 export function statusLabel(entry: Entry, today: number) {
