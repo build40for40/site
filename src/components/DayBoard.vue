@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import DayBox from "./DayBox.vue";
 import DayTile from "./DayTile.vue";
+import EmailBox from "./EmailBox.vue";
 import {
   DEFAULT_AMOUNT,
   buildBoard,
@@ -12,6 +13,7 @@ import {
   type Entry,
   type Idea,
   type ShippedIdea,
+  type Sponsor,
 } from "../data/days";
 import { TOTAL_DAYS, money } from "../data/site";
 
@@ -19,10 +21,15 @@ const props = defineProps<{ ideas: Idea[]; history: Record<number, ShippedIdea>;
 
 const now = ref(props.builtAt);
 const ideas = ref(props.ideas.map((idea) => ({ ...idea, sponsors: [...idea.sponsors] })));
+const history = ref<Record<number, ShippedIdea>>(
+  Object.fromEntries(Object.entries(props.history).map(([day, idea]) => [day, { ...idea, sponsors: [...idea.sponsors] }])),
+);
+const guestSponsors = ref<Record<number, Sponsor[]>>({});
 const picked = ref<string | null>(null);
+const backed = ref<string | null>(null);
 const amount = ref(DEFAULT_AMOUNT);
 
-const board = computed(() => buildBoard(ideas.value, props.history, now.value));
+const board = computed(() => buildBoard(ideas.value, history.value, now.value, guestSponsors.value));
 const pool = computed<Entry[]>(() => board.value.pool.map(({ key, idea }) => ({ key, idea, status: "pool" })));
 const selected = computed<Entry>(
   () => [...board.value.days, ...pool.value].find((e) => e.key === picked.value) ?? board.value.days[board.value.today - 1],
@@ -63,7 +70,24 @@ onMounted(() => {
   const offset = Number.isNaN(override) ? 0 : override - Date.now();
   now.value = Date.now() + offset;
   timer = setInterval(() => (now.value = Date.now() + offset), 1000);
+  openShared();
 });
+
+// Shared links open the board on that idea: ?idea=12 for ideas still moving in the queue, ?day=5 otherwise.
+function openShared() {
+  const params = new URLSearchParams(location.search);
+  const idea = Number(params.get("idea"));
+  const day = Number(params.get("day"));
+  const key = idea
+    ? [...board.value.days, ...pool.value].find((e) => e.idea?.id === idea)?.key
+    : day >= 1 && day <= TOTAL_DAYS ? `day-${day}` : undefined;
+  if (!key) return;
+  picked.value = key;
+  // Scrolling before load is undone when the browser restores the page's scroll position.
+  const scroll = () => document.getElementById("day-box")?.scrollIntoView({ block: "start", behavior: "instant" });
+  if (document.readyState === "complete") nextTick(scroll);
+  else addEventListener("load", () => setTimeout(scroll), { once: true });
+}
 onBeforeUnmount(() => clearInterval(timer));
 
 function swap(change: () => void, focusId: string) {
@@ -82,6 +106,7 @@ function swap(change: () => void, focusId: string) {
 
 function select(key: string, focusId = "day-box") {
   swap(() => {
+    backed.value = null;
     amount.value = DEFAULT_AMOUNT;
     picked.value = key;
   }, focusId);
@@ -89,18 +114,28 @@ function select(key: string, focusId = "day-box") {
 
 function pick(key: string, preset: number) {
   swap(() => {
+    backed.value = null;
     amount.value = preset;
     picked.value = key;
   }, "sponsor-button");
 }
 
 function sponsorLocally(paid: number, anonymous: boolean) {
-  const id = selected.value.idea?.id;
-  const idea = ideas.value.find((i) => i.id === id);
+  const sponsor = { name: anonymous ? "Anonymous" : "You", amount: paid };
+  const { day, status, idea: entryIdea } = selected.value;
+  if (status === "guest" && day) {
+    return swap(() => {
+      (guestSponsors.value[day] ??= []).push(sponsor);
+      backed.value = selected.value.key;
+    }, "day-box");
+  }
+  const id = entryIdea?.id;
+  const idea = ideas.value.find((i) => i.id === id) ?? Object.values(history.value).find((i) => i.id === id);
   if (!idea) return;
   swap(() => {
-    idea.sponsors.push({ name: anonymous ? "Anonymous" : "You", amount: paid });
+    idea.sponsors.push(sponsor);
     picked.value = [...board.value.days, ...pool.value].find((e) => e.idea?.id === id)?.key ?? null;
+    backed.value = selected.value.key;
   }, "day-box");
 }
 
@@ -150,7 +185,9 @@ const tileSub = (e: Entry) => {
       :is-today="board.isToday"
       :now="now"
       :amount="amount"
+      :backed="backed === selected.key"
       @sponsor="sponsorLocally"
+      @again="backed = null"
       @pick="pick"
     />
 
@@ -171,15 +208,12 @@ const tileSub = (e: Entry) => {
         @select="select(d.key)"
         @sponsor="select(d.key, 'sponsor-button')"
       />
-      <li class="col-span-full">
-        <a
-          href="/join"
-          class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-lg border-[1.5px] border-dashed border-night-edge px-4 py-3.5 text-night-text no-underline hover:border-night-text hover:bg-night-panel focus-visible:border-night-text focus-visible:outline-none"
-        >
-          <span aria-hidden="true" class="font-mono text-xl leading-none text-night-muted">+</span>
+      <li class="col-span-full grid gap-3 rounded-lg border-[1.5px] border-dashed border-night-edge px-4 py-3.5 md:grid-cols-[1fr_minmax(320px,28rem)] md:items-end md:gap-12">
+        <div class="flex flex-col gap-1">
           <span class="text-base font-semibold">{{ submit.title }}</span>
           <span class="font-mono text-[11px] leading-snug text-night-muted">{{ submit.sub }}</span>
-        </a>
+        </div>
+        <EmailBox intent="build" label="Want us to build your idea?" button="Let’s go" />
       </li>
     </ul>
 
