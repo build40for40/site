@@ -54,11 +54,14 @@ const tilt = ref<"off" | "on" | "denied" | "unsupported">("unsupported");
 
 const canMove = computed(() => poolConfig.physics.enabled && !reduced.value);
 const physical = computed(() => canMove.value && motionOn.value && !failed.value);
-const tileSize = computed(() => (wide.value ? { width: 64, height: 64 } : { width: 56, height: 56 }));
+const tileSize = computed(() => (wide.value ? { width: 32, height: 32 } : { width: 28, height: 28 }));
+// Room for the pile, plus the rows that matches float up into.
 const height = computed(() => {
-  const { width: w, height: h } = tileSize.value;
+  const { width: w } = tileSize.value;
+  const { grow, label, gap, rows } = poolConfig.search.effects.spring;
   const perRow = Math.max(1, Math.floor(width.value / w));
-  return Math.max(360, Math.ceil((props.tiles.length * 1.3) / perRow) * h + h * 2);
+  const pile = Math.ceil((props.tiles.length * 1.6) / perRow) * w;
+  return Math.max(240, pile + rows * (w * grow + label + gap) + gap + w);
 });
 
 const artwork = computed(() => new Map(props.tiles.map((t) => [t.id, createVisualIdentity(t).svg])));
@@ -162,6 +165,15 @@ const query = ref("");
 const result = ref<SearchResult | null>(null);
 const searching = computed(() => !!result.value && result.value.query.trim() !== "");
 const matched = computed(() => new Set(result.value?.matches.map((m) => m.id)));
+// Only the classifier's scores are a likelihood worth showing. The lexical fallback's are just relative.
+const percents = computed(() => new Map(result.value?.ranking === "classifier" ? result.value.matches.map((m) => [m.id, Math.round(m.score * 100)]) : []));
+
+let lastKey = 0;
+function typed() {
+  const now = performance.now();
+  controller?.jolt(150 / Math.max(1, now - lastKey));
+  lastKey = now;
+}
 const announcement = computed(() => {
   if (!searching.value) return "";
   const count = result.value!.matches.length;
@@ -243,6 +255,7 @@ const control =
       <input
         id="pool-search"
         v-model="query"
+        @input="typed"
         type="search"
         maxlength="80"
         autocomplete="off"
@@ -267,7 +280,7 @@ const control =
         v-for="t in tiles"
         :key="t.key"
         :ref="(element) => setTile(t.id, element)"
-        class="size-14 rounded-full sm:size-16"
+        class="group size-7 rounded-full sm:size-8"
         :class="[
           physical ? 'absolute top-0 left-0 touch-pan-y will-change-transform focus-within:z-10 data-dragging:z-20' : 'relative',
           physical && !active ? 'opacity-0 focus-within:opacity-100' : searching && !matched.has(t.id) && 'opacity-40',
@@ -278,11 +291,17 @@ const control =
           :aria-label="t.label"
           :aria-pressed="t.selected"
           :title="t.title"
-          class="absolute inset-0 cursor-pointer overflow-hidden rounded-full border-0 bg-night-panel p-0 ring-1 ring-night-line ring-inset hover:brightness-115 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text [&>svg]:size-full"
+          class="absolute inset-0 cursor-pointer overflow-hidden rounded-full border-0 bg-night-panel p-0 after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:bg-linear-135 after:from-night-text/60 after:via-night-text/5 after:via-45% after:to-transparent after:ring-1 after:ring-night-text/30 after:ring-inset hover:brightness-115 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text [&>svg]:size-full"
           :class="t.selected && 'outline-2 outline-offset-2 outline-night-text'"
           @click="emit('select', t.key)"
           v-html="artwork.get(t.id)"
         ></button>
+        <span
+          v-if="physical && percents.has(t.id)"
+          aria-hidden="true"
+          class="pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded-full bg-night-text px-1.5 font-mono text-[10px] leading-4 font-medium text-night opacity-0 transition-opacity duration-300 group-data-arrived:opacity-100"
+          >{{ percents.get(t.id) }}%</span
+        >
       </li>
     </ul>
   </section>

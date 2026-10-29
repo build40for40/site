@@ -12,6 +12,8 @@ const physics = () => ({
     enableDeviceMotion() {},
     setBodyTarget() {},
     setBodyGravityScale() {},
+    setBodyScale() {},
+    jolt() {},
     applyImpulse() {},
     wake() {},
     destroy() {},

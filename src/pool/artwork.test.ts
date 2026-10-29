@@ -17,6 +17,12 @@ describe("generateArtwork", () => {
     expect(digest).toMatchInlineSnapshot(`"0f3a81a756bb751d"`);
   });
 
+  test("version 2 is a bright background with a mark on it", () => {
+    const svg = generateArtwork("pinned-seed", {}, 2);
+    expect(svg).toMatch(/^<svg[^>]*><rect width="120" height="120" class="fill-pop-[a-z]+"\/>/);
+    expect(svg).not.toBe(generateArtwork("pinned-seed", {}, 1));
+  });
+
   test("asking for an unknown version fails loudly", () => {
     expect(ARTWORK_VERSIONS).toContain(1);
     expect(() => generateArtwork("x", {}, 99)).toThrow("No artwork version 99");
@@ -27,7 +33,7 @@ describe("generateArtwork", () => {
     const tags = new Set([...svg.matchAll(/<(\w+)/g)].map((m) => m[1]));
     expect([...tags].every((t) => ["svg", "circle", "rect", "polygon", "g"].includes(t))).toBe(true);
     const classes = [...svg.matchAll(/class="([^"]+)"/g)].flatMap((m) => m[1].split(" "));
-    expect(classes.every((c) => /^(fill|stroke)-(none|night-[a-z]+|shipped|live|queued|guest)(\/\d+)?$/.test(c))).toBe(true);
+    expect(classes.every((c) => /^(fill|stroke)-(none|night(-[a-z]+)?|shipped|live|queued|guest|pop-[a-z]+)(\/\d+)?$/.test(c))).toBe(true);
   });
 
   test("options change the picture", () => {
@@ -46,8 +52,9 @@ describe("visual identity", () => {
     const first = createVisualIdentity({ id: "cached" });
     expect(createVisualIdentity({ id: "cached" })).toBe(first);
     expect(getArtwork("cached")).toBe(first);
-    expect(regenerateArtwork("cached", 1)?.svg).toBe(first.svg);
-    expect(() => regenerateArtwork("cached", 2)).toThrow();
+    expect(first.version).toBe(2);
+    expect(regenerateArtwork("cached", 1)?.svg).toBe(generateArtwork("cached", {}, 1));
+    expect(() => regenerateArtwork("cached", 99)).toThrow();
   });
 
   test("ideas from the same submitter share a family but still differ", () => {

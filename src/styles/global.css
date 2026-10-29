@@ -24,6 +24,16 @@
   --color-queued: oklch(0.6 0.01 80);
   --color-guest: oklch(0.62 0.14 255);
 
+  --color-pop-red: oklch(0.66 0.22 25);
+  --color-pop-orange: oklch(0.75 0.18 55);
+  --color-pop-yellow: oklch(0.88 0.17 95);
+  --color-pop-lime: oklch(0.86 0.2 128);
+  --color-pop-green: oklch(0.72 0.18 155);
+  --color-pop-cyan: oklch(0.8 0.13 210);
+  --color-pop-blue: oklch(0.62 0.2 262);
+  --color-pop-violet: oklch(0.6 0.22 298);
+  --color-pop-pink: oklch(0.74 0.19 350);
+
   --animate-pop: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 
   @keyframes pop {

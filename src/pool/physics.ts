@@ -43,6 +43,9 @@ interface Tracked {
   shape: "box" | "circle";
   width: number;
   height: number;
+  base: { width: number; height: number };
+  want?: number;
+  mass: number;
   fixedSize: boolean;
   prev: Pose;
   curr: Pose;
@@ -50,6 +53,7 @@ interface Tracked {
   pickSpawn: boolean;
   shown: boolean;
   drawn?: string;
+  sized?: number;
   target?: { anchor?: RAPIER.RigidBody; joint?: RAPIER.ImpulseJoint; force?: Vector; strength: number; until: number };
 }
 
@@ -66,6 +70,11 @@ interface Grab {
 
 export type PhysicsController = ReturnType<typeof initializePhysics>;
 
+// The top 16 bits say what a collider is and the bottom 16 what it touches. Ideas pulled out of the pile still knock
+// the pile about, but pass through each other.
+const PILE = 0x0001_ffff;
+const MATCH = 0x0002_fffd;
+
 export function initializePhysics(container: HTMLElement, overrides: Partial<Config> = {}) {
   const config: Config = { ...poolConfig.physics, autoStart: true, autoPause: true, motion: poolConfig.motion, ...overrides };
   const scale = config.pxPerMeter;
@@ -81,6 +90,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
   let size = { width: 0, height: 0 };
   let walls: RAPIER.RigidBody | undefined;
   let clock = 0;
+  let lastJolt = -Infinity;
 
   const maxV = config.maxSpeed;
 
@@ -113,13 +123,24 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     if (x !== p.x || y !== p.y) t.body.setTranslation({ x, y }, true);
   };
 
-  function makeCollider(t: Pick<Tracked, "shape" | "width" | "height" | "body">, options: BodyOptions) {
+  const area = (t: Pick<Tracked, "shape" | "width" | "height">) =>
+    t.shape === "circle" ? Math.PI * toM(Math.min(t.width, t.height) / 2) ** 2 : toM(t.width) * toM(t.height);
+
+  // Mass is set rather than worked out from density, so an idea that grows keeps its weight and its springs.
+  function makeCollider(t: Pick<Tracked, "shape" | "width" | "height" | "body" | "mass" | "target">, options: BodyOptions) {
     const shape = t.shape === "circle" ? RAPIER.ColliderDesc.ball(toM(Math.min(t.width, t.height) / 2)) : RAPIER.ColliderDesc.cuboid(toM(t.width / 2), toM(t.height / 2));
     const desc = shape
-      .setDensity(options.density ?? config.body.density)
+      .setMass(t.mass)
       .setRestitution(options.restitution ?? config.body.restitution)
-      .setFriction(options.friction ?? config.body.friction);
+      .setFriction(options.friction ?? config.body.friction)
+      .setCollisionGroups(t.target?.joint ? MATCH : PILE);
     return world.createCollider(desc, t.body);
+  }
+
+  function reshape(t: Tracked) {
+    if (t.shape === "circle") t.collider.setRadius(toM(Math.min(t.width, t.height) / 2));
+    else t.collider.setHalfExtents({ x: toM(t.width / 2), y: toM(t.height / 2) });
+    t.collider.setMass(t.mass);
   }
 
   function resize() {
@@ -128,11 +149,11 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     size = next;
     buildWalls();
     for (const t of bodies.values()) {
-      if (!t.fixedSize && (t.element.offsetWidth !== t.width || t.element.offsetHeight !== t.height)) {
-        world.removeCollider(t.collider, false);
-        t.width = t.element.offsetWidth;
-        t.height = t.element.offsetHeight;
-        t.collider = makeCollider(t, {});
+      const grown = t.width !== t.base.width || t.want !== undefined;
+      if (!t.fixedSize && !grown && (t.element.offsetWidth !== t.width || t.element.offsetHeight !== t.height)) {
+        t.width = t.base.width = t.element.offsetWidth;
+        t.height = t.base.height = t.element.offsetHeight;
+        reshape(t);
       }
       clampInside(t);
       t.body.wakeUp();
@@ -161,6 +182,26 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
       const dist = Math.hypot(dx, dy) || 1;
       const mass = t.body.mass();
       t.body.addForce({ x: (dx / dist) * target.strength * mass, y: (dy / dist) * target.strength * mass }, true);
+    }
+  }
+
+  // Grown ideas ease towards their new size, and ideas held by a spring turn upright on the way.
+  function grow() {
+    for (const t of bodies.values()) {
+      if (t.target?.joint) {
+        t.body.setAngvel(-t.body.rotation() * config.upright, true);
+        const p = t.body.translation();
+        const a = t.target.anchor!.translation();
+        if (toPx(Math.hypot(p.x - a.x, p.y - a.y)) < t.base.width / 2) t.element.dataset.arrived = "";
+      }
+      if (t.want === undefined) continue;
+      let next = t.width + (t.want - t.width) * config.growRate;
+      if (Math.abs(t.want - next) < 0.5) next = t.want;
+      t.height *= next / t.width;
+      t.width = next;
+      reshape(t);
+      t.body.wakeUp();
+      if (next === t.want) t.want = undefined;
     }
   }
 
@@ -205,6 +246,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     clock += config.timestep * 1000;
     spawnDue();
     applyTargets();
+    grow();
     world.step();
     clampVelocities();
     for (const t of bodies.values()) t.curr = snapshot(t);
@@ -213,6 +255,12 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
   function render(alpha: number) {
     for (const t of bodies.values()) {
       if (!t.shown) continue;
+      if (t.sized !== t.width) {
+        t.sized = t.width;
+        const grown = t.width !== t.base.width;
+        t.element.style.width = grown ? `${t.width.toFixed(1)}px` : "";
+        t.element.style.height = grown ? `${t.height.toFixed(1)}px` : "";
+      }
       const x = toPx(t.prev.x + (t.curr.x - t.prev.x) * alpha) - t.width / 2;
       const y = toPx(t.prev.y + (t.curr.y - t.prev.y) * alpha) - t.height / 2;
       const a = t.prev.a + (t.curr.a - t.prev.a) * alpha;
@@ -392,6 +440,8 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     if (t.target?.anchor) world.removeRigidBody(t.target.anchor);
     if (t.target?.force) t.body.resetForces(true);
     t.target = undefined;
+    t.collider.setCollisionGroups(PILE);
+    delete t.element.dataset.arrived;
   };
 
   size = measure();
@@ -410,7 +460,8 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
         .setAngularDamping(options.angularDamping ?? config.body.angularDamping)
         .setCcdEnabled(true);
       const body = world.createRigidBody(desc);
-      const tracked = { id, element, body, shape: options.shape ?? "box", width, height, fixedSize: options.width !== undefined } as Tracked;
+      const tracked = { id, element, body, shape: options.shape ?? "box", width, height, base: { width, height }, fixedSize: options.width !== undefined } as Tracked;
+      tracked.mass = (options.density ?? config.body.density) * area(tracked);
       tracked.collider = makeCollider(tracked, options);
       tracked.prev = tracked.curr = snapshot(tracked);
       tracked.spawnAt = clock + (options.delayMs ?? 0);
@@ -433,7 +484,10 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
       bodies.delete(id);
       t.element.style.transform = "";
       t.element.style.opacity = "";
+      t.element.style.width = "";
+      t.element.style.height = "";
       delete t.element.dataset.bodyId;
+      delete t.element.dataset.arrived;
     },
 
     setGravity(vector: Vector) {
@@ -452,6 +506,29 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     applyImpulseToAll(vector: Vector, { jitter = 0 } = {}) {
       for (const t of bodies.values()) {
         controller.applyImpulse(t.id, { x: vector.x + (Math.random() - 0.5) * jitter, y: vector.y + (Math.random() - 0.5) * jitter });
+      }
+    },
+
+    // Relative to the size the idea was registered at. The idea eases there over a few frames.
+    setBodyScale(id: string, scale: number) {
+      const t = bodies.get(id);
+      if (!t) return;
+      const want = t.base.width * scale;
+      t.want = want === t.width ? undefined : want;
+    },
+
+    // Typing nudges a handful of ideas in the pile, harder the faster it goes. Bursts are spaced out so they can't
+    // add up to a throw.
+    jolt(power: number) {
+      if (clock - lastJolt < config.jolt.gapMs) return;
+      lastJolt = clock;
+      const strength = config.jolt.strength * Math.min(1, Math.max(0.1, power));
+      const pile = [...bodies.values()].filter((t) => t.shown && !t.target);
+      const count = Math.min(config.jolt.max, Math.ceil(pile.length * config.jolt.share));
+      for (let i = 0; i < count && pile.length; i++) {
+        const [t] = pile.splice(Math.floor(Math.random() * pile.length), 1);
+        controller.applyImpulse(t.id, { x: (Math.random() - 0.5) * 2 * strength, y: -Math.random() * strength });
+        t.body.setAngvel(t.body.angvel() + (Math.random() - 0.5) * strength, true);
       }
     },
 
@@ -478,6 +555,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
         const joint = world.createImpulseJoint(spring, anchor, t.body, true);
         // Without this, gravity would leave the idea hanging below its target.
         t.body.setGravityScale(0, true);
+        t.collider.setCollisionGroups(MATCH);
         t.target = { anchor, joint, strength: 0, until: Infinity };
       } else {
         t.target = { force: at, strength: options.strength ?? 40, until: clock + (options.durationMs ?? 2000) };

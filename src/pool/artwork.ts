@@ -34,6 +34,23 @@ const accents = [
   { fill: "fill-guest/20", stroke: "stroke-guest/35" },
 ];
 
+// Version 2 draws a bold little logo: a bright background with a mark on it.
+const pops = [
+  { fill: "fill-pop-red", stroke: "stroke-pop-red" },
+  { fill: "fill-pop-orange", stroke: "stroke-pop-orange" },
+  { fill: "fill-pop-yellow", stroke: "stroke-pop-yellow" },
+  { fill: "fill-pop-lime", stroke: "stroke-pop-lime" },
+  { fill: "fill-pop-green", stroke: "stroke-pop-green" },
+  { fill: "fill-pop-cyan", stroke: "stroke-pop-cyan" },
+  { fill: "fill-pop-blue", stroke: "stroke-pop-blue" },
+  { fill: "fill-pop-violet", stroke: "stroke-pop-violet" },
+  { fill: "fill-pop-pink", stroke: "stroke-pop-pink" },
+];
+const inks = [
+  { fill: "fill-night", stroke: "stroke-night" },
+  { fill: "fill-night-text", stroke: "stroke-night-text" },
+];
+
 // cyrb128 spreads any string over 128 bits, and sfc32 turns that into a stream of floats.
 function cyrb128(text: string) {
   let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
@@ -135,8 +152,41 @@ function generateV1(seed: string, options: ArtworkOptions) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SIZE} ${SIZE}" preserveAspectRatio="xMaxYMax slice" aria-hidden="true" focusable="false">${parts.join("")}</svg>`;
 }
 
+function generateV2(seed: string, options: ArtworkOptions) {
+  const [family, own] = seed.includes(":") ? seed.split(":", 2) : [seed, seed];
+  const fr = seededRandom(`v2:family:${family}`);
+  const r = seededRandom(`v2:idea:${own}`);
+
+  // A submitter's ideas share a background colour, and each gets its own mark.
+  const background = Math.floor(fr() * pops.length);
+  const others = pops.filter((_, i) => i !== background);
+  const mirror = options.symmetry === "mirror" || (options.symmetry === "auto" && r() < 0.5);
+  const scale = 0.7 + options.complexity * 0.6;
+
+  const parts = [`<rect width="${SIZE}" height="${SIZE}" class="${pops[background].fill}"/>`];
+  if (options.background) {
+    const blob = pick(r, others);
+    const edge = r() < 0.5 ? { x: between(r, 0, SIZE), y: pick(r, [0, SIZE]) } : { x: pick(r, [0, SIZE]), y: between(r, 0, SIZE) };
+    parts.push(`<circle cx="${n(edge.x)}" cy="${n(edge.y)}" r="${n(between(r, 30, 60))}" class="${blob.fill}"/>`);
+  }
+
+  const [min, max] = options.count;
+  const marks = Math.max(1, Math.round(between(r, min, max) / 3));
+  for (let i = 0; i < marks; i++) {
+    const kind = pick(r, options.shapes);
+    const colour = r() < 0.6 ? pick(r, inks) : pick(r, others);
+    const size = between(r, 26, 52) * scale / (1 + i * 0.4);
+    const x = mirror ? between(r, 34, 50) : between(r, 38, 82);
+    const y = between(r, 38, 82);
+    const angle = options.rotation ? between(r, -options.rotation, options.rotation) : 0;
+    parts.push(shape(r, kind, x, y, size, angle, colour.fill, colour.stroke, options.density));
+    if (mirror) parts.push(shape(r, kind, SIZE - x, y, size, -angle, colour.fill, colour.stroke, options.density));
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SIZE} ${SIZE}" aria-hidden="true" focusable="false">${parts.join("")}</svg>`;
+}
+
 // Never change a published version. Add a new one and bump poolConfig.artwork.version instead.
-const generators: Record<number, (seed: string, options: ArtworkOptions) => string> = { 1: generateV1 };
+const generators: Record<number, (seed: string, options: ArtworkOptions) => string> = { 1: generateV1, 2: generateV2 };
 
 export const ARTWORK_VERSIONS = Object.keys(generators).map(Number);
 

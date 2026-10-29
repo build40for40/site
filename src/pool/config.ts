@@ -17,6 +17,11 @@ export const poolConfig = {
     rainSpeed: 6,
     // Spring stiffness and damping are per kilogram, so big and small ideas feel the same.
     drag: { stiffness: 150, damping: 20, threshold: 6, longPressMs: 260 },
+    // Share of the way to a new size covered each step, and how fast a held idea turns upright.
+    growRate: 0.12,
+    upright: 8,
+    // Velocities in metres per second.
+    jolt: { share: 0.3, max: 12, strength: 4, gapMs: 70 },
   },
   motion: {
     tiltStrength: 1.6,
@@ -40,14 +45,16 @@ export const poolConfig = {
     minRelevance: 0.34,
     cacheSeconds: 600,
     effects: {
-      spring: { stiffness: 40, damping: 10, gap: 8 },
+      // Matches grow to `grow` times their size and leave the pile `wave` at a time, best first. `label` is the room
+      // above each one for its match percentage.
+      spring: { stiffness: 40, damping: 10, gap: 8, grow: 2, label: 18, rows: 2, wave: 3, waveGapMs: 70 },
       impulse: { strength: 9 },
       attract: { strength: 60, durationMs: 2500 },
       gravity: { scale: -0.4 },
     },
   },
   artwork: {
-    version: 1,
+    version: 2,
   },
 };
 

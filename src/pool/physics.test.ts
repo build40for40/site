@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { initializePhysics, type PhysicsController } from "./physics";
 
 const W = 400;
@@ -76,6 +76,57 @@ describe("bodies", () => {
     }
     expect(controller.bodyState("ball")!.y).toBeCloseTo(H - 30, -1);
     expect(Math.abs(turned)).toBeGreaterThan(Math.PI);
+  });
+
+  test("grow to a new size and back", () => {
+    const { add, controller } = setup();
+    const element = add("a", { x: 200, y: 200 });
+    controller.advance(0.1);
+    controller.setBodyScale("a", 2);
+    controller.advance(1);
+    expect(element.style.width).toBe("200px");
+    controller.setBodyScale("a", 1);
+    controller.advance(1);
+    expect(element.style.width).toBe("");
+  });
+
+  test("turn upright once something pulls them out of the pile", () => {
+    const { add, controller } = setup();
+    add("a", { x: 200, y: 200 });
+    controller.applyImpulse("a", { x: 0, y: 0 });
+    controller.advance(0.1);
+    controller.setBodyTarget("a", { x: 200, y: 100 });
+    controller.advance(2);
+    expect(Math.abs(controller.bodyState("a")!.angle)).toBeLessThan(0.01);
+  });
+
+  test("pass through each other while pulled out, but not through the pile", () => {
+    const { add, controller } = setup();
+    const a = add("a", { x: 120, y: 100 });
+    add("b", { x: 280, y: 100 });
+    add("pile", { x: 200, y: H - 30 });
+    controller.advance(2);
+    controller.setBodyTarget("a", { x: 200, y: 100 });
+    controller.setBodyTarget("b", { x: 200, y: 100 });
+    controller.advance(3);
+    expect(Math.abs(controller.bodyState("a")!.x - controller.bodyState("b")!.x)).toBeLessThan(TILE.width / 4);
+    expect(a.dataset.arrived).toBe("");
+    controller.setBodyTarget("a", { x: 200, y: H - 30 });
+    controller.advance(2);
+    expect(Math.abs(controller.bodyState("a")!.y - controller.bodyState("pile")!.y)).toBeGreaterThan(TILE.height * 0.8);
+  });
+
+  test("a jolt throws a few ideas in the pile, and back to back jolts don't add up", () => {
+    const { add, controller } = setup();
+    for (let i = 0; i < 8; i++) add(`p${i}`, { x: 50 + (i % 4) * 100, y: H - 30 - Math.floor(i / 4) * 62 });
+    controller.advance(4);
+    const moving = () => Array.from({ length: 8 }, (_, i) => controller.bodyState(`p${i}`)!).filter((b) => Math.hypot(b.vx, b.vy) > 50).length;
+    expect(moving()).toBe(0);
+    vi.spyOn(Math, "random").mockReturnValue(0.9);
+    controller.jolt(1);
+    controller.jolt(1);
+    vi.restoreAllMocks();
+    expect(moving()).toBe(3);
   });
 
   test("never go faster than the cap", () => {

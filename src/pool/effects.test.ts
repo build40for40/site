@@ -1,8 +1,9 @@
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { createSearchEffects, slotPositions } from "./effects";
 
 const layout = () => ({ width: 400, tile: { width: 100, height: 60 } });
-const fake = () => ({ applyImpulse: vi.fn(), wake: vi.fn(), setBodyTarget: vi.fn(), setBodyGravityScale: vi.fn() });
+const fake = () => ({ applyImpulse: vi.fn(), wake: vi.fn(), setBodyTarget: vi.fn(), setBodyGravityScale: vi.fn(), setBodyScale: vi.fn() });
+afterEach(() => vi.useRealTimers());
 const matches = [
   { id: "a", score: 1 },
   { id: "b", score: 0.5 },
@@ -18,13 +19,27 @@ test("slots fill rows left to right, top first", () => {
 });
 
 describe("createSearchEffects", () => {
-  test("spring pulls matches to slots in rank order", () => {
+  test("spring grows matches and pulls them to slots in rank order, under room for their label", () => {
     const controller = fake();
-    createSearchEffects(controller, layout, "spring").apply(matches);
+    const small = () => ({ width: 400, tile: { width: 30, height: 30 } });
+    createSearchEffects(controller, small, "spring").apply(matches);
     expect(controller.setBodyTarget.mock.calls.map(([id, at, o]) => [id, at, o.mode])).toEqual([
-      ["a", { x: 58, y: 38 }, "spring"],
-      ["b", { x: 166, y: 38 }, "spring"],
+      ["a", { x: 38, y: 56 }, "spring"],
+      ["b", { x: 106, y: 56 }, "spring"],
     ]);
+    expect(controller.setBodyScale.mock.calls).toEqual([["a", 2], ["b", 2]]);
+  });
+
+  test("spring sends matches off in waves, best first, and only as many as fit", () => {
+    vi.useFakeTimers();
+    const controller = fake();
+    const many = Array.from({ length: 30 }, (_, i) => ({ id: `m${i}`, score: 1 - i / 30 }));
+    createSearchEffects(controller, () => ({ width: 400, tile: { width: 30, height: 30 } }), "spring").apply(many);
+    expect(controller.setBodyTarget.mock.calls.map(([id]) => id)).toEqual(["m0", "m1", "m2"]);
+    vi.advanceTimersByTime(70);
+    expect(controller.setBodyTarget).toHaveBeenCalledTimes(6);
+    vi.runAllTimers();
+    expect(controller.setBodyTarget).toHaveBeenCalledTimes(10);
   });
 
   test("impulse kicks matches upwards, harder for better matches", () => {
@@ -59,5 +74,6 @@ describe("createSearchEffects", () => {
     effects.clear();
     expect(controller.setBodyTarget).toHaveBeenCalledWith("c", null);
     expect(controller.setBodyGravityScale).toHaveBeenCalledWith("c", 1);
+    expect(controller.setBodyScale).toHaveBeenCalledWith("c", 1);
   });
 });
