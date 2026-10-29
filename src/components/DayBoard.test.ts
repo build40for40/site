@@ -81,12 +81,12 @@ async function board() {
 }
 
 const pool = (w: VueWrapper) => w.find("section[aria-labelledby=pool-title] ul");
-const poolTitles = (w: VueWrapper) => pool(w).findAll("li").map((li) => li.text());
+const poolTitles = (w: VueWrapper) => pool(w).findAll("button").map((b) => b.attributes("title"));
 
 describe("the problems pool", () => {
   test("shows every idea that didn't make the days, as bodies once it's on screen", async () => {
     const w = await board();
-    expect(poolTitles(w).map((t) => t.split("£")[0])).toEqual(Array.from({ length: 10 }, (_, i) => `Idea ${34 + i}`));
+    expect(poolTitles(w)).toEqual(Array.from({ length: 10 }, (_, i) => `Idea ${34 + i}`));
     await vi.waitFor(() => expect(bodies.registered).toHaveLength(10));
     expect(pool(w).classes()).toContain("relative");
   });
@@ -97,24 +97,16 @@ describe("the problems pool", () => {
     expect(w.find("#day-box h2").text()).toBe("Idea 34");
   });
 
-  test("the ↑ button opens it with the sponsor button focused", async () => {
-    const w = await board();
-    await pool(w).find("button[aria-label='Sponsor Idea 36']").trigger("click");
-    await flushPromises();
-    expect(w.find("#day-box h2").text()).toBe("Idea 36");
-    expect(document.activeElement?.id).toBe("sponsor-button");
-  });
-
   test("sponsoring moves an idea into the days and bumps the last one into the pool", async () => {
     const w = await board();
     await vi.waitFor(() => expect(bodies.registered).toHaveLength(10));
-    await pool(w).find("button[aria-label='Sponsor Idea 40']").trigger("click");
+    await pool(w).find("button[title='Idea 40']").trigger("click");
     await w.findAll("#day-box button").find((b) => b.text() === "£100")!.trigger("click");
     await w.find("#sponsor-button").trigger("click");
     await flushPromises();
 
-    expect(poolTitles(w).some((t) => t.startsWith("Idea 40"))).toBe(false);
-    expect(poolTitles(w).some((t) => t.startsWith("Idea 33"))).toBe(true);
+    expect(poolTitles(w)).not.toContain("Idea 40");
+    expect(poolTitles(w)).toContain("Idea 33");
     await vi.waitFor(() => expect(bodies.unregistered).toEqual(["idea-40"]));
     expect(bodies.registered.at(-1)).toBe("idea-33");
   });
@@ -135,14 +127,14 @@ describe("the problems pool", () => {
   test("falls back to the plain grid when the physics engine won't load", async () => {
     vi.doMock("../pool/physics", () => Promise.reject(new Error("offline")));
     const w = await board();
-    await vi.waitFor(() => expect(pool(w).classes()).toContain("grid"));
+    await vi.waitFor(() => expect(pool(w).classes()).toContain("flex-wrap"));
     expect(pool(w).find("li").classes()).not.toContain("opacity-0");
   });
 
   test("turning motion off leaves the plain grid", async () => {
     localStorage.setItem("pool-motion", "off");
     const w = await board();
-    expect(pool(w).classes()).toContain("grid");
+    expect(pool(w).classes()).toContain("flex-wrap");
     expect(bodies.registered).toHaveLength(0);
     expect(w.find("section[aria-labelledby=pool-title] button[aria-pressed=false]").text()).toBe("Motion off");
   });
@@ -150,7 +142,7 @@ describe("the problems pool", () => {
   test("reduced motion gets the plain grid and no motion controls", async () => {
     reducedMotion = true;
     const w = await board();
-    expect(pool(w).classes()).toContain("grid");
+    expect(pool(w).classes()).toContain("flex-wrap");
     expect(bodies.registered).toHaveLength(0);
     expect(w.text()).not.toContain("Motion on");
   });

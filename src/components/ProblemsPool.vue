@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type ComponentPublicInstance } from "vue";
-import DayTile from "./DayTile.vue";
 import { createVisualIdentity } from "../pool/artwork";
 import { poolConfig } from "../pool/config";
 import { afterLoad } from "../pool/data";
@@ -16,12 +15,11 @@ export interface PoolTile {
   problem: string;
   seed?: string;
   label: string;
-  sub: string;
   selected: boolean;
 }
 
 const props = defineProps<{ tiles: PoolTile[] }>();
-const emit = defineEmits<{ select: [key: string]; sponsor: [key: string] }>();
+const emit = defineEmits<{ select: [key: string] }>();
 
 const MOTION_KEY = "pool-motion";
 const TILT_KEY = "pool-tilt";
@@ -41,9 +39,8 @@ const recall = (key: string) => {
 const section = ref<HTMLElement>();
 const list = ref<HTMLElement>();
 const elements = new Map<string, HTMLElement>();
-const setTile = (id: string, tile: Element | ComponentPublicInstance | null) => {
-  const element = tile && "$el" in tile ? (tile.$el as HTMLElement) : (tile as HTMLElement | null);
-  if (element) elements.set(id, element);
+const setTile = (id: string, element: Element | ComponentPublicInstance | null) => {
+  if (element instanceof HTMLElement) elements.set(id, element);
   else elements.delete(id);
 };
 
@@ -57,7 +54,7 @@ const tilt = ref<"off" | "on" | "denied" | "unsupported">("unsupported");
 
 const canMove = computed(() => poolConfig.physics.enabled && !reduced.value);
 const physical = computed(() => canMove.value && motionOn.value && !failed.value);
-const tileSize = computed(() => (wide.value ? { width: 192, height: 120 } : { width: 144, height: 96 }));
+const tileSize = computed(() => (wide.value ? { width: 64, height: 64 } : { width: 56, height: 56 }));
 const height = computed(() => {
   const { width: w, height: h } = tileSize.value;
   const perRow = Math.max(1, Math.floor(width.value / w));
@@ -119,7 +116,7 @@ function stop() {
 function register(ids: string[]) {
   ids.forEach((id, i) => {
     const element = elements.get(id);
-    if (element) controller?.registerBody(id, element, { delayMs: i * poolConfig.physics.rainStaggerMs });
+    if (element) controller?.registerBody(id, element, { shape: "circle", delayMs: i * poolConfig.physics.rainStaggerMs });
   });
 }
 
@@ -263,28 +260,30 @@ const control =
     <ul
       ref="list"
       class="m-0 list-none p-0"
-      :class="physical ? 'relative touch-pan-y overflow-clip rounded-lg border border-night-line' : 'grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-5'"
+      :class="physical ? 'relative touch-pan-y overflow-clip rounded-lg border border-night-line' : 'flex flex-wrap gap-2'"
       :style="physical ? { height: `${height}px` } : undefined"
     >
-      <DayTile
+      <li
         v-for="t in tiles"
         :key="t.key"
-        :ref="(tile) => setTile(t.id, tile as ComponentPublicInstance | null)"
+        :ref="(element) => setTile(t.id, element)"
+        class="size-14 rounded-full sm:size-16"
         :class="[
-          physical ? 'h-24 w-36 touch-pan-y will-change-transform focus-within:z-10 data-dragging:z-20 sm:h-30 sm:w-48' : 'h-24 sm:h-30',
+          physical ? 'absolute top-0 left-0 touch-pan-y will-change-transform focus-within:z-10 data-dragging:z-20' : 'relative',
           physical && !active ? 'opacity-0 focus-within:opacity-100' : searching && !matched.has(t.id) && 'opacity-40',
         ]"
-        status="pool"
-        :floating="physical"
-        :label="t.label"
-        :selected="t.selected"
-        :title="t.title"
-        :sub="t.sub"
-        :artwork="artwork.get(t.id)"
-        :sponsor-label="`Sponsor ${t.title}`"
-        @select="emit('select', t.key)"
-        @sponsor="emit('sponsor', t.key)"
-      />
+      >
+        <button
+          type="button"
+          :aria-label="t.label"
+          :aria-pressed="t.selected"
+          :title="t.title"
+          class="absolute inset-0 cursor-pointer overflow-hidden rounded-full border-0 bg-night-panel p-0 ring-1 ring-night-line ring-inset hover:brightness-115 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text [&>svg]:size-full"
+          :class="t.selected && 'outline-2 outline-offset-2 outline-night-text'"
+          @click="emit('select', t.key)"
+          v-html="artwork.get(t.id)"
+        ></button>
+      </li>
     </ul>
   </section>
 </template>

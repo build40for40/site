@@ -11,19 +11,17 @@ defineProps<{
   today?: boolean;
   compact?: boolean;
   sponsorLabel?: string;
-  artwork?: string;
-  floating?: boolean;
 }>();
 defineEmits<{ select: []; sponsor: [] }>();
 </script>
 
 <template>
-  <li :class="floating ? 'absolute top-0 left-0' : 'relative'">
+  <li class="relative">
     <button
       type="button"
       :aria-label="label"
       :aria-pressed="selected"
-      class="absolute inset-0 isolate flex cursor-pointer flex-col gap-1.5 overflow-hidden rounded-lg border-0 bg-night-tile bg-linear-155 p-2 text-left text-night-text hover:brightness-115 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text sm:gap-2 sm:px-4 sm:py-3.5"
+      class="absolute inset-0 flex cursor-pointer flex-col gap-1.5 overflow-hidden rounded-lg border-0 bg-night-tile bg-linear-155 p-2 text-left text-night-text hover:brightness-115 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text sm:gap-2 sm:px-4 sm:py-3.5"
       :class="[
         tones[status].glow,
         status === 'open' && 'border-[1.5px] border-dashed border-night-line bg-transparent hover:border-night-edge',
@@ -33,8 +31,6 @@ defineEmits<{ select: []; sponsor: [] }>();
       ]"
       @click="$emit('select')"
     >
-      <!-- Generated from numbers and fixed class names only, never from submitted text. -->
-      <span v-if="artwork" aria-hidden="true" class="pointer-events-none absolute inset-0 -z-1 [&>svg]:size-full" v-html="artwork"></span>
       <span v-if="number" class="font-mono text-xs font-medium" :class="status === 'open' ? 'text-night-muted' : 'text-night-sub'">{{ pad(number) }}</span>
       <span
         v-if="title"

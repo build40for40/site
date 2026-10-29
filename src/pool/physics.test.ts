@@ -62,6 +62,22 @@ describe("bodies", () => {
     expect(controller.bodyState("a")!.x).toBeGreaterThan(W - TILE.width);
   });
 
+  test("roll when they're circles", () => {
+    const { container, controller } = setup();
+    const element = document.createElement("li");
+    container.append(element);
+    controller.registerBody("ball", element, { shape: "circle", width: 60, height: 60, spawn: { x: 60, y: H - 30 } });
+    controller.setGravity({ x: 20, y: 20 });
+    let turned = 0;
+    for (let i = 0; i < 60; i++) {
+      const before = controller.bodyState("ball")!.angle;
+      controller.advance(1 / 60);
+      turned += Math.atan2(Math.sin(controller.bodyState("ball")!.angle - before), Math.cos(controller.bodyState("ball")!.angle - before));
+    }
+    expect(controller.bodyState("ball")!.y).toBeCloseTo(H - 30, -1);
+    expect(Math.abs(turned)).toBeGreaterThan(Math.PI);
+  });
+
   test("never go faster than the cap", () => {
     const { add, controller } = setup();
     add("a", { x: 200, y: 200 });
@@ -124,19 +140,17 @@ describe("bodies", () => {
 });
 
 describe("pointer", () => {
-  test("the mouse pushes ideas without clicking", () => {
+  test("the mouse passes over ideas without pushing them", () => {
     const { container, add, controller } = setup();
     add("a", { x: 200, y: H - 30 });
     controller.enablePointerInteraction(true);
     controller.advance(1);
     const before = controller.bodyState("a")!.x;
-    pointer(container, "pointermove", "mouse", 60, H - 30);
-    controller.advance(0.1);
-    for (let x = 60; x <= 260; x += 10) {
+    for (let x = 60; x <= 340; x += 10) {
       pointer(container, "pointermove", "mouse", x, H - 30);
       controller.advance(1 / 30);
     }
-    expect(controller.bodyState("a")!.x).toBeGreaterThan(before + 10);
+    expect(controller.bodyState("a")!.x).toBeCloseTo(before, 0);
   });
 
   test("dragging moves an idea, and letting go throws it", () => {

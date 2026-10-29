@@ -9,6 +9,7 @@ type Config = typeof poolConfig.physics & {
 };
 
 interface BodyOptions {
+  shape?: "box" | "circle";
   width?: number;
   height?: number;
   spawn?: Vector;
@@ -39,6 +40,7 @@ interface Tracked {
   element: HTMLElement;
   body: RAPIER.RigidBody;
   collider: RAPIER.Collider;
+  shape: "box" | "circle";
   width: number;
   height: number;
   fixedSize: boolean;
@@ -111,8 +113,9 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     if (x !== p.x || y !== p.y) t.body.setTranslation({ x, y }, true);
   };
 
-  function makeCollider(t: Pick<Tracked, "width" | "height" | "body">, options: BodyOptions) {
-    const desc = RAPIER.ColliderDesc.cuboid(toM(t.width / 2), toM(t.height / 2))
+  function makeCollider(t: Pick<Tracked, "shape" | "width" | "height" | "body">, options: BodyOptions) {
+    const shape = t.shape === "circle" ? RAPIER.ColliderDesc.ball(toM(Math.min(t.width, t.height) / 2)) : RAPIER.ColliderDesc.cuboid(toM(t.width / 2), toM(t.height / 2));
+    const desc = shape
       .setDensity(options.density ?? config.body.density)
       .setRestitution(options.restitution ?? config.body.restitution)
       .setFriction(options.friction ?? config.body.friction);
@@ -141,23 +144,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     return { x: p.x, y: p.y, a: t.body.rotation() };
   }
 
-  // Pointer body: an invisible kinematic ball that follows the mouse at a capped speed.
-  const pointerBody = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(-100, -100));
-  const pointerCollider = world.createCollider(RAPIER.ColliderDesc.ball(toM(config.pointer.radius)), pointerBody);
-  pointerCollider.setEnabled(false);
-  let pointerTarget: Vector | undefined;
   let pointerOn = false;
-
-  function movePointer(dt: number) {
-    if (!pointerTarget || !pointerCollider.isEnabled()) return;
-    const p = pointerBody.translation();
-    const dx = pointerTarget.x - p.x;
-    const dy = pointerTarget.y - p.y;
-    const dist = Math.hypot(dx, dy);
-    const step = config.pointer.maxSpeed * dt;
-    const k = dist > step ? step / dist : 1;
-    pointerBody.setNextKinematicTranslation({ x: p.x + dx * k, y: p.y + dy * k });
-  }
 
   function applyTargets() {
     for (const t of bodies.values()) {
@@ -217,7 +204,6 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     for (const t of bodies.values()) t.prev = t.curr;
     clock += config.timestep * 1000;
     spawnDue();
-    movePointer(config.timestep);
     applyTargets();
     world.step();
     clampVelocities();
@@ -331,16 +317,9 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
 
   const onPointerMove = (e: PointerEvent) => {
     if (!pointerOn) return;
-    const at = local(e);
-    if (e.pointerType === "mouse" && !grabs.has(e.pointerId)) {
-      if (!pointerCollider.isEnabled()) {
-        pointerBody.setTranslation(at, true);
-        pointerCollider.setEnabled(true);
-      }
-      pointerTarget = at;
-    }
     const grab = grabs.get(e.pointerId);
     if (!grab) return;
+    const at = local(e);
     grab.last = at;
     if (grab.anchor) {
       grab.anchor.setNextKinematicTranslation(at);
@@ -353,9 +332,6 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
   };
 
   const onPointerEnd = (e: PointerEvent) => endGrab(e.pointerId);
-  const onPointerLeave = (e: PointerEvent) => {
-    if (e.pointerType === "mouse") pointerCollider.setEnabled(false);
-  };
   const onTouchMove = (e: TouchEvent) => {
     if ([...grabs.values()].some((g) => g.anchor)) e.preventDefault();
   };
@@ -369,7 +345,6 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
   container.addEventListener("pointermove", onPointerMove);
   container.addEventListener("pointerup", onPointerEnd);
   container.addEventListener("pointercancel", onPointerEnd);
-  container.addEventListener("pointerleave", onPointerLeave);
   container.addEventListener("touchmove", onTouchMove, { passive: false });
   container.addEventListener("focusin", onFocusIn);
   cleanups.push(() => {
@@ -377,7 +352,6 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     container.removeEventListener("pointermove", onPointerMove);
     container.removeEventListener("pointerup", onPointerEnd);
     container.removeEventListener("pointercancel", onPointerEnd);
-    container.removeEventListener("pointerleave", onPointerLeave);
     container.removeEventListener("touchmove", onTouchMove);
     container.removeEventListener("focusin", onFocusIn);
   });
@@ -436,7 +410,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
         .setAngularDamping(options.angularDamping ?? config.body.angularDamping)
         .setCcdEnabled(true);
       const body = world.createRigidBody(desc);
-      const tracked = { id, element, body, width, height, fixedSize: options.width !== undefined } as Tracked;
+      const tracked = { id, element, body, shape: options.shape ?? "box", width, height, fixedSize: options.width !== undefined } as Tracked;
       tracked.collider = makeCollider(tracked, options);
       tracked.prev = tracked.curr = snapshot(tracked);
       tracked.spawnAt = clock + (options.delayMs ?? 0);
@@ -514,7 +488,6 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     enablePointerInteraction(enabled: boolean) {
       pointerOn = enabled;
       if (!enabled) {
-        pointerCollider.setEnabled(false);
         for (const pointerId of [...grabs.keys()]) endGrab(pointerId);
       }
     },

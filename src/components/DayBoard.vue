@@ -136,7 +136,6 @@ const poolTiles = computed<PoolTile[]>(() =>
     problem: p.idea!.problem,
     seed: p.idea!.seed,
     label: tileLabel(p),
-    sub: tileSub(p),
     selected: p.key === selected.value.key,
   })),
 );
@@ -216,6 +215,6 @@ const tileSub = (e: Entry) => {
       </li>
     </ul>
 
-    <ProblemsPool v-if="pool.length" :tiles="poolTiles" @select="select" @sponsor="(key) => select(key, 'sponsor-button')" />
+    <ProblemsPool v-if="pool.length" :tiles="poolTiles" @select="select" />
   </div>
 </template>

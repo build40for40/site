@@ -15,7 +15,6 @@ export const poolConfig = {
     // Each new idea drops in this long after the one before it.
     rainStaggerMs: 90,
     rainSpeed: 6,
-    pointer: { radius: 26, maxSpeed: 25 },
     // Spring stiffness and damping are per kilogram, so big and small ideas feel the same.
     drag: { stiffness: 150, damping: 20, threshold: 6, longPressMs: 260 },
   },
