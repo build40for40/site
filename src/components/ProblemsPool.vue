@@ -52,6 +52,17 @@ const canMove = computed(() => poolConfig.physics.enabled && !reduced.value && t
 const physical = computed(() => canMove.value && motionOn.value && !failed.value);
 const tile = computed(() => (wide.value ? 32 : 28));
 
+// Spread out without randomness, so the server and the browser draw the same bubbles.
+const bubbles = Array.from({ length: 9 }, (_, i) => ({
+  left: `${(i * 37 + 11) % 96}%`,
+  width: `${4 + ((i * 5) % 7)}px`,
+  height: `${4 + ((i * 5) % 7)}px`,
+  "--bubble-time": `${5 + ((i * 3) % 5)}s`,
+  "--bubble-delay": `${-((i * 1.7) % 6).toFixed(1)}s`,
+  "--bubble-rise": `${120 + ((i * 41) % 100)}px`,
+  "--bubble-sway": `${i % 2 ? -8 : 8}px`,
+}));
+
 const artwork = computed(() => new Map(props.tiles.map((t) => [t.id, createVisualIdentity(t).svg])));
 
 const scored = computed(() => (props.matches ?? []).filter((m) => m.score >= poolConfig.search.minRelevance));
@@ -210,6 +221,8 @@ function onKeyDown(event: KeyboardEvent) {
   close();
 }
 
+defineExpose({ nudge: () => controller?.nudge() });
+
 let sizer: ResizeObserver | undefined;
 const media: [MediaQueryList, () => void][] = [];
 
@@ -248,9 +261,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section aria-labelledby="pool-title" class="flex flex-col bg-linear-to-b from-night from-15% via-lava-deep to-lava text-night-text floor:min-h-0">
+  <section aria-labelledby="pool-title" class="relative flex flex-col bg-linear-to-b from-night from-15% via-lava-deep to-lava text-night-text floor:min-h-0">
     <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 pt-3 pb-2 lg:px-12">
-      <h2 id="pool-title" class="m-0 text-xl font-semibold tracking-tight sm:text-2xl">Unfunded problems</h2>
+      <div class="flex items-baseline gap-3">
+        <h2 id="pool-title" class="m-0 text-xl font-semibold tracking-tight sm:text-2xl">Unfunded problems</h2>
+        <span v-if="tiles.length" class="hidden font-mono text-xs text-night-muted sm:inline">{{ tiles.length }} simmering</span>
+      </div>
       <button
         v-if="canMove"
         type="button"
@@ -262,6 +278,16 @@ onBeforeUnmount(() => {
       </button>
     </div>
     <p class="sr-only" role="status" aria-live="polite">{{ announcement }}</p>
+
+    <div v-if="physical" aria-hidden="true" class="pointer-events-none absolute inset-0 overflow-hidden">
+      <div class="absolute inset-x-0 bottom-0 h-2/3 animate-simmer bg-radial-[ellipse_at_50%_100%] from-pop-orange/30 via-pop-red/10 to-transparent to-70%"></div>
+      <span
+        v-for="(b, i) in bubbles"
+        :key="i"
+        class="absolute bottom-0 animate-bubble rounded-full border border-pop-orange/50 bg-pop-yellow/10"
+        :style="b"
+      ></span>
+    </div>
 
     <ul ref="list" class="m-0 list-none p-0" :class="physical ? 'relative min-h-0 flex-1 overflow-clip' : 'flex flex-wrap gap-2 px-4 pt-1 pb-6 lg:px-12'">
       <li
@@ -280,7 +306,7 @@ onBeforeUnmount(() => {
           :aria-label="t.label"
           :aria-expanded="open === t.id"
           :aria-describedby="open === t.id ? 'pool-tip' : undefined"
-          class="absolute inset-0 cursor-pointer overflow-hidden rounded-full border-0 bg-night-panel p-0 after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:bg-linear-135 after:from-night-text/60 after:via-night-text/5 after:via-45% after:to-transparent after:ring-1 after:ring-night-text/30 after:ring-inset hover:brightness-115 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-expanded:outline-2 aria-expanded:outline-offset-2 aria-expanded:outline-night-text [&>svg]:size-full"
+          class="absolute inset-0 cursor-pointer overflow-hidden rounded-full border-0 bg-night-panel p-0 after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:bg-linear-135 after:from-night-text/60 after:via-night-text/5 after:via-45% after:to-transparent after:ring-1 after:ring-night-text/30 after:ring-inset hover:brightness-115 motion-safe:hover:animate-wiggle motion-safe:aria-expanded:animate-pop focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-expanded:outline-2 aria-expanded:outline-offset-2 aria-expanded:outline-night-text [&>svg]:size-full"
           @click="clicked(t.id, $event)"
           @focus="focused(t.id, $event)"
           @blur="blurred(t.id, $event)"
@@ -289,7 +315,7 @@ onBeforeUnmount(() => {
         <span
           v-if="physical && percents.has(t.id)"
           aria-hidden="true"
-          class="pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded-full bg-night-text px-1.5 font-mono text-[10px] leading-4 font-medium text-night opacity-0 transition-opacity duration-300 group-data-arrived:opacity-100"
+          class="pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded-full bg-night-text px-1.5 font-mono text-[10px] leading-4 font-medium text-night opacity-0 transition-opacity duration-300 group-data-arrived:animate-pop group-data-arrived:opacity-100"
           >{{ percents.get(t.id) }}%</span
         >
       </li>

@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { initializePhysics, type PhysicsController } from "./physics";
 
 const W = 400;
@@ -13,14 +13,14 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-function setup(width = W, height = H) {
+function setup(width = W, height = H, boiling = false) {
   const container = document.createElement("ul");
   const size = { width, height };
   Object.defineProperty(container, "clientWidth", { get: () => size.width });
   Object.defineProperty(container, "clientHeight", { get: () => size.height });
   container.getBoundingClientRect = () => ({ left: 0, top: 0, right: size.width, bottom: size.height, width: size.width, height: size.height, x: 0, y: 0, toJSON() {} });
   document.body.append(container);
-  controller = initializePhysics(container, { autoStart: false, autoPause: false });
+  controller = initializePhysics(container, { autoStart: false, autoPause: false, boiling });
   const add = (id: string, spawn: { x: number; y: number }) => {
     const element = document.createElement("li");
     element.innerHTML = `<button type="button">${id}</button>`;
@@ -111,6 +111,36 @@ describe("bodies", () => {
       expect(y).toBeLessThanOrEqual(150 - TILE.height / 2 + 1);
       expect(y).toBeGreaterThanOrEqual(TILE.height / 2 - 1);
     }
+  });
+});
+
+describe("lively", () => {
+  const pile = (controller: PhysicsController, add: (id: string, at: { x: number; y: number }) => HTMLElement) => {
+    for (let i = 0; i < 8; i++) add(`p${i}`, { x: 50 + (i % 4) * 100, y: H - 30 - Math.floor(i / 4) * 62 });
+    controller.advance(3);
+    return () => Array.from({ length: 8 }, (_, i) => controller.bodyState(`p${i}`)!).filter((b) => b.vy < -50).length;
+  };
+
+  test("the lava burps a resting idea out of the pile every so often", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    const { add, controller } = setup(W, H, true);
+    let burps = 0;
+    const rising = pile(controller, add);
+    for (let i = 0; i < 300; i++) {
+      controller.advance(1 / 60);
+      burps += rising() ? 1 : 0;
+    }
+    vi.restoreAllMocks();
+    expect(burps).toBeGreaterThan(0);
+  });
+
+  test("a nudge twitches one idea, and back to back nudges don't add up", () => {
+    const { add, controller } = setup();
+    const rising = pile(controller, add);
+    expect(rising()).toBe(0);
+    controller.nudge();
+    controller.nudge();
+    expect(rising()).toBe(1);
   });
 });
 

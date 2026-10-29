@@ -44,6 +44,52 @@
       transform: scale(1.4);
     }
   }
+
+  --animate-wiggle: wiggle 0.5s ease-in-out;
+  --animate-bubble: bubble var(--bubble-time, 6s) ease-in var(--bubble-delay, 0s) infinite;
+  --animate-simmer: simmer 3.2s ease-in-out infinite alternate;
+
+  @keyframes wiggle {
+    25% {
+      rotate: -14deg;
+      scale: 1.15;
+    }
+    55% {
+      rotate: 10deg;
+    }
+    80% {
+      rotate: -4deg;
+    }
+  }
+
+  @keyframes bubble {
+    0% {
+      translate: 0 0;
+      scale: 0.4;
+      opacity: 0;
+    }
+    15% {
+      opacity: 0.7;
+    }
+    90% {
+      opacity: 0.5;
+      scale: 1;
+    }
+    100% {
+      translate: var(--bubble-sway, 6px) calc(-1 * var(--bubble-rise, 160px));
+      scale: 1.6;
+      opacity: 0;
+    }
+  }
+
+  @keyframes simmer {
+    from {
+      opacity: 0.55;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 }
 
 /* The home and join pages split into a scrolling top and the pool as a floor, on screens tall enough to hold both. */

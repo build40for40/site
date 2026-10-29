@@ -3,7 +3,7 @@ import { mount, type VueWrapper } from "@vue/test-utils";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import ProblemsPool from "./ProblemsPool.vue";
 
-vi.mock("../pool/physics", () => ({ initializePhysics: () => ({ registerBody() {}, unregisterBody() {}, setBodyHover() {}, destroy() {} }) }));
+vi.mock("../pool/physics", () => ({ initializePhysics: () => ({ registerBody() {}, unregisterBody() {}, setBodyHover() {}, nudge() {}, destroy() {} }) }));
 
 const tiles = ["a", "b"].map((id) => ({ key: id, id, title: `Idea ${id}`, problem: `The problem behind ${id}`, label: `Unfunded: Idea ${id}` }));
 

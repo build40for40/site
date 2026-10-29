@@ -1,8 +1,9 @@
 // @vitest-environment happy-dom
-import { flushPromises, mount, type VueWrapper } from "@vue/test-utils";
+import { mount, type VueWrapper } from "@vue/test-utils";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 const hovers = new Map<string, number | null>();
+let nudges = 0;
 
 const idea = (i: number) => ({ id: `idea-${i}`, title: `Idea ${i}`, problem: `Problem number ${i}`, sponsors: i < 34 ? [{ name: "Anonymous", amount: 100 - i }] : [] });
 let ranking = "classifier";
@@ -11,9 +12,10 @@ let wrapper: VueWrapper | undefined;
 beforeEach(() => {
   vi.resetModules();
   vi.doMock("../pool/physics", () => ({
-    initializePhysics: () => ({ registerBody() {}, unregisterBody() {}, setBodyHover: (id: string, y: number | null) => hovers.set(id, y), destroy() {} }),
+    initializePhysics: () => ({ registerBody() {}, unregisterBody() {}, setBodyHover: (id: string, y: number | null) => hovers.set(id, y), nudge: () => nudges++, destroy() {} }),
   }));
   hovers.clear();
+  nudges = 0;
   ranking = "classifier";
   vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("min-height"), addEventListener() {}, removeEventListener() {} }));
   vi.stubGlobal(
@@ -45,14 +47,15 @@ async function write(text: string) {
   const { default: JoinPool } = await import("./JoinPool.vue");
   wrapper = mount(JoinPool, { props: { field: "problem" }, attachTo: document.body });
   await vi.waitFor(() => expect(wrapper!.findAll("li")).toHaveLength(10));
-  await flushPromises();
+  await vi.waitFor(() => expect(wrapper!.find("li").classes()).not.toContain("opacity-0"));
   const field = document.querySelector("textarea")!;
   field.value = text;
   field.dispatchEvent(new Event("input"));
 }
 
-test("writing a problem floats similar ideas up by how alike they are, and clearing it drops them", async () => {
+test("writing a problem twitches the pile and floats similar ideas up by how alike they are, and clearing it drops them", async () => {
   await write("My nails chip the day after I paint them");
+  expect(nudges).toBe(1);
   await vi.waitFor(() => expect(hovers.size).toBe(2), { timeout: 2000 });
   expect(hovers.get("idea-40")!).toBeLessThan(hovers.get("idea-41")!);
   expect(wrapper!.text()).toContain("2 unfunded problems look like yours");

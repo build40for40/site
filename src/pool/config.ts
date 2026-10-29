@@ -17,6 +17,10 @@ export const poolConfig = {
     hover: { stiffness: 30, damping: 9 },
     // How fast a hovering idea turns upright.
     upright: 8,
+    // Every so often the lava burps a resting idea out of the pile, and typing makes one twitch. Speeds are in metres
+    // per second, spin in radians per second.
+    boil: { everyMs: [600, 1800], speed: [4.5, 8.5], spin: 10 },
+    nudge: { speed: 3, gapMs: 80 },
   },
   search: {
     debounceMs: 400,

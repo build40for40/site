@@ -11,6 +11,7 @@ const props = defineProps<{ field: string }>();
 const ideas = ref<Idea[]>([]);
 const loading = ref(true);
 const matches = ref<Match[] | null>(null);
+const pool = ref<InstanceType<typeof ProblemsPool>>();
 
 const tiles = computed<PoolTile[]>(() =>
   buildBoard(ideas.value, history, Date.now()).pool.map(({ key, idea }) => ({
@@ -29,6 +30,7 @@ let debounce: ReturnType<typeof setTimeout> | undefined;
 let input: HTMLInputElement | HTMLTextAreaElement | null = null;
 
 function typed() {
+  pool.value?.nudge();
   clearTimeout(debounce);
   const text = input?.value.trim() ?? "";
   if (text.length < poolConfig.search.minLength) {
@@ -67,5 +69,5 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <ProblemsPool v-if="loading || tiles.length" :tiles="tiles" :matches="matches" />
+  <ProblemsPool v-if="loading || tiles.length" ref="pool" :tiles="tiles" :matches="matches" />
 </template>

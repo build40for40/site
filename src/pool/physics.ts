@@ -9,6 +9,7 @@ export interface Vector {
 type Config = typeof poolConfig.physics & {
   autoStart?: boolean;
   autoPause?: boolean;
+  boiling?: boolean;
 };
 
 interface BodyOptions {
@@ -52,7 +53,7 @@ interface Tracked {
 export type PhysicsController = ReturnType<typeof initializePhysics>;
 
 export function initializePhysics(container: HTMLElement, overrides: Partial<Config> = {}) {
-  const config: Config = { ...poolConfig.physics, autoStart: true, autoPause: true, ...overrides };
+  const config: Config = { ...poolConfig.physics, autoStart: true, autoPause: true, boiling: true, ...overrides };
   const scale = config.pxPerMeter;
   const toM = (px: number) => px / scale;
   const toPx = (m: number) => m * scale;
@@ -64,6 +65,8 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
   let size = { width: 0, height: 0 };
   let walls: RAPIER.RigidBody | undefined;
   let clock = 0;
+  let nextBoil = 0;
+  let lastNudge = -Infinity;
 
   const maxV = config.maxSpeed;
 
@@ -152,6 +155,28 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     }
   }
 
+  const between = ([low, high]: readonly number[]) => low + Math.random() * (high - low);
+  const resting = () =>
+    [...bodies.values()].filter((t) => {
+      const v = t.body.linvel();
+      return t.shown && t.hover === undefined && Math.hypot(v.x, v.y) < 0.5;
+    });
+
+  function hop(t: Tracked, speed: number) {
+    const m = t.body.mass();
+    t.body.applyImpulse({ x: (Math.random() - 0.5) * 0.6 * speed * m, y: -speed * m }, true);
+    t.body.setAngvel(t.body.angvel() + (Math.random() - 0.5) * config.boil.spin, true);
+  }
+
+  // Ideas buried in the pile would only bump the ones above them, so the burps come from near the top.
+  function boil() {
+    if (!config.boiling || clock < nextBoil) return;
+    nextBoil = clock + between(config.boil.everyMs);
+    const pile = resting().toSorted((a, b) => a.body.translation().y - b.body.translation().y);
+    const top = pile.slice(0, Math.ceil(pile.length * 0.4));
+    if (top.length) hop(top[Math.floor(Math.random() * top.length)], between(config.boil.speed));
+  }
+
   const overlaps = (t: Tracked, x: number, y: number) =>
     [...bodies.values()].some((o) => {
       if (!o.shown || o === t) return false;
@@ -192,6 +217,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     for (const t of bodies.values()) t.prev = t.curr;
     clock += config.timestep * 1000;
     spawnDue();
+    boil();
     hover();
     world.step();
     clampVelocities();
@@ -337,6 +363,14 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
       }
       t.hover = y;
       t.body.setGravityScale(0, true);
+    },
+
+    // A small twitch from somewhere in the pile. Back to back calls are spaced out so a burst can't add up to a throw.
+    nudge() {
+      if (clock - lastNudge < config.nudge.gapMs) return;
+      lastNudge = clock;
+      const pile = resting();
+      if (pile.length) hop(pile[Math.floor(Math.random() * pile.length)], config.nudge.speed);
     },
 
     pause() {
