@@ -3,6 +3,8 @@ export type SearchEffect = "spring" | "impulse" | "wake" | "attract" | "gravity"
 export const poolConfig = {
   physics: {
     enabled: true,
+    // Past this, the pool shows the plain grid instead of waiting on the physics engine.
+    loadTimeoutMs: 3000,
     pxPerMeter: 50,
     gravity: { x: 0, y: 20 },
     timestep: 1 / 60,

@@ -1,11 +1,10 @@
 // @vitest-environment happy-dom
 import { flushPromises, mount, type VueWrapper } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import DayBoard from "./DayBoard.vue";
 
-const bodies = vi.hoisted(() => ({ registered: [] as string[], unregistered: [] as string[] }));
+const bodies = { registered: [] as string[], unregistered: [] as string[] };
 
-vi.mock("../pool/physics", () => ({
+const physics = () => ({
   initializePhysics: () => ({
     registerBody: (id: string) => bodies.registered.push(id),
     unregisterBody: (id: string) => bodies.unregistered.push(id),
@@ -17,7 +16,7 @@ vi.mock("../pool/physics", () => ({
     wake() {},
     destroy() {},
   }),
-}));
+});
 
 // 34 of the 40 days take ideas before Day 1, so the last 10 of these 44 land in the pool.
 const idea = (i: number) => ({ id: `idea-${i}`, title: `Idea ${i}`, problem: `Problem number ${i}`, sponsors: i < 34 ? [{ name: "Anonymous", amount: 100 - i }] : [] });
@@ -34,6 +33,8 @@ beforeEach(() => {
   vi.setSystemTime(new Date("2026-10-29T12:00:00Z"));
   bodies.registered.length = 0;
   bodies.unregistered.length = 0;
+  vi.resetModules();
+  vi.doMock("../pool/physics", physics);
   reducedMotion = false;
   localStorage.clear();
   vi.stubGlobal("fetch", async (url: string) => {
@@ -72,6 +73,7 @@ afterEach(() => {
 });
 
 async function board() {
+  const { default: DayBoard } = await import("./DayBoard.vue");
   wrapper = mount(DayBoard, { props: { history: {}, builtAt: Date.now() }, attachTo: document.body });
   await vi.waitFor(() => expect(wrapper!.findAll("section[aria-labelledby=pool-title] li")).toHaveLength(10), { timeout: 3000 });
   await flushPromises();
@@ -121,6 +123,20 @@ describe("the problems pool", () => {
     const w = await board();
     await w.find("#pool-search").setValue("Idea 37");
     await vi.waitFor(() => expect(w.find("[role=status]").text()).toMatch(/ideas? match/), { timeout: 2000 });
+  });
+
+  test("is laid out for physics from the start, with ideas hidden until they drop in", async () => {
+    vi.doMock("../pool/physics", () => new Promise(() => {}));
+    const w = await board();
+    expect(pool(w).classes()).toContain("relative");
+    expect(pool(w).findAll("li").every((li) => li.classes().includes("opacity-0"))).toBe(true);
+  });
+
+  test("falls back to the plain grid when the physics engine won't load", async () => {
+    vi.doMock("../pool/physics", () => Promise.reject(new Error("offline")));
+    const w = await board();
+    await vi.waitFor(() => expect(pool(w).classes()).toContain("grid"));
+    expect(pool(w).find("li").classes()).not.toContain("opacity-0");
   });
 
   test("turning motion off leaves the plain grid", async () => {

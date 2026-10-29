@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type Compon
 import DayTile from "./DayTile.vue";
 import { createVisualIdentity } from "../pool/artwork";
 import { poolConfig } from "../pool/config";
+import { afterLoad } from "../pool/data";
 import { motionSupported, requestMotionPermission } from "../pool/motion";
 import { createSearch, type SearchResult } from "../pool/search";
 import type { PhysicsController } from "../pool/physics";
@@ -46,14 +47,16 @@ const setTile = (id: string, tile: Element | ComponentPublicInstance | null) => 
   else elements.delete(id);
 };
 
-const reduced = ref(false);
-const motionOn = ref(true);
+const reduced = ref(typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches);
+const motionOn = ref(recall(MOTION_KEY) !== "off");
+const failed = ref(false);
 const active = ref(false);
 const wide = ref(false);
 const width = ref(0);
 const tilt = ref<"off" | "on" | "denied" | "unsupported">("unsupported");
 
 const canMove = computed(() => poolConfig.physics.enabled && !reduced.value);
+const physical = computed(() => canMove.value && motionOn.value && !failed.value);
 const tileSize = computed(() => (wide.value ? { width: 192, height: 120 } : { width: 144, height: 96 }));
 const height = computed(() => {
   const { width: w, height: h } = tileSize.value;
@@ -66,19 +69,42 @@ const artwork = computed(() => new Map(props.tiles.map((t) => [t.id, createVisua
 let controller: PhysicsController | undefined;
 let effects: ReturnType<typeof createSearchEffects> | undefined;
 let starting = false;
+let engine: Promise<[typeof import("../pool/physics"), typeof import("../pool/effects")]> | undefined;
+
+function preload() {
+  engine ??= Promise.all([import("../pool/physics"), import("../pool/effects")]).catch((error) => {
+    engine = undefined;
+    throw error;
+  });
+  return engine;
+}
+
+function loadEngine() {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => (timer = setTimeout(() => reject(new Error("Physics took too long")), poolConfig.physics.loadTimeoutMs)));
+  return Promise.race([preload(), timeout]).finally(() => clearTimeout(timer));
+}
 
 async function start() {
-  if (controller || starting || !canMove.value || !motionOn.value || !list.value) return;
+  if (controller || starting || !physical.value || !list.value) return;
   starting = true;
-  const [{ initializePhysics }, { createSearchEffects }] = await Promise.all([import("../pool/physics"), import("../pool/effects")]);
-  starting = false;
-  if (!motionOn.value || !list.value) return;
-  active.value = true;
-  await nextTick();
+  let modules;
+  try {
+    modules = await loadEngine();
+    await nextTick();
+  } catch {
+    failed.value = true;
+    return;
+  } finally {
+    starting = false;
+  }
+  const [{ initializePhysics }, { createSearchEffects }] = modules;
+  if (!physical.value || !list.value) return;
   controller = initializePhysics(list.value);
   controller.enablePointerInteraction(true);
   effects = createSearchEffects(controller, () => ({ width: width.value, tile: tileSize.value }));
   register(props.tiles.map((t) => t.id));
+  active.value = true;
   if (tilt.value === "on") controller.enableDeviceMotion(true);
   if (result.value?.matches.length) effects.apply(result.value.matches);
 }
@@ -109,10 +135,13 @@ watch(
   },
 );
 
+watch(reduced, (matches) => (matches ? stop() : start()));
+
 const calibrate = () => controller?.calibrateDeviceMotion();
 
 function toggleMotion() {
   motionOn.value = !motionOn.value;
+  failed.value = false;
   remember(MOTION_KEY, motionOn.value ? "on" : "off");
   if (motionOn.value) start();
   else stop();
@@ -172,17 +201,15 @@ onMounted(() => {
     list.addEventListener("change", update);
     media.push([list, update]);
   };
-  watchMedia("(prefers-reduced-motion: reduce)", (matches) => {
-    reduced.value = matches;
-    if (matches) stop();
-  });
+  watchMedia("(prefers-reduced-motion: reduce)", (matches) => (reduced.value = matches));
   watchMedia("(min-width: 640px)", (matches) => (wide.value = matches));
-  motionOn.value = recall(MOTION_KEY) !== "off";
+  if (physical.value) afterLoad().then(() => preload().catch(() => {}));
   if (motionSupported() && matchMedia("(pointer: coarse)").matches) {
     const iosStyle = typeof (DeviceOrientationEvent as unknown as { requestPermission?: unknown }).requestPermission === "function";
     tilt.value = recall(TILT_KEY) === "on" && !iosStyle ? "on" : "off";
   }
 
+  width.value = section.value?.clientWidth ?? 0;
   sizer = new ResizeObserver(([entry]) => (width.value = entry.contentRect.width));
   if (section.value) sizer.observe(section.value);
   observer = new IntersectionObserver(
@@ -236,19 +263,19 @@ const control =
     <ul
       ref="list"
       class="m-0 list-none p-0"
-      :class="active ? 'relative touch-pan-y overflow-clip rounded-lg border border-night-line' : 'grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-5'"
-      :style="active ? { height: `${height}px` } : undefined"
+      :class="physical ? 'relative touch-pan-y overflow-clip rounded-lg border border-night-line' : 'grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-5'"
+      :style="physical ? { height: `${height}px` } : undefined"
     >
       <DayTile
         v-for="t in tiles"
         :key="t.key"
         :ref="(tile) => setTile(t.id, tile as ComponentPublicInstance | null)"
         :class="[
-          active ? 'h-24 w-36 touch-pan-y will-change-transform focus-within:z-10 data-dragging:z-20 sm:h-30 sm:w-48' : 'h-24 sm:h-30',
-          searching && !matched.has(t.id) && 'opacity-40',
+          physical ? 'h-24 w-36 touch-pan-y will-change-transform focus-within:z-10 data-dragging:z-20 sm:h-30 sm:w-48' : 'h-24 sm:h-30',
+          physical && !active ? 'opacity-0 focus-within:opacity-100' : searching && !matched.has(t.id) && 'opacity-40',
         ]"
         status="pool"
-        :floating="active"
+        :floating="physical"
         :label="t.label"
         :selected="t.selected"
         :title="t.title"
