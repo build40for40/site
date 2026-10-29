@@ -68,7 +68,7 @@ gh secret set CLOUDFLARE_API_TOKEN
 
 ## Forms
 
-Every form posts to `/api/forms/<form>` (`subscribe`, `join`, `help`, `guest`, `problem`). The Worker checks the fields, saves them and redirects to `/thanks/`. The home page's Join box is the exception: it saves the email if it's valid, then sends everyone to the full form at `/join/` with whatever they typed already filled in. A hidden `website` field catches bots, which get the thanks page without being saved.
+Every form posts to `/api/forms/<form>` (`subscribe`, `join`, `help`, `guest`, `problem`). The Worker checks the fields, saves them and redirects to `/thanks/`. A hidden `website` field catches bots, which get the thanks page without being saved.
 
 ### Data
 

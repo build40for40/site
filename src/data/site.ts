@@ -15,23 +15,6 @@ export const links = {
   ],
 };
 
-export type PayKind = "unlock" | "sponsor" | "presale";
-
-export const payOptions: Record<PayKind, { label: string; blurb: string; amount: number; link: string }> = {
-  unlock: { label: "Unlock", blurb: "First payment starts the day", amount: 10, link: "#" },
-  sponsor: { label: "Sponsor", blurb: "Your company on the day page", amount: 250, link: "#" },
-  presale: { label: "Presale", blurb: "Pay now, get the app it ships", amount: 15, link: "#" },
-};
-
-export const helpTypes = [
-  { value: "office", label: "Office space" },
-  { value: "tools", label: "AI tools and tokens" },
-  { value: "guests", label: "Guest intros" },
-  { value: "cto", label: "CTO for a day" },
-  { value: "sponsor", label: "Sponsor a day" },
-  { value: "other", label: "Something else" },
-] as const;
-
 export const involvement = [
   { value: "kind", label: "Help in Kind - Office space, AI credits, I can cater an IRL event!" },
   { value: "marketing", label: "Marketing - I’ll spread the word" },
@@ -39,21 +22,6 @@ export const involvement = [
   { value: "sponsor", label: "Sponsor a Project" },
 ] as const;
 
-
-export const guests = [
-  { name: "Judith Buttigieg", role: "Special guest", photo: "" },
-  { name: "Nic Roope", role: "Special guest", photo: "" },
-  { name: "Dr. Zeenith Ebrahim", role: "Special guest", photo: "" },
-];
-
-export const team = [
-  { name: "Lawrence Kao", role: "Host and builder", photo: "" },
-  { name: "Samira Sohail", role: "Host and builder", photo: "" },
-  { name: "Ben Bourdin", role: "Host and builder", photo: "" },
-];
-
 export const money = (amount: number) =>
   new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(amount);
 
-export const initials = (name: string) =>
-  name.replace(/^Dr\.?\s+/, "").split(/\s+/).map((part) => part[0]).join("").slice(0, 2);

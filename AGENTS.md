@@ -15,6 +15,8 @@ Static Astro site with Vue islands, served by a Cloudflare Worker as static asse
 
 Start the dev server in the background with `npx astro dev --background`, and manage it with `astro dev stop`, `astro dev status` and `astro dev logs`.
 
+The home page runs on the real clock. Add `?now=2026-11-10T11:20Z` to its URL to see the board at any other moment, such as mid-build or after a day ships.
+
 Run wrangler as `npm run wrangler -- <args>`, never `npx wrangler`: the script runs as the `40for40` auth profile and drops the global Cloudflare credentials in the shell, which would otherwise win.
 
 Astro docs: https://docs.astro.build. Check the relevant guide before working on routing, framework components, content collections or styling.
