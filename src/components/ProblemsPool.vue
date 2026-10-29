@@ -148,7 +148,12 @@ const open = ref<string | null>(null);
 const tip = ref<HTMLElement>();
 const place = ref({ left: 0, top: 0 });
 const openTile = computed(() => props.tiles.find((t) => t.id === open.value));
-const blurb = (text: string) => (text.length > 180 ? `${text.slice(0, 180).replace(/\s+\S*$/, "")}…` : text);
+const plain = (text: string) => text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+const blurb = computed(() => {
+  const text = openTile.value?.problem ?? "";
+  if (plain(text) === plain(openTile.value?.title ?? "")) return "";
+  return text.length > 180 ? `${text.slice(0, 180).replace(/\s+\S*$/, "")}…` : text;
+});
 let placing = 0;
 
 function follow() {
@@ -299,7 +304,7 @@ onBeforeUnmount(() => {
       :style="{ transform: `translate(${place.left}px, ${place.top}px)` }"
     >
       <p class="m-0 text-[15px] leading-snug font-semibold">{{ openTile.title }}</p>
-      <p class="m-0 mt-1 text-sm leading-snug text-night-panel">{{ blurb(openTile.problem) }}</p>
+      <p v-if="blurb" class="m-0 mt-1 text-sm leading-snug text-night-panel">{{ blurb }}</p>
     </div>
   </section>
 </template>
