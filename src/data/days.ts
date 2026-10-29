@@ -6,11 +6,12 @@ export interface Sponsor {
 }
 
 export interface Idea {
-  id: number;
+  id: string;
   title: string;
   problem: string;
-  owner: string;
+  owner?: string;
   sponsors: Sponsor[];
+  seed?: string;
 }
 
 export interface ShippedIdea extends Idea {
@@ -105,48 +106,15 @@ function mockSponsors(total: number, count: number, seed: number): Sponsor[] {
 }
 
 const mockIdea = ([title, problem, total, count]: [string, string, number, number], id: number): Idea => ({
-  id,
+  id: `shipped-${id}`,
   title,
   problem,
   owner: firstNames[(id * 7 + 2) % firstNames.length],
   sponsors: mockSponsors(total, count, id),
 });
 
-export const ideas: Idea[] = ([
-  ["Endless standups", "Fifteen people, one meeting, nobody listening. Turn updates into a two-minute digest.", 1200, 5],
-  ["Parking ticket dread", "Photograph a parking sign and get a plain yes or no on whether you can park there right now.", 850, 7],
-  ["Duplicate photos", "Find the 400 near-identical shots of the same sunset and keep the best one.", 600, 3],
-  ["Overdue library books", "Every library card in the house in one place, with a nudge before the fines start.", 420, 9],
-  ["Noisy group chats", "Catch up on 300 unread messages with a summary of the bits that actually need you.", 300, 5],
-  ["Tracking job applications", "Forward the confirmation email and it builds the pipeline for you.", 250, 5],
-  ["Kids' screen time", "A screen time deal the whole family can see and nobody can fudge.", 180, 2],
-  ["Finding a quiet café", "Somewhere nearby with wifi, a socket and no blender for the next hour.", 120, 3],
-  ["Last-minute gifts", "Tell it who they are and your budget, get three gifts you can buy before 18:00.", 100, 1],
-  ["Shared chore rotas", "A chore rota for flatmates that remembers who actually did the bins.", 60, 4],
-  ["Forgotten birthdays", "Birthdays from every app in one feed, with a reminder a week early.", 40, 2],
-  ["Chasing invoices", "Polite, then less polite, reminders for freelancers who'd rather not.", 25, 1],
-  ["Picking a paint colour", "Point your camera at a wall and try twenty colours before buying a tester pot.", 20, 2],
-  ["Splitting the bill", "Photograph the receipt, tap what you had, everyone gets a payment link.", 15, 1],
-  ["Notes nobody reads", "Turn meeting notes into the three actions people actually need.", 12, 2],
-  ["Lost Wi-Fi passwords", "A QR code for guests so nobody reads the router upside down again.", 10, 1],
-  ["Choosing a podcast", "Say how long your commute is, get one episode that fits it exactly.", 10, 1],
-  ["Moving house", "Every account to update when you move, as one checklist.", 8, 1],
-  ["Borrowing tools", "See which neighbour has a drill before you buy a third one.", 5, 1],
-  ["Unread newsletters", "One weekly digest of the newsletters you meant to read.", 5, 1],
-  ["Pet medication", "Shared reminders so the dog doesn't get its pill twice.", 4, 1],
-  ["Booking a court", "Find a free tennis court near you without opening six council websites.", 3, 1],
-  ["Expiring coupons", "Every voucher and code in one list, sorted by when it dies.", 3, 1],
-  ["Habit burnout", "A habit tracker that forgives you for missing a day.", 2, 1],
-  ["Car maintenance", "MOT, tax and service dates for your car, nudged at the right time.", 2, 1],
-  ["Language partners", "Match with someone learning your language who speaks the one you want.", 1, 1],
-  ["Potluck planning", "Stop five people bringing hummus.", 1, 1],
-  ["Planting dates", "What to sow this week for your postcode.", 0, 0],
-  ["Commute playlists", "A playlist exactly as long as today's train.", 0, 0],
-  ["Shift swaps", "Swap shifts with coworkers without the 40-message group chat.", 0, 0],
-] as [string, string, number, number][]).map(mockIdea);
-
 const mockShipped = (day: number, title: string, problem: string, total: number, count: number, buildTime: string): ShippedIdea => ({
-  ...mockIdea([title, problem, total, count], 100 + day),
+  ...mockIdea([title, problem, total, count], day),
   buildTime,
   appUrl: "#",
   recordingUrl: "#",

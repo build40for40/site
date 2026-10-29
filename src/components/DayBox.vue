@@ -169,7 +169,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
         <h2 class="m-0 text-[26px] leading-[1.04] font-semibold tracking-tight text-balance md:text-3xl">{{ idea.title }}</h2>
         <div v-if="(entry.status === 'live' || entry.status === 'shipped') && credit" :class="kicker">Sponsored by <span class="text-night-text">{{ credit }}</span></div>
         <p class="m-0 text-[15px] leading-snug text-night-sub text-pretty">“{{ idea.problem }}”</p>
-        <div class="font-mono text-xs text-night-muted">From {{ idea.owner }}</div>
+        <div v-if="idea.owner" class="font-mono text-xs text-night-muted">From {{ idea.owner }}</div>
         <p v-if="line" class="m-0 text-[15px] leading-snug text-pretty">{{ line }}</p>
         <p v-if="upNext" class="m-0 text-[15px] leading-snug text-pretty">
           Up next: {{ upNext.title }}, Day {{ upNext.day }}, starts in <span class="font-mono tabular-nums">{{ upNext.starts }}</span>
@@ -203,7 +203,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
           <li v-for="e in unsponsored" :key="e.key" class="flex items-center justify-between gap-2.5 border-t border-night-line py-2.5">
             <span class="min-w-0">
               <span class="block text-sm font-semibold">{{ e.idea!.title }}</span>
-              <span class="mt-0.5 block font-mono text-xs text-night-muted">{{ e.idea!.owner }}</span>
+              <span v-if="e.idea!.owner" class="mt-0.5 block font-mono text-xs text-night-muted">{{ e.idea!.owner }}</span>
             </span>
             <button
               type="button"

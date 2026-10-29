@@ -1,4 +1,7 @@
 import { TOTAL_DAYS, helpTypes, involvement } from "../src/data/site";
+import { jevClassifier } from "./classifier";
+import { listProblems } from "./problems";
+import { searchIdeas } from "./search";
 
 interface Field {
   name: string;
@@ -182,10 +185,37 @@ async function stripeWebhook(request: Request, env: Env, ctx: ExecutionContext) 
   return text("Saved.", 200);
 }
 
+const json = (body: unknown, cacheControl = "no-store") => Response.json(body, { headers: { "Cache-Control": cacheControl } });
+
+async function problems(request: Request, env: Env) {
+  const url = new URL(request.url);
+  const seedSecret = (env.ARTWORK_SUBMITTER_SEEDS as string) === "on" ? env.ARTWORK_SEED_SECRET : undefined;
+  return json(
+    await listProblems(env.DB, {
+      offset: Number(url.searchParams.get("offset") ?? 0),
+      limit: Number(url.searchParams.get("limit") ?? 40),
+      seedSecret: seedSecret || undefined,
+    }),
+  );
+}
+
+async function poolSearch(request: Request, env: Env) {
+  const query = new URL(request.url).searchParams.get("q") ?? "";
+  const classifier = env.TYPESAFE_API_KEY ? jevClassifier({ apiKey: env.TYPESAFE_API_KEY, baseUrl: env.TYPESAFE_API_URL || undefined }) : undefined;
+  const cache = typeof caches === "undefined" ? undefined : (caches as unknown as { default: Cache }).default;
+  return json({ query, ...(await searchIdeas(query, { db: env.DB, classifier, cache })) });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (/^\/api\/stripe\/webhook\/?$/.test(url.pathname)) return stripeWebhook(request, env, ctx);
+
+    const read = { "/api/problems": problems, "/api/pool/search": poolSearch }[url.pathname.replace(/\/$/, "")];
+    if (read) {
+      if (request.method !== "GET") return new Response("Method not allowed.", { status: 405, headers: { Allow: "GET" } });
+      return read(request, env);
+    }
 
     const form = url.pathname.match(/^\/api\/forms\/([a-z]+)\/?$/)?.[1];
     const fields = form && Object.hasOwn(forms, form) ? forms[form] : undefined;

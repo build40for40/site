@@ -13,16 +13,24 @@
     "deploy": "astro build && npm run wrangler -- d1 migrations apply 40for40 --remote && npm run wrangler -- deploy",
     "wrangler": "env -u CLOUDFLARE_API_KEY -u CLOUDFLARE_EMAIL wrangler --profile 40for40",
     "types": "wrangler types worker/worker-configuration.d.ts --env-file .dev.vars.example",
-    "db:migrate": "npm run wrangler -- d1 migrations apply 40for40 --local"
+    "db:migrate": "npm run wrangler -- d1 migrations apply 40for40 --local",
+    "db:seed": "npm run wrangler -- d1 execute 40for40 --local --file worker/seed.sql",
+    "test": "vitest run"
   },
   "dependencies": {
     "@astrojs/vue": "^7.1.2",
+    "@dimforge/rapier2d": "^0.21.0",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.4.2",
     "tailwindcss": "^4.3.3",
     "vue": "^3.5.44"
   },
   "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.10",
+    "@vue/test-utils": "^2.5.1",
+    "happy-dom": "^21.0.4",
+    "vite-plugin-wasm": "^3.6.0",
+    "vitest": "^5.0.5",
     "wrangler": "^4.151.3"
   }
 }

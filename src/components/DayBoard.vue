@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import DayBox from "./DayBox.vue";
 import DayTile from "./DayTile.vue";
+import ProblemsPool, { type PoolTile } from "./ProblemsPool.vue";
 import {
   DEFAULT_AMOUNT,
   buildBoard,
@@ -14,11 +15,13 @@ import {
   type ShippedIdea,
 } from "../data/days";
 import { TOTAL_DAYS, money } from "../data/site";
+import { loadIdeas } from "../pool/data";
 
-const props = defineProps<{ ideas: Idea[]; history: Record<number, ShippedIdea>; builtAt: number }>();
+const props = defineProps<{ history: Record<number, ShippedIdea>; builtAt: number }>();
 
 const now = ref(props.builtAt);
-const ideas = ref(props.ideas.map((idea) => ({ ...idea, sponsors: [...idea.sponsors] })));
+const ideas = ref<Idea[]>([]);
+const loading = ref(true);
 const picked = ref<string | null>(null);
 const amount = ref(DEFAULT_AMOUNT);
 
@@ -58,13 +61,27 @@ const legend = [
 ];
 
 let timer: ReturnType<typeof setInterval> | undefined;
+const loader = new AbortController();
 onMounted(() => {
   const override = Date.parse(new URLSearchParams(location.search).get("now") ?? "");
   const offset = Number.isNaN(override) ? 0 : override - Date.now();
   now.value = Date.now() + offset;
   timer = setInterval(() => (now.value = Date.now() + offset), 1000);
+  loadIdeas({
+    signal: loader.signal,
+    onPage(page) {
+      const known = new Set(ideas.value.map((i) => i.id));
+      ideas.value.push(...page.filter((i) => !known.has(i.id)));
+      loading.value = false;
+    },
+  })
+    .catch(() => {})
+    .finally(() => (loading.value = false));
 });
-onBeforeUnmount(() => clearInterval(timer));
+onBeforeUnmount(() => {
+  clearInterval(timer);
+  loader.abort();
+});
 
 function swap(change: () => void, focusId: string) {
   const apply = async () => {
@@ -111,6 +128,19 @@ const tileLabel = (e: Entry) => {
   return `${head}, ${statusLabel(e, board.value.today).toLowerCase()}${title}${sum}`;
 };
 
+const poolTiles = computed<PoolTile[]>(() =>
+  pool.value.map((p) => ({
+    key: p.key,
+    id: p.idea!.id,
+    title: p.idea!.title,
+    problem: p.idea!.problem,
+    seed: p.idea!.seed,
+    label: tileLabel(p),
+    sub: tileSub(p),
+    selected: p.key === selected.value.key,
+  })),
+);
+
 const tileSub = (e: Entry) => {
   if (e.status === "live") return "Live now";
   if (e.status !== "queued" && e.status !== "pool") return "";
@@ -143,6 +173,8 @@ const tileSub = (e: Entry) => {
 
     <DayBox
       :key="selected.key"
+      :aria-busy="loading"
+      :class="loading && 'opacity-60 motion-safe:animate-pulse'"
       :entry="selected"
       :days="board.days"
       :pool="pool"
@@ -154,11 +186,12 @@ const tileSub = (e: Entry) => {
       @pick="pick"
     />
 
-    <ul aria-label="The 40 days" class="m-0 grid list-none grid-cols-5 gap-1.5 p-0 sm:gap-2.5">
+    <ul aria-label="The 40 days" :aria-busy="loading" class="m-0 grid list-none grid-cols-5 gap-1.5 p-0 sm:gap-2.5">
       <DayTile
         v-for="d in board.days"
         :key="d.key"
         class="aspect-square sm:aspect-auto sm:h-30"
+        :class="loading && 'opacity-60 motion-safe:animate-pulse'"
         compact
         :status="d.status"
         :label="tileLabel(d)"
@@ -183,26 +216,6 @@ const tileSub = (e: Entry) => {
       </li>
     </ul>
 
-    <section v-if="pool.length" aria-labelledby="pool-title" class="flex flex-col gap-3 pt-3">
-      <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 id="pool-title" class="m-0 text-2xl font-semibold tracking-tight">Problems pool</h2>
-        <p class="m-0 max-w-[60ch] font-mono text-xs leading-normal text-night-muted">{{ pool.length }} ideas that didn't make the 40 days. Sponsor one you like and it could bump one.</p>
-      </div>
-      <ul class="m-0 grid list-none grid-cols-2 gap-1.5 p-0 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-5">
-        <DayTile
-          v-for="p in pool"
-          :key="p.key"
-          class="h-24 sm:h-30"
-          status="pool"
-          :label="tileLabel(p)"
-          :selected="p.key === selected.key"
-          :title="p.idea?.title"
-          :sub="tileSub(p)"
-          :sponsor-label="`Sponsor ${p.idea?.title}`"
-          @select="select(p.key)"
-          @sponsor="select(p.key, 'sponsor-button')"
-        />
-      </ul>
-    </section>
+    <ProblemsPool v-if="pool.length" :tiles="poolTiles" @select="select" @sponsor="(key) => select(key, 'sponsor-button')" />
   </div>
 </template>

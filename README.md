@@ -30,7 +30,7 @@ Before Day 1, its job is to get people to help, in this priority order: office s
 
 ## Status
 
-The R1 UI is built. Forms are saved to D1, sponsors pay through Stripe Payment Links, and day data in `src/data/days.ts` is mock data. Still to come: Stripe with auto-unlock, the admin screen, day pages, the app gallery and OG images. Open questions include prices, VAT and the receiving entity.
+The R1 UI is built. Forms are saved to D1, sponsors pay through Stripe Payment Links, and the days and problems pool are ranked from the problems in D1. Shipped history in `src/data/days.ts` is still mock data. Still to come: Stripe with auto-unlock, the admin screen, day pages, the app gallery and OG images. Open questions include prices, VAT and the receiving entity.
 
 ## Stack
 
@@ -42,6 +42,8 @@ npm run dev      # localhost:4321
 npm run build    # outputs dist/
 npm run preview  # build + the Worker with a local D1 on localhost:8787
 npm run types    # regenerate worker types after changing wrangler.jsonc
+npm test         # unit tests (Vitest), next to the files they cover
+npm run db:seed  # fake problems and payments in the local D1
 npm run deploy   # build + wrangler deploy
 npm run wrangler -- deployments list
 ```
@@ -81,6 +83,14 @@ Everything lives in the `40for40` D1 database, with the schema in `worker/migrat
 
 To change the schema, add a numbered `.sql` file to `worker/migrations/`. `npm run db:migrate` applies it to the local database, and deploys (`npm run deploy` and CI) apply it to production first.
 
+### Problems and the pool
+
+`GET /api/problems?offset=&limit=` returns problems ranked by money raised, with the team's `title` (or the start of the problem when there isn't one), the submitter's first name and each payment as an anonymous sponsor. Emails never leave the Worker. The home page loads the first 40 for the days, then the rest a page at a time once the page has loaded, and each one drops into the pool.
+
+`GET /api/pool/search?q=` finds candidates with D1 full-text search (`problems_fts`, kept in sync by triggers) and reranks them with TypeSafe's Jev when `TYPESAFE_API_KEY` is set. If Jev is slow, down or unset, it returns the full-text ranking, and the browser falls back to its own word match if the Worker fails. Only the search and each candidate's title and problem text are sent to Jev. To try Jev locally, put a key in `.dev.vars`. In production, `npm run wrangler -- secret put TYPESAFE_API_KEY`.
+
+Artwork is seeded from the problem id. Setting `ARTWORK_SUBMITTER_SEEDS` to `on` (with an `ARTWORK_SEED_SECRET` secret) gives one person's problems a family look, which also reveals that they came from the same person.
+
 ### Sponsoring
 
 Ticking Sponsor on the full form shows the amounts in `sponsorAmounts` in `src/data/site.ts`. Picking one only records it. On Submit, the Worker saves the answers and redirects to that amount's Stripe Payment Link with the email prefilled, and with `client_reference_id` set to the problem's id when they submitted one. The amount is dropped if Sponsor was unticked, and an empty link goes to `/thanks/` instead. In Stripe, every link sells the one Sponsor product at one of its GBP prices (lookup keys `sponsor_<pence>`), with `sponsor` metadata set to the same value, and sends people back to `/thanks/` after paying. Each amount has a live `link` and a sandbox `testLink`: only `build40for40.com` and its subdomains use the live one, so local dev servers and workers.dev previews check out in the sandbox (pay with a test card such as `4242 4242 4242 4242`).
@@ -89,7 +99,7 @@ Stripe sends `checkout.session.completed` and `checkout.session.async_payment_su
 
 ### Running and reading forms
 
-`npm run dev` runs the Worker for `/api/*` with a local D1, and so does `npm run preview` (the built site on port 8787). Before the first run, create the local tables with `npm run db:migrate` and copy `.dev.vars.example` to `.dev.vars`. Stripe can't reach a local server, so to test the webhook locally, set any `STRIPE_WEBHOOK_SECRET` in `.dev.vars` and sign test events with it. Plain `astro preview` serves only the static files, so forms 404 there. To read real submissions:
+`npm run dev` runs the Worker for `/api/*` with a local D1, and so does `npm run preview` (the built site on port 8787). Before the first run, create the local tables with `npm run db:migrate`, add fake problems with `npm run db:seed`, and copy `.dev.vars.example` to `.dev.vars`. Stripe can't reach a local server, so to test the webhook locally, set any `STRIPE_WEBHOOK_SECRET` in `.dev.vars` and sign test events with it. Plain `astro preview` serves only the static files, so forms 404 there. To read real submissions:
 
 ```sh
 npm run wrangler -- d1 execute 40for40 --remote --command "SELECT * FROM people ORDER BY joined_at"
@@ -99,7 +109,8 @@ npm run wrangler -- d1 execute 40for40 --remote --command "SELECT * FROM payment
 ## Where things live
 
 - Site config (start date, links, prices, guests, team): `src/data/site.ts`
-- Day data and statuses (mock data for now): `src/data/days.ts`
+- Day ranking and statuses: `src/data/days.ts`
+- Problems pool (physics, motion, artwork, search): `src/pool/`, settings in `src/pool/config.ts`
 - Theme tokens: `src/styles/global.css`
 - Form handling (fields, limits, storage): `worker/index.ts`, with the database schema in `worker/migrations/`
 

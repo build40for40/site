@@ -1,7 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import DayBoard from "../components/DayBoard.vue";
-import { history, ideas } from "../data/days";
+import { history } from "../data/days";
 ---
 
 <Base dark>
@@ -9,7 +9,7 @@ import { history, ideas } from "../data/days";
     <h1 class="m-0 text-[clamp(44px,6.4vw,84px)] leading-[0.92] font-bold tracking-[-0.045em]">
       <span class="whitespace-nowrap">40 apps.</span> <span class="whitespace-nowrap">40 days.</span>
     </h1>
-    <DayBoard client:load ideas={ideas} history={history} builtAt={Date.now()}>
+    <DayBoard client:load history={history} builtAt={Date.now()}>
       <p class="m-0 max-w-[52ch] text-[19px] leading-[1.4] text-night-sub text-pretty">
         Built in public, live with special guests. Every day stays locked until someone pays us to solve a problem.
       </p>

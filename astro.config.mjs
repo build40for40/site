@@ -3,6 +3,7 @@ import { defineConfig, fontProviders } from 'astro/config';
 
 import vue from '@astrojs/vue';
 import tailwindcss from '@tailwindcss/vite';
+import wasm from 'vite-plugin-wasm';
 import workerDev from './worker/dev.mjs';
 
 // https://astro.build/config
@@ -30,6 +31,6 @@ export default defineConfig({
   ],
 
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss(), wasm()]
   }
 });
