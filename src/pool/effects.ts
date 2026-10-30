@@ -9,7 +9,7 @@ interface Band {
   tile: number;
 }
 
-// Funded ideas that miss the days come out wider than the £0 ones by a pixel a pound, up to a limit that still fits the pool.
+// Funded ideas that miss the days come out wider than the $0 ones by a pixel a dollar, up to a limit that still fits the pool.
 export function boxGrowth(raised: number, { pxPerPound, maxGrowth } = poolConfig.boxes) {
   return Math.min(Math.max(0, raised) * pxPerPound, maxGrowth);
 }

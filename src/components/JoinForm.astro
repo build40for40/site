@@ -1,5 +1,5 @@
 ---
-import { involvement, sponsorAmounts } from "../data/site";
+import { SPONSOR_AMOUNTS, involvement, money } from "../data/site";
 import ShareButton from "./ShareButton.vue";
 import SubmitButton from "./forms/SubmitButton.astro";
 
@@ -111,11 +111,11 @@ const input =
             <ShareButton client:visible expanded label="Share" text="40 apps in 40 days, built live from London. Got a problem? Send it in" url="https://build40for40.com" />
           </div>
           <div role="radiogroup" aria-label="How much?" class="hidden grid-cols-2 gap-2 sm:grid-cols-4 group-has-[[name=backing][value=sponsor]:checked]/join:grid">
-            {sponsorAmounts.map(({ value, label }) => (
+            {SPONSOR_AMOUNTS.map((amount) => (
               <label class="cursor-pointer font-normal!">
-                <input type="radio" name="sponsor" value={value} class="peer sr-only" />
+                <input type="radio" name="sponsor" value={amount * 100} class="peer sr-only" />
                 <span class="block rounded-full border border-night-edge px-3 py-2 text-center text-[15px] font-semibold whitespace-nowrap text-night-text hover:border-night-text peer-checked:border-night-text peer-checked:bg-night-text peer-checked:text-night peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-action">
-                  {label}
+                  {money(amount)}
                 </span>
               </label>
             ))}

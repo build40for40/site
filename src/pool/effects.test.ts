@@ -32,7 +32,7 @@ test("lifting new matches drops the ones that no longer match", () => {
   expect(controller.setBodyHover.mock.calls).toEqual([["b", null]]);
 });
 
-test("funded boxes grow a pixel a pound, up to a limit", () => {
+test("funded boxes grow a pixel a dollar, up to a limit", () => {
   expect(boxGrowth(0)).toBe(0);
   expect(boxGrowth(0.4)).toBe(0.4);
   expect(boxGrowth(4)).toBe(4);

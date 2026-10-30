@@ -22,17 +22,7 @@ export const involvement = [
 
 export const backings = ["share", "sponsor"] as const;
 
-// Values are in cents.
-export const sponsorAmounts = [
-  { value: "400", label: "$4" },
-  { value: "4000", label: "$40" },
-  { value: "10400", label: "$104" },
-  { value: "40000", label: "$400" },
-  { value: "400000", label: "$4,000" },
-  { value: "4000000", label: "$40,000" },
-  { value: "40000000", label: "$400,000" },
-  { value: "400000000", label: "$4,000,000" },
-] as const;
+export const SPONSOR_AMOUNTS = [4, 40, 104, 400, 4_000, 40_000, 400_000, 4_000_000];
 
 export const helpTypes = [
   { value: "office", label: "Office space" },
@@ -44,5 +34,5 @@ export const helpTypes = [
 ] as const;
 
 export const money = (amount: number) =>
-  new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(amount);
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
 

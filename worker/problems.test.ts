@@ -3,7 +3,7 @@ import { excerpt, listProblems, submitterSeed } from "./problems";
 import { addProblem, testDb } from "./test-db";
 
 describe("listProblems", () => {
-  test("ranks by money raised, in pounds, with first names only and never an email", async () => {
+  test("ranks by money raised, in dollars, with first names only and never an email", async () => {
     const { db, sqlite } = testDb();
     const low = addProblem(sqlite, { title: "Low", name: "Ada Example", paid: [500] });
     const high = addProblem(sqlite, { title: "High", name: "  Grace Hopper Example ", paid: [4000, 1000] });

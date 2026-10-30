@@ -66,7 +66,7 @@ export async function listProblems(db: D1Database, { offset, limit, seedSecret }
       problem: row.problem,
       owner: firstName(row.name),
       // Payments don't store how people chose to be credited yet.
-      sponsors: (JSON.parse(row.amounts) as number[]).map((pence) => ({ name: "Anonymous", amount: pence / 100 })),
+      sponsors: (JSON.parse(row.amounts) as number[]).map((cents) => ({ name: "Anonymous", amount: cents / 100 })),
       ...(seedSecret ? { seed: await submitterSeed(row.email, row.id, seedSecret) } : {}),
     })),
   );

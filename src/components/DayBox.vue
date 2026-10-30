@@ -91,7 +91,7 @@ const line = computed(() => {
   }
   if (status !== "queued") return "";
   if (isUpFirst.value) return "Once the clock starts we get 4 hours 40 minutes to ship it.";
-  if (!total.value) return `#${rank} in the queue, pencilled in for ${date}. If it’s still at £0 by 9:00 that day, the day stays locked.`;
+  if (!total.value) return `#${rank} in the queue, pencilled in for ${date}. If it’s still at $0 by 9:00 that day, the day stays locked.`;
   if (rank === 1) return `Top of the queue. If nothing outfunds it by 9:00 on ${date}, we build it.`;
   return `#${rank} in the queue. Outfund the ones above it to move up.`;
 });
@@ -373,7 +373,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
             <p v-if="sponsorNote" class="m-0 text-sm text-night-sub text-pretty">{{ sponsorNote }}</p>
 
             <div class="flex flex-wrap gap-1.5">
-              <div class="grid min-w-56 flex-[2] grid-cols-4 gap-1.5" role="group" aria-label="Amount">
+              <div class="grid min-w-56 flex-[2] grid-cols-[repeat(4,minmax(max-content,1fr))] gap-1.5" role="group" aria-label="Amount">
                 <button
                   v-for="a in SPONSOR_AMOUNTS"
                   :key="a"

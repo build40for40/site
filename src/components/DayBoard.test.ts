@@ -93,7 +93,7 @@ describe("the problems pool", () => {
     await vi.waitFor(() => expect(bodies.registered).toHaveLength(10));
     w.findComponent({ name: "DayBox" }).vm.$emit("pick", "pool-idea-34", 25);
     await flushPromises();
-    await w.findAll("#day-box button").find((b) => b.text() === "£100")!.trigger("click");
+    await w.findAll("#day-box button").find((b) => b.text() === "$104")!.trigger("click");
     await w.find("#sponsor-button").trigger("click");
     await flushPromises();
 

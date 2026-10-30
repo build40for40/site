@@ -37,7 +37,7 @@ const backed = ref<string | null>(null);
 const amount = ref(DEFAULT_AMOUNT);
 const devCounts = ref<{ grid?: number; pool?: number }>({});
 
-// Dev only: ?grid=12 keeps the 12 best-funded ideas and ?pool=5 keeps 5 at £0, topped up from the funded ones it dropped.
+// Dev only: ?grid=12 keeps the 12 best-funded ideas and ?pool=5 keeps 5 at $0, topped up from the funded ones it dropped.
 const submitted = computed(() => {
   const { grid, pool } = devCounts.value;
   if (grid === undefined && pool === undefined) return ideas.value;

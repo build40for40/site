@@ -35,8 +35,8 @@ export function addProblem(sqlite: DatabaseSync, { title = null as string | null
   const at = new Date(Date.UTC(2026, 9, 1, 9, n)).toISOString();
   sqlite.prepare("INSERT INTO people (email, name, joined_at, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING").run(email, name, at, at);
   sqlite.prepare("INSERT INTO problems (id, email, problem, title, created_at) VALUES (?, ?, ?, ?, ?)").run(id, email, problem, title, at);
-  paid.forEach((pence, i) =>
-    sqlite.prepare("INSERT INTO payments (id, problem_id, amount, currency, livemode, paid_at) VALUES (?, ?, ?, 'gbp', 0, ?)").run(`cs_test_${id}_${i}`, id, pence, at),
+  paid.forEach((cents, i) =>
+    sqlite.prepare("INSERT INTO payments (id, problem_id, amount, currency, livemode, paid_at) VALUES (?, ?, ?, 'usd', 0, ?)").run(`cs_test_${id}_${i}`, id, cents, at),
   );
   return id;
 }

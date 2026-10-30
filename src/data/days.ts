@@ -1,5 +1,7 @@
 import { START, TOTAL_DAYS, UK_TZ } from "./site";
 
+export { SPONSOR_AMOUNTS } from "./site";
+
 export interface Sponsor {
   name: string;
   amount: number;
@@ -50,7 +52,6 @@ export interface PoolIdea {
 export type Phase = "before" | "live" | "after";
 
 export const GUEST_DAYS = new Set([10, 15, 21, 28, 34, 40]);
-export const SPONSOR_AMOUNTS = [10, 20, 40, 100];
 export const DEFAULT_AMOUNT = 40;
 
 const DAY_MS = 86_400_000;
@@ -80,7 +81,7 @@ export function clock(now: number): { today: number; phase: Phase; isToday: bool
 export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, now: number, guestSponsors: Record<number, Sponsor[]> = {}) {
   const { today, phase, isToday } = clock(now);
   const started = (day: number) => day < today || (day === today && phase !== "before");
-  // Only ideas with money behind them get a day. Everything at £0 waits in the pool, after any funded overflow. Ticking
+  // Only ideas with money behind them get a day. Everything at $0 waits in the pool, after any funded overflow. Ticking
   // sponsor on the join form always earns a day: the next free one, or the last one if they're all taken, which bumps
   // the lowest funded idea into the pool.
   const funded = ideas.filter((idea) => raised(idea) > 0).toSorted((a, b) => raised(b) - raised(a));

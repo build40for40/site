@@ -1,4 +1,4 @@
-import { TOTAL_DAYS, backings, helpTypes, involvement, sponsorAmounts } from "../src/data/site";
+import { SPONSOR_AMOUNTS, TOTAL_DAYS, backings, helpTypes, involvement } from "../src/data/site";
 import { jevClassifier } from "./classifier";
 import { listProblems } from "./problems";
 import { searchIdeas } from "./search";
@@ -25,7 +25,7 @@ const forms: Record<string, Field[]> = {
     { name: "involved", options: involvement.map((option) => option.value), multiple: true },
     ...involvement.map((option) => ({ name: option.note, max: 200 })),
     { name: "backing", options: backings },
-    { name: "sponsor", options: sponsorAmounts.map((amount) => amount.value) },
+    { name: "sponsor", options: SPONSOR_AMOUNTS.map((amount) => String(amount * 100)) },
     { name: "contact", options: ["yes"] },
   ],
   help: [
