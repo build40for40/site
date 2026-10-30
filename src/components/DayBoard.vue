@@ -106,7 +106,7 @@ onBeforeUnmount(() => {
 
 // A problem sent from the join form lands on the board straight away: on a day if they're sponsoring it, otherwise
 // in the pool. When the form folded into a box, the box lobs onto the day, or curls into a ball and drops from where
-// it is.
+// it is. Whatever the day box was showing stays put.
 const problems = ref<InstanceType<typeof ProblemsPool>>();
 const flight = ref<{ title: string; from: Box } | null>(null);
 const ghost = ref<HTMLElement>();
@@ -136,9 +136,6 @@ async function arrive(event: Event) {
     landed.value = day.key;
     setTimeout(() => (landed.value = null), 400);
   }
-  // Only a sponsored problem scrolls the page, since it's the only one that lands somewhere it has to be seen.
-  if (day) select(day.key);
-  else select(`pool-${idea.id}`, "day-box", false);
 }
 
 // The box lands on the day's tile in the grid, or on its notch in the progress bar on phones, where the grid is hidden.
@@ -149,13 +146,13 @@ async function lobOnto(key: string, element: HTMLElement) {
   await lob(element, boxOf(element), boxOf(target));
 }
 
-function swap(change: () => void, focusId: string, scroll = true) {
+function swap(change: () => void, focusId: string) {
   const apply = async () => {
     change();
     await nextTick();
     const box = document.getElementById("day-box");
     const rect = box?.getBoundingClientRect();
-    if (scroll && rect && (rect.bottom < 160 || rect.top > innerHeight * 0.6)) box?.scrollIntoView({ block: "start" });
+    if (rect && (rect.bottom < 160 || rect.top > innerHeight * 0.6)) box?.scrollIntoView({ block: "start" });
     document.getElementById(focusId)?.focus({ preventScroll: true });
   };
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -163,16 +160,12 @@ function swap(change: () => void, focusId: string, scroll = true) {
   document.startViewTransition(apply).ready.catch(() => {});
 }
 
-function select(key: string, focusId = "day-box", scroll = true) {
-  swap(
-    () => {
-      backed.value = null;
-      amount.value = DEFAULT_AMOUNT;
-      picked.value = key;
-    },
-    focusId,
-    scroll,
-  );
+function select(key: string, focusId = "day-box") {
+  swap(() => {
+    backed.value = null;
+    amount.value = DEFAULT_AMOUNT;
+    picked.value = key;
+  }, focusId);
 }
 
 function pick(key: string, preset: number) {
