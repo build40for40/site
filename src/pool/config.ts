@@ -25,6 +25,9 @@ export const poolConfig = {
     // ideas it lands near. Losing more than impact metres per second of downward speed in one step counts as landing.
     drop: { speed: 520, impact: 2, splash: { radius: 160, speed: 6 } },
   },
+  boxes: {
+    fullAt: 400,
+  },
   search: {
     debounceMs: 400,
     timeoutMs: 2500,

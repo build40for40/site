@@ -3,9 +3,9 @@ import { mount, type VueWrapper } from "@vue/test-utils";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import ProblemsPool from "./ProblemsPool.vue";
 
-vi.mock("../pool/physics", () => ({ initializePhysics: () => ({ registerBody() {}, unregisterBody() {}, setBodyHover() {}, nudge() {}, destroy() {} }) }));
+vi.mock("../pool/physics", () => ({ initializePhysics: () => ({ registerBody() {}, unregisterBody() {}, setBodyHover() {}, nudge() {}, refit() {}, destroy() {} }) }));
 
-const tiles = ["a", "b"].map((id) => ({ key: id, id, title: `Idea ${id}`, problem: `The problem behind ${id}`, label: `Unfunded: Idea ${id}`, sub: "£0" }));
+const tiles = ["a", "b"].map((id) => ({ key: id, id, title: `Idea ${id}`, problem: `The problem behind ${id}`, label: `Unfunded: Idea ${id}`, raised: 0 }));
 
 let wrapper: VueWrapper | undefined;
 beforeEach(() => {

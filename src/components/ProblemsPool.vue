@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type Compon
 import { createVisualIdentity } from "../pool/artwork";
 import { poolConfig } from "../pool/config";
 import { afterLoad } from "../pool/data";
+import { boxScale } from "../pool/effects";
 import { boxOf, fall, lob } from "../pool/flight";
 import type { Match } from "../pool/search";
 import type { PhysicsController } from "../pool/physics";
@@ -15,7 +16,7 @@ export interface PoolTile {
   problem: string;
   seed?: string;
   label: string;
-  sub: string;
+  raised: number;
 }
 
 const props = defineProps<{ tiles: PoolTile[]; matches?: Match[] | null }>();
@@ -210,6 +211,13 @@ watch(
 );
 
 watch(() => props.tiles.length > 0, reveal);
+watch(
+  () => props.tiles.map((t) => boxScale(t.raised)).join(),
+  async () => {
+    await nextTick();
+    controller?.refit();
+  },
+);
 watch(scored, (matches) => lift?.apply(matches));
 watch(() => size.value.height, () => lift?.apply(scored.value));
 watch(physical, (on) => {
@@ -368,12 +376,13 @@ onBeforeUnmount(() => {
         ></span>
       </div>
 
-      <ul ref="list" class="m-0 list-none p-0" :class="physical ? 'relative min-h-0 flex-1 overflow-clip' : 'flex flex-wrap gap-2 px-4 pt-1 pb-6 lg:px-12'">
+      <ul ref="list" class="m-0 list-none p-0" :class="physical ? 'relative min-h-0 flex-1 overflow-clip' : 'flex flex-wrap items-end gap-2 px-4 pt-1 pb-6 lg:px-12'">
         <li
           v-for="t in tiles"
           :key="t.key"
           :ref="(element) => setTile(t.id, element)"
-          class="group h-8 w-10 sm:h-10 sm:w-12"
+          class="group h-[calc(var(--box)*2rem)] w-[calc(var(--box)*2.5rem)] sm:h-[calc(var(--box)*2.5rem)] sm:w-[calc(var(--box)*3rem)]"
+          :style="{ '--box': boxScale(t.raised) }"
           :class="[
             physical ? 'absolute top-0 left-0 will-change-transform focus-within:z-10' : 'relative',
             physical && !active ? 'opacity-0 focus-within:opacity-100' : !physical && matches && !percents.has(t.id) && 'opacity-40',
@@ -386,14 +395,12 @@ onBeforeUnmount(() => {
             :aria-label="t.label"
             :aria-expanded="open === t.id"
             :aria-describedby="open === t.id ? 'pool-tip' : undefined"
-            class="absolute inset-0 flex cursor-pointer flex-col items-start justify-between overflow-hidden rounded-md border-0 bg-night-panel bg-linear-155 from-night-text/10 to-transparent px-1.5 py-1 text-night-text ring-1 ring-night-edge ring-inset hover:brightness-125 motion-safe:hover:animate-wiggle motion-safe:aria-expanded:animate-pop focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-expanded:outline-2 aria-expanded:outline-offset-2 aria-expanded:outline-night-text"
+            class="absolute inset-0 cursor-pointer overflow-hidden rounded-md border-0 bg-night-panel p-0 after:pointer-events-none after:absolute after:inset-0 after:rounded-md after:ring-1 after:ring-night-text/25 after:ring-inset hover:brightness-115 [&>svg]:absolute [&>svg]:top-1/2 [&>svg]:left-0 [&>svg]:h-auto [&>svg]:w-full [&>svg]:-translate-y-1/2 motion-safe:hover:animate-wiggle motion-safe:aria-expanded:animate-pop focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-expanded:outline-2 aria-expanded:outline-offset-2 aria-expanded:outline-night-text"
             @click="clicked(t.id, $event)"
             @focus="focused(t.id, $event)"
             @blur="blurred(t.id, $event)"
-          >
-            <span aria-hidden="true" class="block size-3 overflow-hidden rounded-[3px] sm:size-3.5 [&>svg]:size-full" v-html="artwork.get(t.id)"></span>
-            <span aria-hidden="true" class="font-mono text-[9px] leading-none font-medium text-night-sub sm:text-[10px]">{{ t.sub }}</span>
-          </button>
+            v-html="artwork.get(t.id)"
+          ></button>
           <span
             v-if="physical && percents.has(t.id)"
             aria-hidden="true"

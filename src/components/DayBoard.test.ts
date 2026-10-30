@@ -10,6 +10,7 @@ const physics = () => ({
     unregisterBody: (id: string) => bodies.unregistered.push(id),
     setBodyHover() {},
     nudge() {},
+    refit() {},
     destroy() {},
   }),
 });

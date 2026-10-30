@@ -210,7 +210,7 @@ const poolTiles = computed<PoolTile[]>(() =>
     problem: p.idea!.problem,
     seed: p.idea!.seed,
     label: tileLabel(p),
-    sub: tileSub(p),
+    raised: raised(p.idea!),
   })),
 );
 

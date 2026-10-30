@@ -123,10 +123,15 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     if (next.width === size.width && next.height === size.height) return;
     size = next;
     buildWalls();
+    refit();
+  }
+
+  function refit() {
     for (const t of bodies.values()) {
       if (!t.fixedSize && (t.element.offsetWidth !== t.width || t.element.offsetHeight !== t.height)) {
         t.width = t.element.offsetWidth;
         t.height = t.element.offsetHeight;
+        t.mass = config.body.density * area(t);
         reshape(t);
       }
       clampInside(t);
@@ -426,6 +431,9 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     },
 
     resize,
+
+    // Picks up ideas whose boxes changed size.
+    refit,
 
     get size() {
       return { ...size };

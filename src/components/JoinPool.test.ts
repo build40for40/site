@@ -12,7 +12,7 @@ let wrapper: VueWrapper | undefined;
 beforeEach(() => {
   vi.resetModules();
   vi.doMock("../pool/physics", () => ({
-    initializePhysics: () => ({ registerBody() {}, unregisterBody() {}, setBodyHover: (id: string, y: number | null) => hovers.set(id, y), nudge: () => nudges++, destroy() {} }),
+    initializePhysics: () => ({ registerBody() {}, unregisterBody() {}, setBodyHover: (id: string, y: number | null) => hovers.set(id, y), nudge: () => nudges++, refit() {}, destroy() {} }),
   }));
   hovers.clear();
   nudges = 0;
