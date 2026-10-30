@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import BrowsePanel from "./BrowsePanel.vue";
 import DayBox from "./DayBox.vue";
 import DayTile from "./DayTile.vue";
 import ProblemsPool, { type PoolTile } from "./ProblemsPool.vue";
@@ -107,6 +108,8 @@ onMounted(() => {
   now.value = Date.now() + offset;
   timer = setInterval(() => (now.value = Date.now() + offset), 1000);
   addEventListener(SENT, arrive);
+  addEventListener("click", browseClicked);
+  if (location.hash === "#browse") openBrowse();
   openShared();
   loadIdeas({
     signal: loader.signal,
@@ -144,7 +147,34 @@ onBeforeUnmount(() => {
   loader.abort();
   removeEventListener(SENT, arrive);
   removeEventListener(DEV_FEWER, fewer);
+  removeEventListener("click", browseClicked);
 });
+
+// The Browse link sits in the page's static markup, so the board picks up its clicks and keeps its state in sync.
+const browsing = ref(false);
+const browsable = computed(() => [...board.value.days.filter((d) => d.idea), ...pool.value]);
+const browseLinks = () => document.querySelectorAll<HTMLAnchorElement>('a[href="#browse"]');
+
+function openBrowse() {
+  dispatchEvent(new Event(JOIN_CLOSE));
+  browsing.value = true;
+  browseLinks().forEach((link) => link.setAttribute("aria-expanded", "true"));
+  window.posthog?.capture("browse_opened");
+  nextTick(() => document.getElementById("browse")?.scrollIntoView({ block: "nearest" }));
+}
+
+function closeBrowse() {
+  browsing.value = false;
+  browseLinks().forEach((link) => link.setAttribute("aria-expanded", "false"));
+  browseLinks()[0]?.focus({ preventScroll: true });
+}
+
+function browseClicked(event: MouseEvent) {
+  if (!(event.target instanceof Element && event.target.closest('a[href="#browse"]'))) return;
+  event.preventDefault();
+  if (browsing.value) closeBrowse();
+  else openBrowse();
+}
 
 // A problem sent from the join form lands on the board straight away: on a day by how much they're sponsoring it,
 // otherwise in the pool. When the form folded into a box, the box lobs onto its day while the days after it shift
@@ -327,6 +357,7 @@ const tileSub = (e: Entry) => {
         </div>
       </div>
       <div class="flex flex-col gap-4">
+        <BrowsePanel v-if="browsing" class="in-data-joining:hidden" :entries="browsable" :selected="selected.key" @select="select" @close="closeBrowse" />
         <div class="hidden in-data-joining:block"><slot name="join" /></div>
         <DayBox
           :key="selected.key"

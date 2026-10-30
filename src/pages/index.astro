@@ -27,7 +27,7 @@ const cta = "rounded-full border px-4 py-2 text-sm font-semibold no-underline fo
     </nav>
     <div slot="links" class="flex gap-2">
       <a href="#join" class:list={[cta, "border-brand-lime bg-brand-lime text-brand-lime-ink hover:border-brand-lime-hover hover:bg-brand-lime-hover"]}>I have a problem</a>
-      <a href="#problems" class:list={[cta, "border-night-edge text-night-text hover:border-night-text"]}>Browse</a>
+      <a href="#browse" aria-controls="browse" aria-expanded="false" class:list={[cta, "border-night-edge text-night-text hover:border-night-text"]}>Browse</a>
     </div>
     <JoinForm slot="join" />
   </DayBoard>

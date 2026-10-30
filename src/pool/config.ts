@@ -48,6 +48,8 @@ export const poolConfig = {
     cacheSeconds: 600,
     // Room above a risen idea for its match percentage.
     label: 18,
+    // Browsing searches from a few letters, where the join form waits for a sentence.
+    browseMinLength: 3,
   },
   artwork: {
     version: 2,
