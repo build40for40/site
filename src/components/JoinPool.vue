@@ -9,7 +9,6 @@ import { createSearch, type Match } from "../pool/search";
 const props = defineProps<{ field: string }>();
 
 const ideas = ref<Idea[]>([]);
-const loading = ref(true);
 const matches = ref<Match[] | null>(null);
 const pool = ref<InstanceType<typeof ProblemsPool>>();
 
@@ -53,11 +52,8 @@ onMounted(() => {
     onPage(page) {
       const known = new Set(ideas.value.map((i) => i.id));
       ideas.value.push(...page.filter((i) => !known.has(i.id)));
-      loading.value = false;
     },
-  })
-    .catch(() => {})
-    .finally(() => (loading.value = false));
+  }).catch(() => {});
 });
 
 onBeforeUnmount(() => {
@@ -69,5 +65,5 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <ProblemsPool v-if="loading || tiles.length" ref="pool" :tiles="tiles" :matches="matches" />
+  <ProblemsPool ref="pool" :tiles="tiles" :matches="matches" />
 </template>

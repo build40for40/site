@@ -10,7 +10,7 @@ const input =
 
 <Base title="Join us | 40 for 40">
   <div class="flex flex-col floor:h-dvh">
-    <div class="floor:min-h-0 floor:flex-[2] floor:overflow-y-auto">
+    <div class="floor:min-h-0 floor:flex-1 floor:overflow-y-auto">
       <article class="flex max-w-2xl flex-col gap-10 px-8 py-10 text-xl leading-snug text-pretty md:px-9 md:text-2xl">
         <header class="flex items-start justify-between gap-6">
           <h1 class="text-4xl leading-tight font-semibold tracking-tight md:text-5xl">We’d like to get to know you</h1>
@@ -70,7 +70,7 @@ const input =
         </form>
       </article>
     </div>
-    <JoinPool client:load field="join-problem" class="floor:flex-1" />
+    <JoinPool client:load field="join-problem" />
   </div>
 </Base>
 

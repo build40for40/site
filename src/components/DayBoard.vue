@@ -188,7 +188,7 @@ const tileSub = (e: Entry) => {
 
 <template>
   <div class="flex flex-col floor:h-dvh">
-    <div class="floor:min-h-0 floor:flex-[2] floor:overflow-y-auto">
+    <div class="floor:min-h-0 floor:flex-1 floor:overflow-y-auto">
       <div class="mx-auto flex max-w-[1600px] flex-col gap-3.5 px-4 pt-7 pb-8 lg:px-12 lg:pt-10">
         <slot name="title" />
         <div class="flex flex-col gap-4 lg:gap-5">
@@ -261,6 +261,6 @@ const tileSub = (e: Entry) => {
       </div>
     </div>
 
-    <ProblemsPool v-if="loading || pool.length" class="floor:flex-1" :tiles="poolTiles" />
+    <ProblemsPool :tiles="poolTiles" />
   </div>
 </template>

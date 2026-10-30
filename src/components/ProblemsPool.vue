@@ -73,6 +73,32 @@ const announcement = computed(() => {
   return count ? `${count} unfunded ${count === 1 ? "problem looks" : "problems look"} like yours` : "Nothing in the pool looks like yours yet";
 });
 
+// The band stays shut until there's something to show, then the lava slides up from the floor and the ideas rain in
+// once it's up. Sliding rather than growing keeps everything else on the page still.
+const band = ref<HTMLElement>();
+const shown = ref(false);
+let loaded = false;
+let risen = false;
+let rising = false;
+
+async function reveal() {
+  if (!props.tiles.length) {
+    stop();
+    risen = false;
+    return;
+  }
+  if (risen || rising) return;
+  rising = true;
+  await nextTick();
+  await new Promise(requestAnimationFrame);
+  shown.value = true;
+  await nextTick();
+  await Promise.allSettled((band.value?.getAnimations?.() ?? []).map((a) => a.finished));
+  rising = false;
+  risen = true;
+  start();
+}
+
 let controller: PhysicsController | undefined;
 let lift: ReturnType<typeof createLift> | undefined;
 let starting = false;
@@ -93,7 +119,7 @@ function loadEngine() {
 }
 
 async function start() {
-  if (controller || starting || !physical.value || !list.value) return;
+  if (controller || starting || !loaded || !risen || !physical.value || !list.value) return;
   starting = true;
   let modules;
   try {
@@ -141,6 +167,7 @@ watch(
   },
 );
 
+watch(() => props.tiles.length > 0, reveal);
 watch(scored, (matches) => lift?.apply(matches));
 watch(() => size.value.height, () => lift?.apply(scored.value));
 watch(physical, (on) => {
@@ -246,7 +273,11 @@ onMounted(() => {
 
   addEventListener("pointerdown", onPointerDown, true);
   addEventListener("keydown", onKeyDown, true);
-  afterLoad().then(start);
+  afterLoad().then(() => {
+    loaded = true;
+    start();
+  });
+  reveal();
 });
 
 onBeforeUnmount(() => {
@@ -261,76 +292,83 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section aria-labelledby="pool-title" class="relative flex flex-col bg-linear-to-b from-night from-15% via-lava-deep to-lava text-night-text floor:min-h-0">
-    <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 pt-3 pb-2 lg:px-12">
-      <div class="flex items-baseline gap-3">
-        <h2 id="pool-title" class="m-0 text-xl font-semibold tracking-tight sm:text-2xl">Unfunded problems</h2>
-        <span v-if="tiles.length" class="hidden font-mono text-xs text-night-muted sm:inline">{{ tiles.length }} simmering</span>
-      </div>
-      <button
-        v-if="canMove"
-        type="button"
-        :aria-pressed="motionOn"
-        class="cursor-pointer rounded-full border border-night-edge bg-transparent px-3 py-1 font-mono text-xs font-medium text-night-text hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-pressed:border-night-text"
-        @click="toggleMotion"
-      >
-        Motion {{ motionOn ? "on" : "off" }}
-      </button>
-    </div>
-    <p class="sr-only" role="status" aria-live="polite">{{ announcement }}</p>
-
-    <div v-if="physical" aria-hidden="true" class="pointer-events-none absolute inset-0 overflow-hidden">
-      <div class="absolute inset-x-0 bottom-0 h-2/3 animate-simmer bg-radial-[ellipse_at_50%_100%] from-pop-orange/30 via-pop-red/10 to-transparent to-70%"></div>
-      <span
-        v-for="(b, i) in bubbles"
-        :key="i"
-        class="absolute bottom-0 animate-bubble rounded-full border border-pop-orange/50 bg-pop-yellow/10"
-        :style="b"
-      ></span>
-    </div>
-
-    <ul ref="list" class="m-0 list-none p-0" :class="physical ? 'relative min-h-0 flex-1 overflow-clip' : 'flex flex-wrap gap-2 px-4 pt-1 pb-6 lg:px-12'">
-      <li
-        v-for="t in tiles"
-        :key="t.key"
-        :ref="(element) => setTile(t.id, element)"
-        class="group size-7 rounded-full sm:size-8"
-        :class="[
-          physical ? 'absolute top-0 left-0 will-change-transform focus-within:z-10' : 'relative',
-          physical && !active ? 'opacity-0 focus-within:opacity-100' : !physical && matches && !percents.has(t.id) && 'opacity-40',
-        ]"
-      >
-        <button
-          type="button"
-          :data-pool-circle="t.id"
-          :aria-label="t.label"
-          :aria-expanded="open === t.id"
-          :aria-describedby="open === t.id ? 'pool-tip' : undefined"
-          class="absolute inset-0 cursor-pointer overflow-hidden rounded-full border-0 bg-night-panel p-0 after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:bg-linear-135 after:from-night-text/60 after:via-night-text/5 after:via-45% after:to-transparent after:ring-1 after:ring-night-text/30 after:ring-inset hover:brightness-115 motion-safe:hover:animate-wiggle motion-safe:aria-expanded:animate-pop focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-expanded:outline-2 aria-expanded:outline-offset-2 aria-expanded:outline-night-text [&>svg]:size-full"
-          @click="clicked(t.id, $event)"
-          @focus="focused(t.id, $event)"
-          @blur="blurred(t.id, $event)"
-          v-html="artwork.get(t.id)"
-        ></button>
-        <span
-          v-if="physical && percents.has(t.id)"
-          aria-hidden="true"
-          class="pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded-full bg-night-text px-1.5 font-mono text-[10px] leading-4 font-medium text-night opacity-0 transition-opacity duration-300 group-data-arrived:animate-pop group-data-arrived:opacity-100"
-          >{{ percents.get(t.id) }}%</span
-        >
-      </li>
-    </ul>
-
-    <div
-      v-if="openTile"
-      id="pool-tip"
-      ref="tip"
-      role="tooltip"
-      class="fixed top-0 left-0 z-50 w-max max-w-[min(20rem,calc(100vw-16px))] rounded-lg bg-night-text px-3.5 py-3 text-night shadow-lg"
-      :style="{ transform: `translate(${place.left}px, ${place.top}px)` }"
+  <div class="floor:h-1/3 floor:shrink-0 floor:overflow-hidden" :class="!tiles.length && 'hidden'">
+    <section
+      ref="band"
+      aria-labelledby="pool-title"
+      class="relative flex flex-col bg-linear-to-b from-night from-15% via-lava-deep to-lava text-night-text transition-transform duration-700 ease-out floor:h-full"
+      :class="!shown && 'invisible floor:translate-y-full'"
     >
-      <p class="m-0 text-[15px] leading-snug font-semibold">{{ openTile.title }}</p>
-      <p v-if="blurb" class="m-0 mt-1 text-sm leading-snug text-night-panel">{{ blurb }}</p>
-    </div>
-  </section>
+      <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 pt-3 pb-2 lg:px-12">
+        <div class="flex items-baseline gap-3">
+          <h2 id="pool-title" class="m-0 text-xl font-semibold tracking-tight sm:text-2xl">Unfunded problems</h2>
+          <span v-if="tiles.length" class="hidden font-mono text-xs text-night-muted sm:inline">{{ tiles.length }} simmering</span>
+        </div>
+        <button
+          v-if="canMove"
+          type="button"
+          :aria-pressed="motionOn"
+          class="cursor-pointer rounded-full border border-night-edge bg-transparent px-3 py-1 font-mono text-xs font-medium text-night-text hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-pressed:border-night-text"
+          @click="toggleMotion"
+        >
+          Motion {{ motionOn ? "on" : "off" }}
+        </button>
+      </div>
+      <p class="sr-only" role="status" aria-live="polite">{{ announcement }}</p>
+
+      <div v-if="physical" aria-hidden="true" class="pointer-events-none absolute inset-0 overflow-hidden">
+        <div class="absolute inset-x-0 bottom-0 h-2/3 animate-simmer bg-radial-[ellipse_at_50%_100%] from-pop-orange/30 via-pop-red/10 to-transparent to-70%"></div>
+        <span
+          v-for="(b, i) in bubbles"
+          :key="i"
+          class="absolute bottom-0 animate-bubble rounded-full border border-pop-orange/50 bg-pop-yellow/10"
+          :style="b"
+        ></span>
+      </div>
+
+      <ul ref="list" class="m-0 list-none p-0" :class="physical ? 'relative min-h-0 flex-1 overflow-clip' : 'flex flex-wrap gap-2 px-4 pt-1 pb-6 lg:px-12'">
+        <li
+          v-for="t in tiles"
+          :key="t.key"
+          :ref="(element) => setTile(t.id, element)"
+          class="group size-7 rounded-full sm:size-8"
+          :class="[
+            physical ? 'absolute top-0 left-0 will-change-transform focus-within:z-10' : 'relative',
+            physical && !active ? 'opacity-0 focus-within:opacity-100' : !physical && matches && !percents.has(t.id) && 'opacity-40',
+          ]"
+        >
+          <button
+            type="button"
+            :data-pool-circle="t.id"
+            :aria-label="t.label"
+            :aria-expanded="open === t.id"
+            :aria-describedby="open === t.id ? 'pool-tip' : undefined"
+            class="absolute inset-0 cursor-pointer overflow-hidden rounded-full border-0 bg-night-panel p-0 after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:bg-linear-135 after:from-night-text/60 after:via-night-text/5 after:via-45% after:to-transparent after:ring-1 after:ring-night-text/30 after:ring-inset hover:brightness-115 motion-safe:hover:animate-wiggle motion-safe:aria-expanded:animate-pop focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-expanded:outline-2 aria-expanded:outline-offset-2 aria-expanded:outline-night-text [&>svg]:size-full"
+            @click="clicked(t.id, $event)"
+            @focus="focused(t.id, $event)"
+            @blur="blurred(t.id, $event)"
+            v-html="artwork.get(t.id)"
+          ></button>
+          <span
+            v-if="physical && percents.has(t.id)"
+            aria-hidden="true"
+            class="pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded-full bg-night-text px-1.5 font-mono text-[10px] leading-4 font-medium text-night opacity-0 transition-opacity duration-300 group-data-arrived:animate-pop group-data-arrived:opacity-100"
+            >{{ percents.get(t.id) }}%</span
+          >
+        </li>
+      </ul>
+
+      <div
+        v-if="openTile"
+        id="pool-tip"
+        ref="tip"
+        role="tooltip"
+        class="fixed top-0 left-0 z-50 w-max max-w-[min(20rem,calc(100vw-16px))] rounded-lg bg-night-text px-3.5 py-3 text-night shadow-lg"
+        :style="{ transform: `translate(${place.left}px, ${place.top}px)` }"
+      >
+        <p class="m-0 text-[15px] leading-snug font-semibold">{{ openTile.title }}</p>
+        <p v-if="blurb" class="m-0 mt-1 text-sm leading-snug text-night-panel">{{ blurb }}</p>
+      </div>
+    </section>
+  </div>
 </template>

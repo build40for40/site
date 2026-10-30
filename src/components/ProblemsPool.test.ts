@@ -57,3 +57,12 @@ test("Enter on a focused idea opens its tooltip rather than closing it", async (
   await wrapper!.vm.$nextTick();
   expect(tip()?.textContent).toContain("Idea a");
 });
+
+test("stays shut while there's nothing in the pool, and opens once ideas arrive", async () => {
+  wrapper!.unmount();
+  wrapper = mount(ProblemsPool, { props: { tiles: [] }, attachTo: document.body });
+  expect(wrapper.classes()).toContain("hidden");
+  await wrapper.setProps({ tiles });
+  expect(wrapper.classes()).not.toContain("hidden");
+  await vi.waitFor(() => expect(wrapper!.find("section").classes()).not.toContain("invisible"));
+});
