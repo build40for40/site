@@ -8,6 +8,9 @@ export interface Box {
 // The join form announces each problem it sends, with the box it folded into, or null when it didn't fold.
 export const SENT = "problem-sent";
 
+// Anything that brings the day box back asks the join form to close first.
+export const JOIN_CLOSE = "join-close";
+
 export interface SentProblem {
   problem: string;
   name: string;

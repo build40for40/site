@@ -1,4 +1,4 @@
-import { TOTAL_DAYS, helpTypes, involvement } from "../src/data/site";
+import { TOTAL_DAYS, backings, helpTypes, involvement, sponsorAmounts } from "../src/data/site";
 import { jevClassifier } from "./classifier";
 import { listProblems } from "./problems";
 import { searchIdeas } from "./search";
@@ -23,6 +23,10 @@ const forms: Record<string, Field[]> = {
     email,
     { name: "problem", max: 1000 },
     { name: "involved", options: involvement.map((option) => option.value), multiple: true },
+    ...involvement.map((option) => ({ name: option.note, max: 200 })),
+    { name: "backing", options: backings },
+    { name: "sponsor", options: sponsorAmounts.map((amount) => amount.value) },
+    { name: "contact", options: ["yes"] },
   ],
   help: [
     name,
@@ -73,20 +77,24 @@ interface Person {
   email: string;
   name: string | null;
   involved: string | null;
+  helpNote: string | null;
+  guestNote: string | null;
   now: string;
 }
 
 // A later form fills in or changes answers but never clears one it left out.
-const upsertPerson = (db: D1Database, { email, name, involved, now }: Person) =>
+const upsertPerson = (db: D1Database, { email, name, involved, helpNote, guestNote, now }: Person) =>
   db
     .prepare(
-      `INSERT INTO people (email, name, involved, joined_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?4)
+      `INSERT INTO people (email, name, involved, help_note, guest_note, joined_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6)
        ON CONFLICT (email) DO UPDATE SET
          name = coalesce(excluded.name, name),
          involved = coalesce(excluded.involved, involved),
+         help_note = coalesce(excluded.help_note, help_note),
+         guest_note = coalesce(excluded.guest_note, guest_note),
          updated_at = excluded.updated_at`,
     )
-    .bind(email, name, involved, now);
+    .bind(email, name, involved, helpNote, guestNote, now);
 
 async function capture(env: Env, event: string, distinctId: string, properties: Record<string, unknown>) {
   if (!env.PUBLIC_POSTHOG_PROJECT_TOKEN) return;
@@ -255,10 +263,14 @@ export default {
     }
 
     if (typeof values === "string") return text(values, 400);
+    if (form === "join" && values.problem && !values.backing) return text("Promise to share it or sponsor it, please.", 400);
+    if (values.backing === "sponsor" && !values.sponsor) return text("Pick how much you’re sponsoring.", 400);
 
     const id = crypto.randomUUID();
     const problemId = values.problem ? id : undefined;
     const json = (value: string | string[] | undefined) => (value ? JSON.stringify(value) : null);
+    // A note only counts while its box is ticked, since unticking hides the note but keeps what was typed.
+    const note = (value: string, field: string) => ([values.involved ?? []].flat().includes(value) && values[field] ? String(values[field]) : null);
 
     const record =
       form === "help"
@@ -275,11 +287,14 @@ export default {
               "INSERT INTO guest_applications (id, email, role, nominated_by, bring, availability, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             ).bind(id, values.email, values.role, values.nominated_by ?? null, values.bring, json(values.availability), now)
           : problemId
-            ? env.DB.prepare("INSERT INTO problems (id, email, problem, affects, created_at) VALUES (?1, ?2, ?3, ?4, ?5)").bind(
+            ? env.DB.prepare("INSERT INTO problems (id, email, problem, affects, backing, pledge, contact, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)").bind(
                 problemId,
                 values.email,
                 values.problem,
                 values.affects ?? null,
+                values.backing ?? null,
+                values.backing === "sponsor" ? Number(values.sponsor) : null,
+                form === "join" ? Number(values.contact === "yes") : null,
                 now,
               )
             : undefined;
@@ -289,11 +304,13 @@ export default {
         email: String(values.email),
         name: values.name ? String(values.name) : null,
         involved: json(values.involved),
+        helpNote: note("kind", "help_note"),
+        guestNote: note("guest", "guest_note"),
         now,
       }),
       ...(record ? [record] : []),
     ]);
-    track("form_saved", { form_type: form, involvement: values.involved });
+    track("form_saved", { form_type: form, involvement: values.involved, backing: values.backing });
 
     return home;
   },

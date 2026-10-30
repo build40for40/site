@@ -1,14 +1,14 @@
 ---
 import Base from "../layouts/Base.astro";
 import DayBoard from "../components/DayBoard.vue";
-import EmailBox from "../components/EmailBox.vue";
-import JoinModal from "../components/JoinModal.astro";
+import JoinForm from "../components/JoinForm.astro";
 import SendInPlace from "../components/forms/SendInPlace.astro";
 import DevVariants from "../components/DevVariants.astro";
 import { history } from "../data/days";
 import { links } from "../data/site";
 
 const navLink = "text-night-muted underline-offset-3 hover:text-night-text";
+const cta = "rounded-full border px-4 py-2 text-sm font-semibold no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text";
 ---
 
 <Base dark>
@@ -22,11 +22,12 @@ const navLink = "text-night-muted underline-offset-3 hover:text-night-text";
       <a href={`mailto:${links.email}`} class={navLink}>{links.email}</a>
       <a href="/privacy" class={navLink}>Privacy notice</a>
     </nav>
-    <div class="w-[30rem] max-w-full">
-      <EmailBox opensJoin label="Want us to build your idea?" button="Pitch a problem" />
+    <div slot="links" class="flex gap-2">
+      <a href="#join" class:list={[cta, "border-night-text bg-night-text text-night hover:border-night-sub hover:bg-night-sub"]}>I have a problem</a>
+      <a href="#problems" class:list={[cta, "border-night-edge text-night-text hover:border-night-text"]}>Browse</a>
     </div>
+    <JoinForm slot="join" />
   </DayBoard>
-  <JoinModal />
   <SendInPlace />
   {import.meta.env.DEV && <DevVariants />}
 </Base>

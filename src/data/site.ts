@@ -16,10 +16,22 @@ export const links = {
 };
 
 export const involvement = [
-  { value: "kind", label: "Help in Kind - Office space, AI credits, I can cater an IRL event!" },
-  { value: "marketing", label: "Marketing - I’ll spread the word" },
-  { value: "guest", label: "Be a guest" },
-  { value: "sponsor", label: "Sponsor a Project" },
+  { value: "kind", label: "Help (e.g. office space, credits)", note: "help_note", prompt: "What help?" },
+  { value: "guest", label: "Be a guest", note: "guest_note", prompt: "Why do you want to be a guest?" },
+] as const;
+
+export const backings = ["share", "sponsor"] as const;
+
+// Values are in cents.
+export const sponsorAmounts = [
+  { value: "400", label: "$4" },
+  { value: "4000", label: "$40" },
+  { value: "10400", label: "$104" },
+  { value: "40000", label: "$400" },
+  { value: "400000", label: "$4,000" },
+  { value: "4000000", label: "$40,000" },
+  { value: "40000000", label: "$400,000" },
+  { value: "400000000", label: "$4,000,000" },
 ] as const;
 
 export const helpTypes = [

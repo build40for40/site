@@ -20,7 +20,7 @@ import {
 } from "../data/days";
 import { TOTAL_DAYS, money } from "../data/site";
 import { loadIdeas } from "../pool/data";
-import { SENT, boxOf, lob, type Box, type SentProblem } from "../pool/flight";
+import { JOIN_CLOSE, SENT, boxOf, lob, type Box, type SentProblem } from "../pool/flight";
 import { excerpt } from "../../worker/problems";
 
 const props = defineProps<{ history: Record<number, ShippedIdea>; builtAt: number }>();
@@ -178,6 +178,7 @@ async function lobOnto(key: string, element: HTMLElement) {
 
 function swap(change: () => void, focusId: string) {
   const apply = async () => {
+    dispatchEvent(new Event(JOIN_CLOSE));
     change();
     await nextTick();
     const box = document.getElementById("day-box");
@@ -263,7 +264,7 @@ const tileSub = (e: Entry) => {
         <div aria-label="Progress" class="flex w-full min-w-0 flex-col gap-2 md:w-auto md:max-w-[40rem] md:flex-1">
           <div class="flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-xs font-medium">
             <span>{{ String(shippedCount).padStart(2, "0") }} / 40 SHIPPED</span>
-            <span class="text-night-muted">{{ upcoming }} upcoming<template v-if="pool.length"> · {{ pool.length }} in the pool</template></span>
+            <span class="text-night-muted">{{ upcoming }} upcoming<template v-if="pool.length"> · {{ pool.length }} {{ pool.length === 1 ? "problem" : "problems" }} simmering</template></span>
           </div>
           <div class="flex gap-[3px]" aria-hidden="true">
             <span
@@ -280,8 +281,10 @@ const tileSub = (e: Entry) => {
         </div>
       </div>
       <div class="flex flex-col gap-4">
+        <div class="hidden in-data-joining:block"><slot name="join" /></div>
         <DayBox
           :key="selected.key"
+          class="in-data-joining:hidden"
           :aria-busy="loading"
           :class="loading && 'opacity-60 motion-safe:animate-pulse'"
           :entry="selected"
@@ -323,9 +326,6 @@ const tileSub = (e: Entry) => {
           />
         </ul>
 
-        <section aria-label="About" class="rounded-lg border border-night-line bg-night-panel px-4.5 py-4 min-[900px]:px-6">
-          <slot />
-        </section>
       </div>
     </div>
 

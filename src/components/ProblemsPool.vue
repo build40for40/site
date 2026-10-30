@@ -365,19 +365,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="floor" :class="[!tiles.length && 'hidden', !shown && 'invisible', physical ? 'h-[clamp(12rem,30dvh,17rem)] overflow-hidden' : lava]">
+  <div id="problems" ref="floor" :class="[!tiles.length && 'hidden', !shown && 'invisible', physical ? 'h-[clamp(12rem,30dvh,17rem)] overflow-hidden' : lava]">
     <section
       ref="band"
       aria-labelledby="pool-title"
       class="relative flex flex-col text-night-text transition-transform duration-700 ease-out"
       :class="physical && ['h-full', lava, !shown && 'translate-y-full']"
     >
-      <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 pt-3 pb-2 lg:px-12">
-        <div class="flex items-baseline gap-3">
-          <h2 id="pool-title" class="m-0 text-xl font-semibold tracking-tight sm:text-2xl">Unfunded problems</h2>
-          <span v-if="tiles.length" class="hidden font-mono text-xs text-night-muted sm:inline">{{ tiles.length }} simmering</span>
-        </div>
-      </div>
+      <h2 id="pool-title" class="sr-only">Unfunded problems</h2>
       <p class="sr-only" role="status" aria-live="polite">{{ announcement }}</p>
 
       <div v-if="physical" aria-hidden="true" class="pointer-events-none absolute inset-0 overflow-hidden">
