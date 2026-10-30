@@ -4,6 +4,7 @@ import DayBoard from "../components/DayBoard.vue";
 import EmailBox from "../components/EmailBox.vue";
 import JoinModal from "../components/JoinModal.astro";
 import SendInPlace from "../components/forms/SendInPlace.astro";
+import DevVariants from "../components/DevVariants.astro";
 import { history } from "../data/days";
 import { links } from "../data/site";
 
@@ -27,4 +28,5 @@ const navLink = "text-night-muted underline-offset-3 hover:text-night-text";
   </DayBoard>
   <JoinModal />
   <SendInPlace />
+  {import.meta.env.DEV && <DevVariants />}
 </Base>

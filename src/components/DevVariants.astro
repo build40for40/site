@@ -1,0 +1,69 @@
+---
+const times = [
+  { label: "Real", value: "" },
+  { label: "Day 7 live", value: "2026-11-10T11:20:00Z" },
+  { label: "Between days", value: "2026-11-10T19:00:00Z" },
+];
+const counts = [
+  { label: "Day grid", param: "grid" },
+  { label: "Pool", param: "pool" },
+];
+---
+
+<nav
+  aria-label="Dev variants"
+  class="fixed top-2 left-1/2 z-50 flex -translate-x-1/2 flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border border-night-edge bg-night-panel/95 px-3 py-1.5 font-mono text-[11px] text-night-muted shadow-lg"
+>
+  <div class="flex items-center gap-1">
+    <span class="mr-1 uppercase">Time</span>
+    {
+      times.map((option) => (
+        <a
+          href="#"
+          data-value={option.value}
+          class="rounded-full px-2 py-0.5 whitespace-nowrap text-night-sub no-underline hover:text-night-text aria-[current=true]:bg-night-text aria-[current=true]:text-night"
+        >
+          {option.label}
+        </a>
+      ))
+    }
+  </div>
+  {
+    counts.map(({ label, param }) => (
+      <label class="flex items-center gap-1.5 uppercase">
+        {label}
+        <input
+          type="number"
+          min="0"
+          max="57"
+          placeholder="all"
+          name={param}
+          class="w-14 rounded-full border border-night-edge bg-night px-2 py-0.5 text-night-text placeholder:text-night-muted"
+        />
+      </label>
+    ))
+  }
+</nav>
+
+<script>
+  const current = new URLSearchParams(location.search);
+
+  function go(param: string, value: string) {
+    const params = new URLSearchParams(current);
+    if (value) params.set(param, value);
+    else params.delete(param);
+    const query = params.toString();
+    return query ? `?${query}` : location.pathname;
+  }
+
+  for (const link of document.querySelectorAll<HTMLAnchorElement>("nav[aria-label='Dev variants'] a")) {
+    const value = link.dataset.value ?? "";
+    link.href = go("now", value);
+    if ((current.get("now") ?? "") === value) link.setAttribute("aria-current", "true");
+  }
+
+  for (const input of document.querySelectorAll<HTMLInputElement>("nav[aria-label='Dev variants'] input")) {
+    input.value = current.get(input.name) ?? "";
+    input.addEventListener("change", () => location.assign(go(input.name, input.value)));
+  }
+</script>

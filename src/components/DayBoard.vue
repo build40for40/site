@@ -4,9 +4,12 @@ import DayBox from "./DayBox.vue";
 import DayTile from "./DayTile.vue";
 import ProblemsPool, { type PoolTile } from "./ProblemsPool.vue";
 import {
+  BUILD_MS,
   DEFAULT_AMOUNT,
   buildBoard,
+  countdown,
   dayDate,
+  dayStart,
   raised,
   statusLabel,
   tones,
@@ -30,11 +33,26 @@ const guestSponsors = ref<Record<number, Sponsor[]>>({});
 const picked = ref<string | null>(null);
 const backed = ref<string | null>(null);
 const amount = ref(DEFAULT_AMOUNT);
+const devCounts = ref<{ grid?: number; pool?: number }>({});
 
-const board = computed(() => buildBoard(ideas.value, history.value, now.value, guestSponsors.value));
+// Dev only: ?grid=12 keeps the 12 best-funded ideas and ?pool=5 keeps 5 at £0, topped up from the funded ones it dropped.
+const submitted = computed(() => {
+  const { grid, pool } = devCounts.value;
+  if (grid === undefined && pool === undefined) return ideas.value;
+  const funded = ideas.value.filter((i) => raised(i) > 0);
+  const unfunded = ideas.value.filter((i) => !raised(i));
+  const spare = [...unfunded, ...funded.slice(grid ?? funded.length).map((i) => ({ ...i, sponsors: [] }))];
+  return [...funded.slice(0, grid), ...spare.slice(0, pool ?? unfunded.length)];
+});
+const board = computed(() => buildBoard(submitted.value, history.value, now.value, guestSponsors.value));
 const pool = computed<Entry[]>(() => board.value.pool.map(({ key, idea }) => ({ key, idea, status: "pool" })));
+const nextDay = computed(() => {
+  const { today, phase } = board.value;
+  if (phase === "before") return today;
+  return phase === "after" && today < TOTAL_DAYS ? today + 1 : undefined;
+});
 const selected = computed<Entry>(
-  () => [...board.value.days, ...pool.value].find((e) => e.key === picked.value) ?? board.value.days[board.value.today - 1],
+  () => [...board.value.days, ...pool.value].find((e) => e.key === picked.value) ?? board.value.days[(nextDay.value ?? board.value.today) - 1],
 );
 
 const shippedCount = computed(() => board.value.days.filter((d) => d.status === "shipped").length);
@@ -42,9 +60,16 @@ const upcoming = computed(() => board.value.days.filter((d) => d.status === "que
 
 const kicker = computed(() => {
   const { today, phase, isToday } = board.value;
-  if (phase === "live") return { tone: "text-live", dot: "bg-live motion-safe:animate-pulse", text: `Live now · Day ${today} ships by 13:40 UK` };
-  if (phase === "before") return { tone: "text-night-muted", dot: "bg-queued", text: `Day ${today} starts 9:00 UK${isToday ? "" : `, ${dayDate(today)}`}` };
-  if (today < TOTAL_DAYS) return { tone: "text-night-muted", dot: "bg-shipped", text: `Day ${today} shipped · Day ${today + 1} starts 9:00 UK, ${dayDate(today + 1)}` };
+  if (phase === "live") {
+    const left = countdown(dayStart(today) + BUILD_MS - now.value);
+    return { tone: "text-live", dot: "bg-live motion-safe:animate-pulse", text: `Live now · ${left} left` };
+  }
+  if (phase === "before") {
+    return { tone: "text-night-muted", dot: "bg-queued", text: `Up next · 9:00 UK${isToday ? "" : `, ${dayDate(today)}`}` };
+  }
+  if (today < TOTAL_DAYS) {
+    return { tone: "text-night-muted", dot: "bg-shipped", text: `Day ${today} shipped · Up next 9:00 UK, ${dayDate(today + 1)}` };
+  }
   return { tone: "text-night-muted", dot: "bg-shipped", text: "That’s 40. What a ride." };
 });
 
@@ -59,7 +84,12 @@ const legend = [
 let timer: ReturnType<typeof setInterval> | undefined;
 const loader = new AbortController();
 onMounted(() => {
-  const override = Date.parse(new URLSearchParams(location.search).get("now") ?? "");
+  const params = new URLSearchParams(location.search);
+  const override = Date.parse(params.get("now") ?? "");
+  if (import.meta.env.DEV) {
+    const count = (name: string) => (params.has(name) ? Number(params.get(name)) : undefined);
+    devCounts.value = { grid: count("grid"), pool: count("pool") };
+  }
   const offset = Number.isNaN(override) ? 0 : override - Date.now();
   now.value = Date.now() + offset;
   timer = setInterval(() => (now.value = Date.now() + offset), 1000);
@@ -198,10 +228,6 @@ const tileSub = (e: Entry) => {
           </div>
         </div>
         <div class="flex flex-col gap-4">
-          <section aria-label="About" class="rounded-lg border border-night-line bg-night-panel px-4.5 py-4 min-[900px]:px-6">
-            <slot />
-          </section>
-
           <DayBox
             :key="selected.key"
             :aria-busy="loading"
@@ -215,6 +241,7 @@ const tileSub = (e: Entry) => {
             :amount="amount"
             :backed="backed === selected.key"
             :headline="kicker"
+            :next-day="nextDay"
             @sponsor="sponsorLocally"
             @again="backed = null"
             @pick="pick"
@@ -242,6 +269,10 @@ const tileSub = (e: Entry) => {
               @sponsor="select(d.key, 'sponsor-button')"
             />
           </ul>
+
+          <section aria-label="About" class="rounded-lg border border-night-line bg-night-panel px-4.5 py-4 min-[900px]:px-6">
+            <slot />
+          </section>
         </div>
       </div>
     </div>
