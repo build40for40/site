@@ -3,7 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type Compon
 import { createVisualIdentity } from "../pool/artwork";
 import { poolConfig } from "../pool/config";
 import { afterLoad } from "../pool/data";
-import { boxScale } from "../pool/effects";
+import { boxGrowth } from "../pool/effects";
 import { boxOf, fall, lob } from "../pool/flight";
 import type { Match } from "../pool/search";
 import type { PhysicsController } from "../pool/physics";
@@ -53,7 +53,7 @@ const size = ref({ width: 0, height: 0 });
 
 const canMove = computed(() => poolConfig.physics.enabled && !reduced.value && tall.value);
 const physical = computed(() => canMove.value && motionOn.value && !failed.value);
-const tile = computed(() => (wide.value ? 40 : 32));
+const tile = computed(() => (wide.value ? 20 : 16));
 
 // Spread out without randomness, so the server and the browser draw the same bubbles.
 const bubbles = Array.from({ length: 9 }, (_, i) => ({
@@ -212,7 +212,7 @@ watch(
 
 watch(() => props.tiles.length > 0, reveal);
 watch(
-  () => props.tiles.map((t) => boxScale(t.raised)).join(),
+  () => props.tiles.map((t) => boxGrowth(t.raised)).join(),
   async () => {
     await nextTick();
     controller?.refit();
@@ -381,8 +381,8 @@ onBeforeUnmount(() => {
           v-for="t in tiles"
           :key="t.key"
           :ref="(element) => setTile(t.id, element)"
-          class="group h-[calc(var(--box)*2rem)] w-[calc(var(--box)*2.5rem)] sm:h-[calc(var(--box)*2.5rem)] sm:w-[calc(var(--box)*3rem)]"
-          :style="{ '--box': boxScale(t.raised) }"
+          class="group aspect-5/4 w-[calc(1.25rem+var(--grow))] sm:aspect-6/5 sm:w-[calc(1.5rem+var(--grow))]"
+          :style="{ '--grow': `${boxGrowth(t.raised)}px` }"
           :class="[
             physical ? 'absolute top-0 left-0 will-change-transform focus-within:z-10' : 'relative',
             physical && !active ? 'opacity-0 focus-within:opacity-100' : !physical && matches && !percents.has(t.id) && 'opacity-40',

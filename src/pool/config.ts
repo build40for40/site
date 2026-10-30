@@ -26,8 +26,8 @@ export const poolConfig = {
     drop: { speed: 520, impact: 2, splash: { radius: 160, speed: 6 } },
   },
   boxes: {
-    fullAt: 400,
-    unfunded: 0.5,
+    pxPerPound: 1,
+    maxGrowth: 72,
   },
   search: {
     debounceMs: 400,
