@@ -180,7 +180,10 @@ const tileSub = (e: Entry) => {
     <div class="floor:min-h-0 floor:flex-1 floor:overflow-y-auto">
       <div class="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 pt-7 pb-8 lg:px-12">
         <div class="flex flex-wrap items-end justify-between gap-x-12 gap-y-4">
-          <slot name="title" />
+          <div class="flex flex-col gap-3">
+            <slot name="title" />
+            <slot name="socials" />
+          </div>
           <div aria-label="Progress" class="flex w-full min-w-0 flex-col gap-2 md:w-auto md:max-w-[40rem] md:flex-1">
             <div class="flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-xs font-medium">
               <span>{{ String(shippedCount).padStart(2, "0") }} / 40 SHIPPED</span>
