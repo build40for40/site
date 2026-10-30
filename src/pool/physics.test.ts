@@ -163,6 +163,23 @@ describe("lively", () => {
   });
 });
 
+test("a held idea follows the pointer and flies on when it's let go", () => {
+  const { add, controller } = setup();
+  add("a", { x: 100, y: 200 });
+  controller.advance(2);
+  expect(controller.grab("a", { x: 100, y: 100 })).toBe(true);
+  controller.advance(1);
+  expect(controller.bodyState("a")!.y).toBeCloseTo(100, -1);
+
+  controller.drag({ x: 300, y: 100 });
+  controller.advance(1 / 30);
+  controller.release();
+  const thrown = controller.bodyState("a")!;
+  expect(thrown.vx).toBeGreaterThan(500);
+  controller.advance(1 / 10);
+  expect(controller.bodyState("a")!.x).toBeGreaterThan(thrown.x + 30);
+});
+
 test("destroy cleans up every idea and listener", () => {
   const { container, add, controller } = setup();
   const element = add("a", { x: 100, y: 100 });

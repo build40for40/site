@@ -37,10 +37,12 @@ function travel(element: HTMLElement, from: Box, to: Box, { duration, easing, li
 
 const distance = (from: Box, to: Box) => Math.hypot(to.left - from.left, to.top - from.top);
 
-// A short hop, then a fall that speeds up like it's under gravity. The words fade before the box gets too small for them.
+// A short hop, then a fall that speeds up like it's under gravity, rounding off into a ball. The words fade before the
+// box gets too small for them.
 export function fall(element: HTMLElement, from: Box, to: Box, spin = 0) {
   const duration = 420 + Math.sqrt(distance(from, to)) * 14;
   for (const child of element.children) child.animate([{ opacity: 1 }, { opacity: 1, offset: 0.4 }, { opacity: 0 }], { duration, fill: "forwards" });
+  element.animate([{ borderRadius: "6px" }, { borderRadius: "50%" }], { duration, easing: "ease-in", fill: "forwards" });
   return travel(element, from, to, { duration, easing: "cubic-bezier(.55,0,.9,.55)", lift: 28, peak: 0.2, spin });
 }
 

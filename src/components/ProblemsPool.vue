@@ -6,7 +6,7 @@ import { afterLoad } from "../pool/data";
 import { boxGrowth } from "../pool/effects";
 import { boxOf, fall, lob } from "../pool/flight";
 import type { Match } from "../pool/search";
-import type { PhysicsController } from "../pool/physics";
+import type { PhysicsController, Vector } from "../pool/physics";
 import type { createLift } from "../pool/effects";
 
 export interface PoolTile {
@@ -21,20 +21,6 @@ export interface PoolTile {
 
 const props = defineProps<{ tiles: PoolTile[]; matches?: Match[] | null }>();
 
-const MOTION_KEY = "pool-motion";
-const remember = (key: string, value: string) => {
-  try {
-    localStorage.setItem(key, value);
-  } catch {}
-};
-const recall = (key: string) => {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-};
-
 const list = ref<HTMLElement>();
 const elements = new Map<string, HTMLElement>();
 const setTile = (id: string, element: Element | ComponentPublicInstance | null) => {
@@ -44,16 +30,13 @@ const setTile = (id: string, element: Element | ComponentPublicInstance | null) 
 
 // These start as the server renders them, and the real values arrive once mounted.
 const reduced = ref(false);
-const tall = ref(true);
-const motionOn = ref(true);
 const failed = ref(false);
 const active = ref(false);
 const wide = ref(false);
 const size = ref({ width: 0, height: 0 });
 
-const canMove = computed(() => poolConfig.physics.enabled && !reduced.value && tall.value);
-const physical = computed(() => canMove.value && motionOn.value && !failed.value);
-const tile = computed(() => (wide.value ? 20 : 16));
+const physical = computed(() => poolConfig.physics.enabled && !reduced.value && !failed.value);
+const tile = computed(() => (wide.value ? 24 : 20));
 
 // Spread out without randomness, so the server and the browser draw the same bubbles.
 const bubbles = Array.from({ length: 9 }, (_, i) => ({
@@ -78,6 +61,7 @@ const announcement = computed(() => {
 
 // The band stays shut until there's something to show, then the lava slides up from the floor and the ideas rain in
 // once it's up. Sliding rather than growing keeps everything else on the page still.
+const floor = ref<HTMLElement>();
 const band = ref<HTMLElement>();
 const shown = ref(false);
 let loaded = false;
@@ -153,7 +137,7 @@ function stop() {
 function register(ids: string[]) {
   ids.forEach((id, i) => {
     const element = elements.get(id);
-    if (element) controller?.registerBody(id, element, { delayMs: held.value.has(id) ? Infinity : i * poolConfig.physics.rainStaggerMs });
+    if (element) controller?.registerBody(id, element, { shape: "circle", delayMs: held.value.has(id) ? Infinity : i * poolConfig.physics.rainStaggerMs });
   });
 }
 
@@ -182,6 +166,7 @@ async function receive(id: string, ghost: HTMLElement) {
   await settled();
   await nextTick();
   const element = elements.get(id);
+  floor.value?.scrollIntoView({ block: "nearest" });
   const box = list.value && boxOf(list.value);
   if (controller && element && box) {
     const { offsetWidth: width, offsetHeight: height } = element;
@@ -220,17 +205,7 @@ watch(
 );
 watch(scored, (matches) => lift?.apply(matches));
 watch(() => size.value.height, () => lift?.apply(scored.value));
-watch(physical, (on) => {
-  document.documentElement.toggleAttribute("data-pool-stacked", !on);
-  if (on) start();
-  else stop();
-});
-
-function toggleMotion() {
-  motionOn.value = !motionOn.value;
-  failed.value = false;
-  remember(MOTION_KEY, motionOn.value ? "on" : "off");
-}
+watch(physical, (on) => (on ? start() : stop()));
 
 const open = ref<string | null>(null);
 const tip = ref<HTMLElement>();
@@ -268,9 +243,55 @@ watch(open, async (id) => {
 
 const close = () => (open.value = null);
 
-// Keyboard clicks have no detail and only ever open, since focus has already opened the tooltip.
+// Keyboard clicks have no detail and only ever open, since focus has already opened the tooltip. The click that ends a
+// drag isn't a tap.
 function clicked(id: string, event: MouseEvent) {
+  if (thrown) {
+    thrown = false;
+    return;
+  }
   open.value = event.detail === 0 || open.value !== id ? id : null;
+}
+
+// Click and hold picks an idea up, and moving while it's held drags it. Letting go throws it.
+let press: { id: string; pointer: number; start: Vector; at: Vector; timer: ReturnType<typeof setTimeout>; holding: boolean } | undefined;
+let thrown = false;
+
+function local(event: PointerEvent): Vector {
+  const box = list.value!.getBoundingClientRect();
+  return { x: event.clientX - box.left, y: event.clientY - box.top };
+}
+
+function pickUp() {
+  if (!press || press.holding) return;
+  clearTimeout(press.timer);
+  press.holding = !!controller?.grab(press.id, press.at);
+  if (press.holding) close();
+}
+
+function pressed(id: string, event: PointerEvent) {
+  thrown = false;
+  if (!controller || event.button !== 0) return;
+  (event.currentTarget as Element).setPointerCapture?.(event.pointerId);
+  const at = local(event);
+  press = { id, pointer: event.pointerId, start: at, at, holding: false, timer: setTimeout(pickUp, poolConfig.physics.drag.holdMs) };
+}
+
+function moved(event: PointerEvent) {
+  if (event.pointerId !== press?.pointer) return;
+  press.at = local(event);
+  if (!press.holding && Math.hypot(press.at.x - press.start.x, press.at.y - press.start.y) > poolConfig.physics.drag.movePx) pickUp();
+  if (press.holding) controller?.drag(press.at);
+}
+
+function lifted(event: PointerEvent) {
+  if (event.pointerId !== press?.pointer) return;
+  clearTimeout(press.timer);
+  if (press.holding) {
+    controller?.release();
+    thrown = true;
+  }
+  press = undefined;
 }
 
 function focused(id: string, event: FocusEvent) {
@@ -281,14 +302,14 @@ function focused(id: string, event: FocusEvent) {
 
 function blurred(id: string, event: FocusEvent) {
   const next = event.relatedTarget as Element | null;
-  if (open.value === id && !next?.closest?.("[data-pool-box]")) close();
+  if (open.value === id && !next?.closest?.("[data-pool-ball]")) close();
 }
 
 function onPointerDown(event: PointerEvent) {
   if (!open.value) return;
   const target = event.target as Element | null;
-  const box = target?.closest?.("[data-pool-box]");
-  if (box?.getAttribute("data-pool-box") === open.value || target?.closest?.("#pool-tip")) return;
+  const ball = target?.closest?.("[data-pool-ball]");
+  if (ball?.getAttribute("data-pool-ball") === open.value || target?.closest?.("#pool-tip")) return;
   close();
 }
 
@@ -311,11 +332,8 @@ onMounted(() => {
     list.addEventListener("change", update);
     media.push([list, update]);
   };
-  motionOn.value = recall(MOTION_KEY) !== "off";
   watchMedia("(prefers-reduced-motion: reduce)", (matches) => (reduced.value = matches));
-  watchMedia("(min-height: 500px)", (matches) => (tall.value = matches));
   watchMedia("(min-width: 640px)", (matches) => (wide.value = matches));
-  document.documentElement.toggleAttribute("data-pool-stacked", !physical.value);
 
   if (list.value) size.value = { width: list.value.clientWidth, height: list.value.clientHeight };
   sizer = new ResizeObserver(([entry]) => (size.value = { width: entry.contentRect.width, height: entry.contentRect.height }));
@@ -336,33 +354,24 @@ onBeforeUnmount(() => {
   for (const [list, update] of media) list.removeEventListener("change", update);
   removeEventListener("pointerdown", onPointerDown, true);
   removeEventListener("keydown", onKeyDown, true);
-  document.documentElement.removeAttribute("data-pool-stacked");
+  if (press) clearTimeout(press.timer);
   stop();
 });
 </script>
 
 <template>
-  <div class="floor:h-[clamp(9rem,22dvh,13rem)] floor:shrink-0 floor:overflow-hidden" :class="!tiles.length && 'hidden'">
+  <div ref="floor" :class="[!tiles.length && 'hidden', physical && 'h-[clamp(12rem,30dvh,17rem)] overflow-hidden']">
     <section
       ref="band"
       aria-labelledby="pool-title"
-      class="relative flex flex-col bg-linear-to-b from-night from-15% via-lava-deep to-lava text-night-text transition-transform duration-700 ease-out floor:h-full"
-      :class="!shown && 'invisible floor:translate-y-full'"
+      class="relative flex flex-col bg-linear-to-b from-night from-15% via-lava-deep to-lava text-night-text transition-transform duration-700 ease-out"
+      :class="[physical && 'h-full', !shown && ['invisible', physical && 'translate-y-full']]"
     >
       <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 pt-3 pb-2 lg:px-12">
         <div class="flex items-baseline gap-3">
           <h2 id="pool-title" class="m-0 text-xl font-semibold tracking-tight sm:text-2xl">Unfunded problems</h2>
           <span v-if="tiles.length" class="hidden font-mono text-xs text-night-muted sm:inline">{{ tiles.length }} simmering</span>
         </div>
-        <button
-          v-if="canMove"
-          type="button"
-          :aria-pressed="motionOn"
-          class="cursor-pointer rounded-full border border-night-edge bg-transparent px-3 py-1 font-mono text-xs font-medium text-night-text hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-pressed:border-night-text"
-          @click="toggleMotion"
-        >
-          Motion {{ motionOn ? "on" : "off" }}
-        </button>
       </div>
       <p class="sr-only" role="status" aria-live="polite">{{ announcement }}</p>
 
@@ -381,7 +390,7 @@ onBeforeUnmount(() => {
           v-for="t in tiles"
           :key="t.key"
           :ref="(element) => setTile(t.id, element)"
-          class="group aspect-5/4 w-[calc(1.25rem+var(--grow))] sm:aspect-6/5 sm:w-[calc(1.5rem+var(--grow))]"
+          class="group aspect-square w-[calc(1.25rem+var(--grow))] rounded-full sm:w-[calc(1.5rem+var(--grow))]"
           :style="{ '--grow': `${boxGrowth(t.raised)}px` }"
           :class="[
             physical ? 'absolute top-0 left-0 will-change-transform focus-within:z-10' : 'relative',
@@ -391,12 +400,17 @@ onBeforeUnmount(() => {
         >
           <button
             type="button"
-            :data-pool-box="t.id"
+            :data-pool-ball="t.id"
             :aria-label="t.label"
             :aria-expanded="open === t.id"
             :aria-describedby="open === t.id ? 'pool-tip' : undefined"
-            class="absolute inset-0 cursor-pointer overflow-hidden rounded-md border-0 bg-night-panel p-0 after:pointer-events-none after:absolute after:inset-0 after:rounded-md after:ring-1 after:ring-night-text/25 after:ring-inset hover:brightness-115 [&>svg]:absolute [&>svg]:top-1/2 [&>svg]:left-0 [&>svg]:h-auto [&>svg]:w-full [&>svg]:-translate-y-1/2 motion-safe:hover:animate-wiggle motion-safe:aria-expanded:animate-pop focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-expanded:outline-2 aria-expanded:outline-offset-2 aria-expanded:outline-night-text"
+            class="absolute inset-0 cursor-pointer overflow-hidden rounded-full border-0 bg-night-panel p-0 select-none after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:bg-linear-135 after:from-night-text/60 after:via-night-text/5 after:via-45% after:to-transparent after:ring-1 after:ring-night-text/30 after:ring-inset hover:brightness-115 active:cursor-grabbing [&>svg]:size-full motion-safe:hover:animate-wiggle motion-safe:aria-expanded:animate-pop focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-expanded:outline-2 aria-expanded:outline-offset-2 aria-expanded:outline-night-text"
+            :class="physical && 'touch-none'"
             @click="clicked(t.id, $event)"
+            @pointerdown="pressed(t.id, $event)"
+            @pointermove="moved"
+            @pointerup="lifted"
+            @pointercancel="lifted"
             @focus="focused(t.id, $event)"
             @blur="blurred(t.id, $event)"
             v-html="artwork.get(t.id)"

@@ -23,7 +23,6 @@ const pages: Record<string, unknown> = {
 };
 
 let reducedMotion = false;
-let tall = true;
 let wrapper: VueWrapper | undefined;
 
 beforeEach(() => {
@@ -34,14 +33,13 @@ beforeEach(() => {
   vi.resetModules();
   vi.doMock("../pool/physics", physics);
   reducedMotion = false;
-  tall = true;
   localStorage.clear();
   vi.stubGlobal("fetch", async (url: string) => {
     const { pathname, searchParams } = new URL(url, "http://localhost");
     if (pathname === "/api/problems") return Response.json(pages[searchParams.get("offset")!]);
     return new Response("", { status: 404 });
   });
-  vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce") ? reducedMotion : query.includes("min-height") ? tall : false, addEventListener() {}, removeEventListener() {} }));
+  vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce") && reducedMotion, addEventListener() {}, removeEventListener() {} }));
   vi.stubGlobal(
     "IntersectionObserver",
     class {
@@ -81,7 +79,6 @@ async function board() {
 
 const pool = (w: VueWrapper) => w.find("section[aria-labelledby=pool-title] ul");
 const poolTitles = (w: VueWrapper) => pool(w).findAll("button").map((b) => b.attributes("aria-label")!.match(/: (.+),/)![1]);
-const stacked = () => document.documentElement.hasAttribute("data-pool-stacked");
 
 describe("the problems pool", () => {
   test("shows every idea that didn't make the days, as bodies once it's on screen", async () => {
@@ -126,31 +123,12 @@ describe("the problems pool", () => {
     const w = await board();
     await vi.waitFor(() => expect(pool(w).classes()).toContain("flex-wrap"));
     expect(pool(w).find("li").classes()).not.toContain("opacity-0");
-    expect(stacked()).toBe(true);
   });
 
-  test("screens too short for a floor get the stacked page and the plain grid", async () => {
-    tall = false;
-    const w = await board();
-    expect(pool(w).classes()).toContain("flex-wrap");
-    expect(stacked()).toBe(true);
-    expect(bodies.registered).toHaveLength(0);
-    expect(w.text()).not.toContain("Motion on");
-  });
-
-  test("turning motion off leaves the plain grid", async () => {
-    localStorage.setItem("pool-motion", "off");
-    const w = await board();
-    expect(pool(w).classes()).toContain("flex-wrap");
-    expect(bodies.registered).toHaveLength(0);
-    expect(w.find("section[aria-labelledby=pool-title] button[aria-pressed=false]").text()).toBe("Motion off");
-  });
-
-  test("reduced motion gets the plain grid and no motion controls", async () => {
+  test("reduced motion gets the plain grid", async () => {
     reducedMotion = true;
     const w = await board();
     expect(pool(w).classes()).toContain("flex-wrap");
     expect(bodies.registered).toHaveLength(0);
-    expect(w.text()).not.toContain("Motion on");
   });
 });

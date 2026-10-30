@@ -68,6 +68,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
   let clock = 0;
   let nextBoil = 0;
   let lastNudge = -Infinity;
+  let held: { t: Tracked; target: Vector } | undefined;
 
   const maxV = config.maxSpeed;
 
@@ -149,7 +150,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
   function hover() {
     const { stiffness, damping } = config.hover;
     for (const t of bodies.values()) {
-      if (t.hover === undefined || !t.shown) continue;
+      if (t.hover === undefined || !t.shown || t === held?.t) continue;
       const p = t.body.translation();
       const v = t.body.linvel();
       const y = Math.min(Math.max(t.hover, t.height / 2), size.height - t.height / 2);
@@ -165,7 +166,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
   const resting = () =>
     [...bodies.values()].filter((t) => {
       const v = t.body.linvel();
-      return t.shown && t.hover === undefined && Math.hypot(v.x, v.y) < 0.5;
+      return t.shown && t.hover === undefined && t !== held?.t && Math.hypot(v.x, v.y) < 0.5;
     });
 
   function hop(t: Tracked, speed: number) {
@@ -216,7 +217,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     const { radius, speed } = config.drop.splash;
     const x = toPx(at.body.translation().x);
     for (const t of bodies.values()) {
-      if (t === at || !t.shown || t.hover !== undefined) continue;
+      if (t === at || !t.shown || t.hover !== undefined || t === held?.t) continue;
       const dx = toPx(t.body.translation().x) - x;
       const near = 1 - Math.abs(dx) / radius;
       if (near <= 0) continue;
@@ -236,6 +237,16 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     }
   }
 
+  // A held idea chases the pointer, so letting go leaves it moving at the pointer's speed: a throw.
+  function follow() {
+    if (!held) return;
+    const { t, target } = held;
+    const p = t.body.translation();
+    const k = config.drag.follow;
+    t.body.setLinvel({ x: (toM(target.x) - p.x) * k, y: (toM(target.y) - p.y) * k }, true);
+    t.body.setAngvel(t.body.angvel() * config.drag.spinKeep, true);
+  }
+
   function clampVelocities() {
     for (const t of bodies.values()) {
       const v = t.body.linvel();
@@ -250,6 +261,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     spawnDue();
     boil();
     hover();
+    follow();
     world.step();
     landed();
     clampVelocities();
@@ -385,9 +397,29 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
       render(1);
     },
 
+    // Picks up an idea at a point in pixels from the pool's top left. False if it isn't in the pool yet.
+    grab(id: string, at: Vector) {
+      const t = bodies.get(id);
+      if (!t?.shown) return false;
+      held = { t, target: at };
+      t.body.setGravityScale(0, true);
+      return true;
+    },
+
+    drag(at: Vector) {
+      if (held) held.target = at;
+    },
+
+    release() {
+      if (!held) return;
+      held.t.body.setGravityScale(held.t.hover === undefined ? 1 : 0, true);
+      held = undefined;
+    },
+
     unregisterBody(id: string) {
       const t = bodies.get(id);
       if (!t) return;
+      if (held?.t === t) held = undefined;
       world.removeRigidBody(t.body);
       bodies.delete(id);
       t.element.style.transform = "";
