@@ -70,13 +70,13 @@ gh secret set CLOUDFLARE_API_TOKEN
 
 ## Forms
 
-Every form posts to `/api/forms/<form>` (`subscribe`, `join`, `help`, `guest`, `problem`). The Worker checks the fields, saves them and redirects to `/thanks/`. A hidden `website` field catches bots, which get the thanks page without being saved.
+Every form posts to `/api/forms/<form>` (`subscribe`, `join`, `help`, `guest`, `problem`). The Worker checks the fields and saves them. The home page posts them in the background and shows a thank you in place of the form, and without JavaScript the Worker redirects back to `/`. A hidden `website` field catches bots, which get the same answer without being saved.
 
 ### Data
 
 Everything lives in the `40for40` D1 database, with the schema in `worker/migrations/`:
 
-- **`people`:** one row per email. The Join box creates it, and later forms fill in or change answers without clearing ones they leave out, keeping the original `joined_at`. `involved` is a JSON array and `sponsor` is the amount in pence picked before checkout.
+- **`people`:** one row per email. The first form someone sends creates it, and later forms fill in or change answers without clearing ones they leave out, keeping the original `joined_at`. `involved` is a JSON array and `sponsor` is the amount in pence picked before checkout.
 - **`problems`:** one row per problem submitted, so a second problem from the same person never replaces the first.
 - **`payments`:** one row per paid Stripe Checkout Session, written by the webhook.
 - **`help_offers`** and **`guest_applications`:** one row per submission of the hidden help and guest forms.
@@ -118,7 +118,7 @@ npm run wrangler -- d1 execute 40for40 --remote --command "SELECT * FROM payment
 
 PostHog (EU) runs in cookieless mode: nothing is stored in the browser, and PostHog hashes IP, user agent and host into a visitor id that changes daily. The project needs **Cookieless server hash mode** on (Project settings > Web analytics), or every event is dropped.
 
-The browser sends page views, clicks, errors, `form_submitted`, `checkout_started` from a day and `stream_loaded`. The Worker sends `form_saved` once a form is stored, with the same cookieless fields so it joins the visitor's funnel. The Stripe webhook sends `payment_completed`, keyed by Checkout Session since it can't be tied to a visitor.
+The browser sends page views, clicks, errors, `form_submitted`, `join_opened` when the join form pops up, `checkout_started` from a day and `stream_loaded`. The Worker sends `form_saved` once a form is stored, with the same cookieless fields so it joins the visitor's funnel. The Stripe webhook sends `payment_completed`, keyed by Checkout Session since it can't be tied to a visitor.
 
 - **Build:** `PUBLIC_POSTHOG_PROJECT_TOKEN` and `PUBLIC_POSTHOG_HOST` in `.env` locally, and for CI as a repo secret (the token, since GitHub rejects it as a variable) and a repo variable (the host).
 - **Worker:** the same names. `PUBLIC_POSTHOG_HOST` is in `wrangler.jsonc`, and `PUBLIC_POSTHOG_PROJECT_TOKEN` is a secret (`.dev.vars` locally, `npm run wrangler -- secret put PUBLIC_POSTHOG_PROJECT_TOKEN` in production).

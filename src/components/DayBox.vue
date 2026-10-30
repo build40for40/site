@@ -30,6 +30,7 @@ const props = defineProps<{
   now: number;
   amount: number;
   backed: boolean;
+  headline: { tone: string; dot: string; text: string };
 }>();
 const emit = defineEmits<{ sponsor: [amount: number, anonymous: boolean]; pick: [key: string, amount: number]; again: [] }>();
 
@@ -43,6 +44,7 @@ const shippedIdea = computed(() => props.entry.idea as ShippedIdea);
 const sponsors = computed(() => idea.value?.sponsors ?? props.entry.sponsors ?? []);
 const total = computed(() => sponsors.value.reduce((sum, s) => sum + s.amount, 0));
 const isTodayEntry = computed(() => props.entry.day === props.today);
+const repeatsHeadline = computed(() => isTodayEntry.value && (props.entry.status === "live" || props.entry.status === "shipped"));
 const label = computed(() => statusLabel(props.entry, props.today));
 const glyph = computed(() => ({ live: "● ", shipped: "✓ " })[props.entry.status as "live" | "shipped"] ?? "");
 const where = computed(() => {
@@ -162,8 +164,11 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
     :class="tones[entry.status].border"
   >
     <div class="col-span-full flex flex-wrap justify-between gap-x-3 gap-y-1" :class="kicker">
-      <span>{{ where }}</span>
-      <span :class="tones[entry.status].text">{{ glyph }}{{ label }}</span>
+      <span v-if="isTodayEntry" class="flex items-center gap-2" :class="headline.tone">
+        <span class="size-[7px] shrink-0 rounded-full" :class="headline.dot"></span>{{ headline.text }}
+      </span>
+      <span v-else>{{ where }}</span>
+      <span v-if="!repeatsHeadline" :class="tones[entry.status].text">{{ glyph }}{{ label }}</span>
     </div>
 
     <div class="flex min-w-0 flex-col overflow-hidden rounded-md bg-night-panel md:row-span-2 xl:row-span-1">
@@ -252,14 +257,14 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
         <p class="m-0 text-[15px] leading-snug text-night-sub text-pretty">A special guest brings their own problem and builds it with us. It stays a secret until 9:00 on {{ entry.date }}.</p>
         <p class="m-0 text-[15px] leading-snug text-pretty">Same rules as every day: 4 hours 40 minutes on the clock, live on Twitch.</p>
         <ShareButton v-if="share" v-bind="share" />
-        <div class="mt-auto pt-2"><EmailBox intent="updates" :label="`Remind me on ${entry.date}`" button="Remind me" /></div>
-        <a href="/join" :class="smallLink">Suggest a guest</a>
+        <div class="mt-auto pt-2"><EmailBox :label="`Remind me on ${entry.date}`" button="Remind me" /></div>
+        <a href="#join" :class="smallLink">Suggest a guest</a>
       </template>
       <template v-else-if="entry.status === 'open'">
         <h2 class="m-0 text-[26px] leading-[1.04] font-semibold tracking-tight text-balance md:text-3xl">Sponsor this day</h2>
         <p class="m-0 text-[15px] leading-snug text-night-sub text-pretty">Nothing’s booked for {{ entry.date }} yet. Bring a problem and sponsor it, and the queue grows into this day.</p>
         <p class="m-0 text-[15px] leading-snug text-pretty">The idea with the most sponsorship goes first.</p>
-        <a href="/join" :class="mainButton">Bring your own problem</a>
+        <a href="#join" :class="mainButton">Bring your own problem</a>
       </template>
       <template v-else-if="idea">
         <h2 class="relative m-0 text-[26px] leading-[1.04] font-semibold tracking-tight text-balance md:text-3xl">{{ idea.title }}</h2>
@@ -273,7 +278,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
         </p>
 
         <div v-if="entry.status === 'queued'" class="mt-auto pt-2">
-          <EmailBox intent="updates" :label="`Get a ping when Day ${entry.day} goes live`" button="Ping me" />
+          <EmailBox :label="`Get a ping when Day ${entry.day} goes live`" button="Ping me" />
         </div>
         <template v-else-if="entry.status === 'live'">
           <div class="mt-auto flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-t border-night-line pt-2.5">

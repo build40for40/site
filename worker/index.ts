@@ -225,7 +225,7 @@ export default {
     const origin = request.headers.get("Origin");
     if (origin && origin !== url.origin) return text("Forbidden.", 403);
 
-    const thanks = Response.redirect(new URL("/thanks/", url).href, 303);
+    const home = Response.redirect(new URL("/", url).href, 303);
     let data: FormData;
     try {
       data = await request.formData();
@@ -233,7 +233,7 @@ export default {
       return text("Bad request.", 400);
     }
     // Honeypot: bots fill in every field, people never see this one.
-    if (data.get("website")) return thanks;
+    if (data.get("website")) return home;
 
     const values = parse(fields, data);
     const now = new Date().toISOString();
@@ -249,9 +249,9 @@ export default {
           .run();
         track("form_saved", { form_type: form });
       }
-      if (data.get("next") === "thanks") return thanks;
+      if (data.get("next") === "thanks") return home;
       const typed = String(data.get("email") ?? "").trim();
-      return Response.redirect(new URL(typed ? `/join/#email=${encodeURIComponent(typed)}` : "/join/", url).href, 303);
+      return Response.redirect(new URL(typed ? `/#join&email=${encodeURIComponent(typed)}` : "/#join", url).href, 303);
     }
 
     if (typeof values === "string") return text(values, 400);
@@ -295,6 +295,6 @@ export default {
     ]);
     track("form_saved", { form_type: form, involvement: values.involved });
 
-    return thanks;
+    return home;
   },
 } satisfies ExportedHandler<Env>;

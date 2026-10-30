@@ -3,7 +3,6 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import DayBox from "./DayBox.vue";
 import DayTile from "./DayTile.vue";
 import ProblemsPool, { type PoolTile } from "./ProblemsPool.vue";
-import EmailBox from "./EmailBox.vue";
 import {
   DEFAULT_AMOUNT,
   buildBoard,
@@ -40,7 +39,6 @@ const selected = computed<Entry>(
 
 const shippedCount = computed(() => board.value.days.filter((d) => d.status === "shipped").length);
 const upcoming = computed(() => board.value.days.filter((d) => d.status === "queued").length);
-const open = computed(() => board.value.days.filter((d) => d.status === "open").length);
 
 const kicker = computed(() => {
   const { today, phase, isToday } = board.value;
@@ -49,15 +47,6 @@ const kicker = computed(() => {
   if (today < TOTAL_DAYS) return { tone: "text-night-muted", dot: "bg-shipped", text: `Day ${today} shipped · Day ${today + 1} starts 9:00 UK, ${dayDate(today + 1)}` };
   return { tone: "text-night-muted", dot: "bg-shipped", text: "That’s 40. What a ride." };
 });
-
-const submit = computed(() =>
-  open.value
-    ? { title: "Submit a problem", sub: `${open.value} more days need a problem to solve` }
-    : {
-        title: "Submit a new problem",
-        sub: `All 40 days are spoken for${pool.value.length ? `, ${pool.value.length} more in the pool` : ""}. Outfund one to jump the queue.`,
-      },
-);
 
 const legend = [
   { label: "shipped", dot: tones.shipped.dot },
@@ -189,27 +178,28 @@ const tileSub = (e: Entry) => {
 <template>
   <div class="flex flex-col floor:h-dvh">
     <div class="floor:min-h-0 floor:flex-1 floor:overflow-y-auto">
-      <div class="mx-auto flex max-w-[1600px] flex-col gap-3.5 px-4 pt-7 pb-8 lg:px-12 lg:pt-10">
-        <slot name="title" />
-        <div class="flex flex-col gap-4 lg:gap-5">
-          <div class="-mt-1 flex items-center gap-2 font-mono text-xs font-medium tracking-wider uppercase" :class="kicker.tone">
-            <span class="size-[7px] shrink-0 rounded-full" :class="kicker.dot"></span>{{ kicker.text }}
+      <div class="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 pt-7 pb-8 lg:px-12">
+        <div class="flex flex-wrap items-end justify-between gap-x-12 gap-y-4">
+          <div class="flex flex-col gap-3">
+            <slot name="title" />
+            <slot name="links" />
           </div>
-
-          <section aria-label="About" class="grid gap-4.5 rounded-lg border border-night-line bg-night-panel px-4.5 pt-4.5 pb-5 min-[900px]:grid-cols-[minmax(0,1.3fr)_minmax(320px,1fr)] min-[900px]:items-end min-[900px]:gap-12 min-[900px]:px-6 min-[900px]:pt-5.5 min-[900px]:pb-6">
-            <slot />
-            <div class="flex min-w-0 flex-col gap-2">
-              <div class="flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-xs font-medium">
-                <span>{{ String(shippedCount).padStart(2, "0") }} / 40 SHIPPED</span>
-                <span class="text-night-muted">{{ upcoming }} upcoming<template v-if="pool.length"> · {{ pool.length }} in the pool</template></span>
-              </div>
-              <div class="flex gap-[3px]" aria-hidden="true">
-                <span v-for="d in board.days" :key="d.key" class="h-2.5 flex-1 rounded-xs" :class="[tones[d.status].dot, d.status === 'live' && 'motion-safe:animate-pulse']"></span>
-              </div>
-              <ul class="m-0 flex list-none flex-wrap gap-x-4 gap-y-1.5 p-0 font-mono text-[11px] text-night-muted">
-                <li v-for="item in legend" :key="item.label" class="flex items-center gap-1.5"><span class="size-[7px] rounded-full" :class="item.dot"></span>{{ item.label }}</li>
-              </ul>
+          <div aria-label="Progress" class="flex w-full min-w-0 flex-col gap-2 md:w-auto md:max-w-[40rem] md:flex-1">
+            <div class="flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-xs font-medium">
+              <span>{{ String(shippedCount).padStart(2, "0") }} / 40 SHIPPED</span>
+              <span class="text-night-muted">{{ upcoming }} upcoming<template v-if="pool.length"> · {{ pool.length }} in the pool</template></span>
             </div>
+            <div class="flex gap-[3px]" aria-hidden="true">
+              <span v-for="d in board.days" :key="d.key" class="h-2.5 flex-1 rounded-xs" :class="[tones[d.status].dot, d.status === 'live' && 'motion-safe:animate-pulse']"></span>
+            </div>
+            <ul class="m-0 flex list-none flex-wrap gap-x-4 gap-y-1.5 p-0 font-mono text-[11px] text-night-muted">
+              <li v-for="item in legend" :key="item.label" class="flex items-center gap-1.5"><span class="size-[7px] rounded-full" :class="item.dot"></span>{{ item.label }}</li>
+            </ul>
+          </div>
+        </div>
+        <div class="flex flex-col gap-4">
+          <section aria-label="About" class="rounded-lg border border-night-line bg-night-panel px-4.5 py-4 min-[900px]:px-6">
+            <slot />
           </section>
 
           <DayBox
@@ -224,18 +214,22 @@ const tileSub = (e: Entry) => {
             :now="now"
             :amount="amount"
             :backed="backed === selected.key"
+            :headline="kicker"
             @sponsor="sponsorLocally"
             @again="backed = null"
             @pick="pick"
           />
 
-          <ul aria-label="The 40 days" :aria-busy="loading" class="m-0 hidden list-none grid-cols-5 gap-2.5 p-0 sm:grid">
+          <ul
+            aria-label="The 40 days"
+            :aria-busy="loading"
+            class="m-0 hidden list-none grid-cols-[repeat(auto-fill,minmax(5rem,5.5rem))] justify-between gap-2 p-0 sm:grid"
+          >
             <DayTile
               v-for="d in board.days"
               :key="d.key"
-              class="h-30"
+              class="h-18"
               :class="loading && 'opacity-60 motion-safe:animate-pulse'"
-              compact
               :status="d.status"
               :label="tileLabel(d)"
               :selected="d.key === selected.key"
@@ -248,16 +242,7 @@ const tileSub = (e: Entry) => {
               @sponsor="select(d.key, 'sponsor-button')"
             />
           </ul>
-
-          <div class="grid gap-3 rounded-lg border-[1.5px] border-dashed border-night-edge px-4 py-3.5 md:grid-cols-[1fr_minmax(320px,28rem)] md:items-end md:gap-12">
-            <div class="flex flex-col gap-1">
-              <span class="text-base font-semibold">{{ submit.title }}</span>
-              <span class="font-mono text-[11px] leading-snug text-night-muted">{{ submit.sub }}</span>
-            </div>
-            <EmailBox intent="build" label="Want us to build your idea?" button="Let’s go" />
-          </div>
         </div>
-        <slot name="footer" />
       </div>
     </div>
 
