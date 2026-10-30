@@ -10,6 +10,8 @@
     try {
       const response = await fetch(form.action, { method: "POST", body: new FormData(form), redirect: "manual" });
       if (response.type === "opaqueredirect" || response.ok) {
+        // A listener can cancel this to show the form was sent some other way.
+        if (!form.dispatchEvent(new Event("sent", { cancelable: true }))) return;
         form.dataset.sent = "";
         if (status) status.textContent = form.dataset.sentMessage;
         return;

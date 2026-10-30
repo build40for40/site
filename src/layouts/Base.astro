@@ -35,11 +35,6 @@ const url = new URL(Astro.url.pathname, Astro.site);
     <meta name="theme-color" content={dark ? "#161513" : "#ffffff"} />
     <Font cssVariable="--font-bricolage" preload />
     <Font cssVariable="--font-plex-mono" />
-    <script is:inline>
-      try {
-        if (localStorage.getItem("pool-motion") === "off") document.documentElement.dataset.poolStacked = "";
-      } catch {}
-    </script>
     <PostHog />
   </head>
   <body class:list={["font-sans antialiased", dark ? "bg-night text-night-text" : "bg-white text-ink"]}>

@@ -9,6 +9,11 @@ interface Band {
   tile: number;
 }
 
+// Funded ideas that miss the days come out wider than the £0 ones by a pixel a pound, up to a limit that still fits the pool.
+export function boxGrowth(raised: number, { pxPerPound, maxGrowth } = poolConfig.boxes) {
+  return Math.min(Math.max(0, raised) * pxPerPound, maxGrowth);
+}
+
 // A score of 1 rises to the top of the pool, under room for its percentage, and lower scores in proportion towards
 // the floor. Below the threshold an idea stays in the pile.
 export function liftHeight(score: number, { height, tile }: Band, { label = poolConfig.search.label, minRelevance = poolConfig.search.minRelevance } = {}) {

@@ -12,6 +12,8 @@ export interface Idea {
   owner?: string;
   sponsors: Sponsor[];
   seed?: string;
+  // Ticked sponsor when they sent it in, so it holds a day while the payment catches up.
+  pledged?: boolean;
 }
 
 export interface Short {
@@ -77,19 +79,24 @@ export function clock(now: number): { today: number; phase: Phase; isToday: bool
 
 export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, now: number, guestSponsors: Record<number, Sponsor[]> = {}) {
   const { today, phase, isToday } = clock(now);
-  // Only ideas with money behind them get a day. Everything at £0 waits in the pool, after any funded overflow.
-  const ranked = ideas.filter((idea) => raised(idea) > 0).toSorted((a, b) => raised(b) - raised(a));
-  const unfunded = ideas.filter((idea) => raised(idea) === 0);
+  const started = (day: number) => day < today || (day === today && phase !== "before");
+  // Only ideas with money behind them get a day. Everything at £0 waits in the pool, after any funded overflow. Ticking
+  // sponsor on the join form always earns a day: the next free one, or the last one if they're all taken, which bumps
+  // the lowest funded idea into the pool.
+  const funded = ideas.filter((idea) => raised(idea) > 0).toSorted((a, b) => raised(b) - raised(a));
+  const pledged = ideas.filter((idea) => idea.pledged && raised(idea) === 0);
+  const unfunded = ideas.filter((idea) => !idea.pledged && raised(idea) === 0);
+  const slots = Array.from({ length: TOTAL_DAYS }, (_, i) => i + 1).filter((day) => !GUEST_DAYS.has(day) && !(started(day) && history[day])).length;
+  const ranked = funded.toSpliced(Math.max(0, Math.min(funded.length, slots - pledged.length)), 0, ...pledged);
   const days: Day[] = [];
   let next = 0;
   let rank = 0;
 
   for (let day = 1; day <= TOTAL_DAYS; day++) {
     const base = { key: `day-${day}`, day, date: dayDate(day) };
-    const started = day < today || (day === today && phase !== "before");
     if (GUEST_DAYS.has(day)) {
       days.push({ ...base, status: "guest", sponsors: guestSponsors[day] ?? [] });
-    } else if (started) {
+    } else if (started(day)) {
       const idea = history[day] ?? ranked[next++];
       const status = day === today && phase === "live" ? "live" : "shipped";
       days.push(idea ? { ...base, status, idea } : { ...base, status: "open" });

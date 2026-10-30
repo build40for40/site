@@ -3,8 +3,10 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type Compon
 import { createVisualIdentity } from "../pool/artwork";
 import { poolConfig } from "../pool/config";
 import { afterLoad } from "../pool/data";
+import { boxGrowth } from "../pool/effects";
+import { boxOf, fall, lob } from "../pool/flight";
 import type { Match } from "../pool/search";
-import type { PhysicsController } from "../pool/physics";
+import type { PhysicsController, Vector } from "../pool/physics";
 import type { createLift } from "../pool/effects";
 
 export interface PoolTile {
@@ -14,23 +16,10 @@ export interface PoolTile {
   problem: string;
   seed?: string;
   label: string;
+  raised: number;
 }
 
 const props = defineProps<{ tiles: PoolTile[]; matches?: Match[] | null }>();
-
-const MOTION_KEY = "pool-motion";
-const remember = (key: string, value: string) => {
-  try {
-    localStorage.setItem(key, value);
-  } catch {}
-};
-const recall = (key: string) => {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-};
 
 const list = ref<HTMLElement>();
 const elements = new Map<string, HTMLElement>();
@@ -41,16 +30,13 @@ const setTile = (id: string, element: Element | ComponentPublicInstance | null) 
 
 // These start as the server renders them, and the real values arrive once mounted.
 const reduced = ref(false);
-const tall = ref(true);
-const motionOn = ref(true);
 const failed = ref(false);
 const active = ref(false);
 const wide = ref(false);
 const size = ref({ width: 0, height: 0 });
 
-const canMove = computed(() => poolConfig.physics.enabled && !reduced.value && tall.value);
-const physical = computed(() => canMove.value && motionOn.value && !failed.value);
-const tile = computed(() => (wide.value ? 32 : 28));
+const physical = computed(() => poolConfig.physics.enabled && !reduced.value && !failed.value);
+const tile = computed(() => (wide.value ? 24 : 20));
 
 // Spread out without randomness, so the server and the browser draw the same bubbles.
 const bubbles = Array.from({ length: 9 }, (_, i) => ({
@@ -75,6 +61,8 @@ const announcement = computed(() => {
 
 // The band stays shut until there's something to show, then the lava slides up from the floor and the ideas rain in
 // once it's up. Sliding rather than growing keeps everything else on the page still.
+const floor = ref<HTMLElement>();
+const lava = "bg-linear-to-b from-night from-15% via-lava-deep to-lava";
 const band = ref<HTMLElement>();
 const shown = ref(false);
 let loaded = false;
@@ -133,8 +121,8 @@ async function start() {
   }
   const [{ initializePhysics }, { createLift }] = modules;
   if (!physical.value || !list.value) return;
-  controller = initializePhysics(list.value);
-  lift = createLift(controller, () => ({ height: size.value.height, tile: tile.value }));
+  controller = initializePhysics(list.value, { entry });
+  lift = createLift({ setBodyHover: (id, y) => controller?.setBodyHover(id, y === null ? null : y + entry()) }, () => ({ height: size.value.height - entry(), tile: tile.value }));
   register(props.tiles.map((t) => t.id));
   active.value = true;
   lift.apply(scored.value);
@@ -150,8 +138,55 @@ function stop() {
 function register(ids: string[]) {
   ids.forEach((id, i) => {
     const element = elements.get(id);
-    if (element) controller?.registerBody(id, element, { shape: "circle", delayMs: i * poolConfig.physics.rainStaggerMs });
+    if (element) controller?.registerBody(id, element, { shape: "circle", delayMs: held.value.has(id) ? Infinity : i * poolConfig.physics.rainStaggerMs });
   });
+}
+
+// A problem sent from the join form is held back from raining in, so it can fall in from wherever its box is.
+const held = ref(new Set<string>());
+const hold = (id: string) => held.value.add(id);
+
+function settled() {
+  const ready = () => shown.value && (active.value || !physical.value);
+  return new Promise<void>((resolve) => {
+    const timer = setTimeout(resolve, poolConfig.physics.loadTimeoutMs);
+    const done = () => {
+      clearTimeout(timer);
+      resolve();
+    };
+    if (ready()) return done();
+    const stop = watch(ready, (ok) => {
+      if (!ok) return;
+      stop();
+      done();
+    });
+  });
+}
+
+// The balls fly over the whole board, but they rain in and rest in the pool at the bottom of it.
+function entry() {
+  return floor.value && list.value ? floor.value.getBoundingClientRect().top - list.value.getBoundingClientRect().top : 0;
+}
+
+async function receive(id: string, ghost: HTMLElement) {
+  await settled();
+  await nextTick();
+  const element = elements.get(id);
+  floor.value?.scrollIntoView({ block: "nearest" });
+  const box = list.value && boxOf(list.value);
+  if (controller && element && box) {
+    const { offsetWidth: width, offsetHeight: height } = element;
+    const from = boxOf(ghost);
+    const x = Math.min(Math.max(from.left + from.width / 2 - box.left, width / 2), box.width - width / 2);
+    const spin = (Math.random() - 0.5) * 1.2;
+    const y = entry() + height / 2 + 1;
+    await fall(ghost, from, { left: box.left + x - width / 2, top: box.top + y - height / 2, width, height }, spin);
+    controller.drop(id, { x, y }, { x: 0, y: poolConfig.physics.drop.speed }, spin);
+  } else if (element) {
+    element.scrollIntoView({ block: "nearest" });
+    await lob(ghost, boxOf(ghost), boxOf(element));
+  }
+  held.value.delete(id);
 }
 
 watch(
@@ -168,19 +203,16 @@ watch(
 );
 
 watch(() => props.tiles.length > 0, reveal);
+watch(
+  () => props.tiles.map((t) => boxGrowth(t.raised)).join(),
+  async () => {
+    await nextTick();
+    controller?.refit();
+  },
+);
 watch(scored, (matches) => lift?.apply(matches));
 watch(() => size.value.height, () => lift?.apply(scored.value));
-watch(physical, (on) => {
-  document.documentElement.toggleAttribute("data-pool-stacked", !on);
-  if (on) start();
-  else stop();
-});
-
-function toggleMotion() {
-  motionOn.value = !motionOn.value;
-  failed.value = false;
-  remember(MOTION_KEY, motionOn.value ? "on" : "off");
-}
+watch(physical, (on) => (on ? start() : stop()));
 
 const open = ref<string | null>(null);
 const tip = ref<HTMLElement>();
@@ -196,9 +228,9 @@ let placing = 0;
 
 function follow() {
   placing = 0;
-  const circle = open.value ? elements.get(open.value)?.querySelector("button") : undefined;
-  if (!circle || !tip.value) return;
-  const rect = circle.getBoundingClientRect();
+  const button = open.value ? elements.get(open.value)?.querySelector("button") : undefined;
+  if (!button || !tip.value) return;
+  const rect = button.getBoundingClientRect();
   const margin = 8;
   const { offsetWidth: w, offsetHeight: h } = tip.value;
   const left = Math.min(Math.max(margin, rect.left + rect.width / 2 - w / 2), Math.max(margin, innerWidth - w - margin));
@@ -218,9 +250,55 @@ watch(open, async (id) => {
 
 const close = () => (open.value = null);
 
-// Keyboard clicks have no detail and only ever open, since focus has already opened the tooltip.
+// Keyboard clicks have no detail and only ever open, since focus has already opened the tooltip. The click that ends a
+// drag isn't a tap.
 function clicked(id: string, event: MouseEvent) {
+  if (thrown) {
+    thrown = false;
+    return;
+  }
   open.value = event.detail === 0 || open.value !== id ? id : null;
+}
+
+// Click and hold picks an idea up, and moving while it's held drags it. Letting go throws it.
+let press: { id: string; pointer: number; start: Vector; at: Vector; timer: ReturnType<typeof setTimeout>; holding: boolean } | undefined;
+let thrown = false;
+
+function local(event: PointerEvent): Vector {
+  const box = list.value!.getBoundingClientRect();
+  return { x: event.clientX - box.left, y: event.clientY - box.top };
+}
+
+function pickUp() {
+  if (!press || press.holding) return;
+  clearTimeout(press.timer);
+  press.holding = !!controller?.grab(press.id, press.at);
+  if (press.holding) close();
+}
+
+function pressed(id: string, event: PointerEvent) {
+  thrown = false;
+  if (!controller || event.button !== 0) return;
+  (event.currentTarget as Element).setPointerCapture?.(event.pointerId);
+  const at = local(event);
+  press = { id, pointer: event.pointerId, start: at, at, holding: false, timer: setTimeout(pickUp, poolConfig.physics.drag.holdMs) };
+}
+
+function moved(event: PointerEvent) {
+  if (event.pointerId !== press?.pointer) return;
+  press.at = local(event);
+  if (!press.holding && Math.hypot(press.at.x - press.start.x, press.at.y - press.start.y) > poolConfig.physics.drag.movePx) pickUp();
+  if (press.holding) controller?.drag(press.at);
+}
+
+function lifted(event: PointerEvent) {
+  if (event.pointerId !== press?.pointer) return;
+  clearTimeout(press.timer);
+  if (press.holding) {
+    controller?.release();
+    thrown = true;
+  }
+  press = undefined;
 }
 
 function focused(id: string, event: FocusEvent) {
@@ -231,14 +309,14 @@ function focused(id: string, event: FocusEvent) {
 
 function blurred(id: string, event: FocusEvent) {
   const next = event.relatedTarget as Element | null;
-  if (open.value === id && !next?.closest?.("[data-pool-circle]")) close();
+  if (open.value === id && !next?.closest?.("[data-pool-ball]")) close();
 }
 
 function onPointerDown(event: PointerEvent) {
   if (!open.value) return;
   const target = event.target as Element | null;
-  const circle = target?.closest?.("[data-pool-circle]");
-  if (circle?.getAttribute("data-pool-circle") === open.value || target?.closest?.("#pool-tip")) return;
+  const ball = target?.closest?.("[data-pool-ball]");
+  if (ball?.getAttribute("data-pool-ball") === open.value || target?.closest?.("#pool-tip")) return;
   close();
 }
 
@@ -248,7 +326,7 @@ function onKeyDown(event: KeyboardEvent) {
   close();
 }
 
-defineExpose({ nudge: () => controller?.nudge() });
+defineExpose({ nudge: () => controller?.nudge(), hold, receive });
 
 let sizer: ResizeObserver | undefined;
 const media: [MediaQueryList, () => void][] = [];
@@ -261,11 +339,8 @@ onMounted(() => {
     list.addEventListener("change", update);
     media.push([list, update]);
   };
-  motionOn.value = recall(MOTION_KEY) !== "off";
   watchMedia("(prefers-reduced-motion: reduce)", (matches) => (reduced.value = matches));
-  watchMedia("(min-height: 500px)", (matches) => (tall.value = matches));
   watchMedia("(min-width: 640px)", (matches) => (wide.value = matches));
-  document.documentElement.toggleAttribute("data-pool-stacked", !physical.value);
 
   if (list.value) size.value = { width: list.value.clientWidth, height: list.value.clientHeight };
   sizer = new ResizeObserver(([entry]) => (size.value = { width: entry.contentRect.width, height: entry.contentRect.height }));
@@ -286,33 +361,24 @@ onBeforeUnmount(() => {
   for (const [list, update] of media) list.removeEventListener("change", update);
   removeEventListener("pointerdown", onPointerDown, true);
   removeEventListener("keydown", onKeyDown, true);
-  document.documentElement.removeAttribute("data-pool-stacked");
+  if (press) clearTimeout(press.timer);
   stop();
 });
 </script>
 
 <template>
-  <div class="floor:h-[clamp(9rem,22dvh,13rem)] floor:shrink-0 floor:overflow-hidden" :class="!tiles.length && 'hidden'">
+  <div ref="floor" :class="[!tiles.length && 'hidden', !shown && 'invisible', physical ? 'h-[clamp(12rem,30dvh,17rem)] overflow-hidden' : lava]">
     <section
       ref="band"
       aria-labelledby="pool-title"
-      class="relative flex flex-col bg-linear-to-b from-night from-15% via-lava-deep to-lava text-night-text transition-transform duration-700 ease-out floor:h-full"
-      :class="!shown && 'invisible floor:translate-y-full'"
+      class="relative flex flex-col text-night-text transition-transform duration-700 ease-out"
+      :class="physical && ['h-full', lava, !shown && 'translate-y-full']"
     >
       <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 pt-3 pb-2 lg:px-12">
         <div class="flex items-baseline gap-3">
           <h2 id="pool-title" class="m-0 text-xl font-semibold tracking-tight sm:text-2xl">Unfunded problems</h2>
           <span v-if="tiles.length" class="hidden font-mono text-xs text-night-muted sm:inline">{{ tiles.length }} simmering</span>
         </div>
-        <button
-          v-if="canMove"
-          type="button"
-          :aria-pressed="motionOn"
-          class="cursor-pointer rounded-full border border-night-edge bg-transparent px-3 py-1 font-mono text-xs font-medium text-night-text hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-pressed:border-night-text"
-          @click="toggleMotion"
-        >
-          Motion {{ motionOn ? "on" : "off" }}
-        </button>
       </div>
       <p class="sr-only" role="status" aria-live="polite">{{ announcement }}</p>
 
@@ -326,38 +392,6 @@ onBeforeUnmount(() => {
         ></span>
       </div>
 
-      <ul ref="list" class="m-0 list-none p-0" :class="physical ? 'relative min-h-0 flex-1 overflow-clip' : 'flex flex-wrap gap-2 px-4 pt-1 pb-6 lg:px-12'">
-        <li
-          v-for="t in tiles"
-          :key="t.key"
-          :ref="(element) => setTile(t.id, element)"
-          class="group size-7 rounded-full sm:size-8"
-          :class="[
-            physical ? 'absolute top-0 left-0 will-change-transform focus-within:z-10' : 'relative',
-            physical && !active ? 'opacity-0 focus-within:opacity-100' : !physical && matches && !percents.has(t.id) && 'opacity-40',
-          ]"
-        >
-          <button
-            type="button"
-            :data-pool-circle="t.id"
-            :aria-label="t.label"
-            :aria-expanded="open === t.id"
-            :aria-describedby="open === t.id ? 'pool-tip' : undefined"
-            class="absolute inset-0 cursor-pointer overflow-hidden rounded-full border-0 bg-night-panel p-0 after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:bg-linear-135 after:from-night-text/60 after:via-night-text/5 after:via-45% after:to-transparent after:ring-1 after:ring-night-text/30 after:ring-inset hover:brightness-115 motion-safe:hover:animate-wiggle motion-safe:aria-expanded:animate-pop focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-expanded:outline-2 aria-expanded:outline-offset-2 aria-expanded:outline-night-text [&>svg]:size-full"
-            @click="clicked(t.id, $event)"
-            @focus="focused(t.id, $event)"
-            @blur="blurred(t.id, $event)"
-            v-html="artwork.get(t.id)"
-          ></button>
-          <span
-            v-if="physical && percents.has(t.id)"
-            aria-hidden="true"
-            class="pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded-full bg-night-text px-1.5 font-mono text-[10px] leading-4 font-medium text-night opacity-0 transition-opacity duration-300 group-data-arrived:animate-pop group-data-arrived:opacity-100"
-            >{{ percents.get(t.id) }}%</span
-          >
-        </li>
-      </ul>
-
       <div
         v-if="openTile"
         id="pool-tip"
@@ -370,5 +404,50 @@ onBeforeUnmount(() => {
         <p v-if="blurb" class="m-0 mt-1 text-sm leading-snug text-night-panel">{{ blurb }}</p>
       </div>
     </section>
+
+    <!-- Outside the band so the balls can fly over the rest of the board. Only the balls take clicks. -->
+    <ul
+      ref="list"
+      aria-labelledby="pool-title"
+      class="m-0 list-none p-0"
+      :class="physical ? 'pointer-events-none absolute inset-0 z-20 overflow-clip' : 'flex flex-wrap items-end gap-2 px-4 pt-1 pb-6 lg:px-12'"
+    >
+      <li
+        v-for="t in tiles"
+        :key="t.key"
+        :ref="(element) => setTile(t.id, element)"
+        class="group aspect-square w-[calc(1.25rem+var(--grow))] rounded-full sm:w-[calc(1.5rem+var(--grow))]"
+        :style="{ '--grow': `${boxGrowth(t.raised)}px` }"
+        :class="[
+          physical ? 'pointer-events-auto absolute top-0 left-0 will-change-transform focus-within:z-10' : 'relative',
+          physical && !active ? 'opacity-0 focus-within:opacity-100' : !physical && matches && !percents.has(t.id) && 'opacity-40',
+          !physical && held.has(t.id) && 'invisible',
+        ]"
+      >
+        <button
+          type="button"
+          :data-pool-ball="t.id"
+          :aria-label="t.label"
+          :aria-expanded="open === t.id"
+          :aria-describedby="open === t.id ? 'pool-tip' : undefined"
+          class="absolute inset-0 cursor-pointer overflow-hidden rounded-full border-0 bg-night-panel p-0 select-none after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:bg-linear-135 after:from-night-text/60 after:via-night-text/5 after:via-45% after:to-transparent after:ring-1 after:ring-night-text/30 after:ring-inset hover:brightness-115 active:cursor-grabbing [&>svg]:size-full motion-safe:hover:animate-wiggle motion-safe:aria-expanded:animate-pop focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-expanded:outline-2 aria-expanded:outline-offset-2 aria-expanded:outline-night-text"
+          :class="physical && 'touch-none'"
+          @click="clicked(t.id, $event)"
+          @pointerdown="pressed(t.id, $event)"
+          @pointermove="moved"
+          @pointerup="lifted"
+          @pointercancel="lifted"
+          @focus="focused(t.id, $event)"
+          @blur="blurred(t.id, $event)"
+          v-html="artwork.get(t.id)"
+        ></button>
+        <span
+          v-if="physical && percents.has(t.id)"
+          aria-hidden="true"
+          class="pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded-full bg-night-text px-1.5 font-mono text-[10px] leading-4 font-medium text-night opacity-0 transition-opacity duration-300 group-data-arrived:animate-pop group-data-arrived:opacity-100"
+          >{{ percents.get(t.id) }}%</span
+        >
+      </li>
+    </ul>
   </div>
 </template>

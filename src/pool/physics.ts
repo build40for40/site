@@ -10,6 +10,8 @@ type Config = typeof poolConfig.physics & {
   autoStart?: boolean;
   autoPause?: boolean;
   boiling?: boolean;
+  // Where new ideas drop in, in pixels from the top of the container.
+  entry?: () => number;
 };
 
 interface BodyOptions {
@@ -48,6 +50,7 @@ interface Tracked {
   shown: boolean;
   drawn?: string;
   hover?: number;
+  falling?: number;
 }
 
 export type PhysicsController = ReturnType<typeof initializePhysics>;
@@ -67,6 +70,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
   let clock = 0;
   let nextBoil = 0;
   let lastNudge = -Infinity;
+  let held: { t: Tracked; target: Vector } | undefined;
 
   const maxV = config.maxSpeed;
 
@@ -122,10 +126,15 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     if (next.width === size.width && next.height === size.height) return;
     size = next;
     buildWalls();
+    refit();
+  }
+
+  function refit() {
     for (const t of bodies.values()) {
       if (!t.fixedSize && (t.element.offsetWidth !== t.width || t.element.offsetHeight !== t.height)) {
         t.width = t.element.offsetWidth;
         t.height = t.element.offsetHeight;
+        t.mass = config.body.density * area(t);
         reshape(t);
       }
       clampInside(t);
@@ -143,7 +152,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
   function hover() {
     const { stiffness, damping } = config.hover;
     for (const t of bodies.values()) {
-      if (t.hover === undefined || !t.shown) continue;
+      if (t.hover === undefined || !t.shown || t === held?.t) continue;
       const p = t.body.translation();
       const v = t.body.linvel();
       const y = Math.min(Math.max(t.hover, t.height / 2), size.height - t.height / 2);
@@ -159,7 +168,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
   const resting = () =>
     [...bodies.values()].filter((t) => {
       const v = t.body.linvel();
-      return t.shown && t.hover === undefined && Math.hypot(v.x, v.y) < 0.5;
+      return t.shown && t.hover === undefined && t !== held?.t && Math.hypot(v.x, v.y) < 0.5;
     });
 
   function hop(t: Tracked, speed: number) {
@@ -190,7 +199,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     for (const t of bodies.values()) {
       if (t.shown || clock < t.spawnAt) continue;
       if (t.pickSpawn) {
-        const y = t.height / 2 + 1;
+        const y = (config.entry?.() ?? 0) + t.height / 2 + 1;
         const tries = Array.from({ length: 6 }, () => t.width / 2 + Math.random() * Math.max(0, size.width - t.width));
         const x = tries.find((x) => !overlaps(t, x, y));
         if (x === undefined && clock - t.spawnAt < 2000) continue;
@@ -202,7 +211,43 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
       t.body.setEnabled(true);
       t.body.wakeUp();
       t.element.style.opacity = "";
+      t.element.style.pointerEvents = "";
     }
+  }
+
+  // Landing knocks the ideas around it up and away, harder the closer they are.
+  function splash(at: Tracked) {
+    const { radius, speed } = config.drop.splash;
+    const x = toPx(at.body.translation().x);
+    for (const t of bodies.values()) {
+      if (t === at || !t.shown || t.hover !== undefined || t === held?.t) continue;
+      const dx = toPx(t.body.translation().x) - x;
+      const near = 1 - Math.abs(dx) / radius;
+      if (near <= 0) continue;
+      const m = t.body.mass();
+      t.body.applyImpulse({ x: Math.sign(dx || 1) * 0.5 * speed * near * m, y: -speed * near * m }, true);
+    }
+  }
+
+  function landed() {
+    for (const t of bodies.values()) {
+      if (t.falling === undefined) continue;
+      const vy = t.body.linvel().y;
+      if (vy < t.falling - config.drop.impact) {
+        t.falling = undefined;
+        splash(t);
+      } else t.falling = vy;
+    }
+  }
+
+  // A held idea chases the pointer, so letting go leaves it moving at the pointer's speed: a throw.
+  function follow() {
+    if (!held) return;
+    const { t, target } = held;
+    const p = t.body.translation();
+    const k = config.drag.follow;
+    t.body.setLinvel({ x: (toM(target.x) - p.x) * k, y: (toM(target.y) - p.y) * k }, true);
+    t.body.setAngvel(t.body.angvel() * config.drag.spinKeep, true);
   }
 
   function clampVelocities() {
@@ -219,7 +264,9 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     spawnDue();
     boil();
     hover();
+    follow();
     world.step();
+    landed();
     clampVelocities();
     for (const t of bodies.values()) t.curr = snapshot(t);
   }
@@ -333,18 +380,55 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
       body.setEnabled(false);
       element.dataset.bodyId = id;
       element.style.opacity = "0";
+      element.style.pointerEvents = "none";
       bodies.set(id, tracked);
       if (!options.delayMs) spawnDue();
       render(1);
     },
 
+    // Drops a held idea in at a point, in pixels from the pool's top left, moving at a velocity in pixels per second.
+    drop(id: string, at: Vector, velocity: Vector, angle = 0) {
+      const t = bodies.get(id);
+      if (!t || t.shown) return;
+      t.body.setTranslation({ x: toM(at.x), y: toM(at.y) }, false);
+      t.body.setRotation(angle, false);
+      t.body.setLinvel({ x: toM(velocity.x), y: toM(velocity.y) }, false);
+      t.curr = t.prev = snapshot(t);
+      t.falling = toM(velocity.y);
+      t.spawnAt = clock;
+      t.pickSpawn = false;
+      spawnDue();
+      render(1);
+    },
+
+    // Picks up an idea at a point in pixels from the pool's top left. False if it isn't in the pool yet.
+    grab(id: string, at: Vector) {
+      const t = bodies.get(id);
+      if (!t?.shown) return false;
+      held = { t, target: at };
+      t.body.setGravityScale(0, true);
+      return true;
+    },
+
+    drag(at: Vector) {
+      if (held) held.target = at;
+    },
+
+    release() {
+      if (!held) return;
+      held.t.body.setGravityScale(held.t.hover === undefined ? 1 : 0, true);
+      held = undefined;
+    },
+
     unregisterBody(id: string) {
       const t = bodies.get(id);
       if (!t) return;
+      if (held?.t === t) held = undefined;
       world.removeRigidBody(t.body);
       bodies.delete(id);
       t.element.style.transform = "";
       t.element.style.opacity = "";
+      t.element.style.pointerEvents = "";
       delete t.element.dataset.bodyId;
       delete t.element.dataset.arrived;
     },
@@ -384,6 +468,9 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     },
 
     resize,
+
+    // Picks up ideas whose boxes changed size.
+    refit,
 
     get size() {
       return { ...size };

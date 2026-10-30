@@ -10,9 +10,11 @@ const input =
 <dialog
   id="join"
   aria-labelledby="join-title"
-  class="m-auto h-dvh max-h-dvh w-full max-w-full overflow-hidden bg-transparent p-0 text-night-text backdrop:bg-night/85 sm:h-auto sm:max-h-[calc(100dvh-4rem)] sm:w-[min(44rem,calc(100%-2rem))]"
+  class="m-auto h-dvh max-h-dvh w-full max-w-full overflow-hidden bg-transparent p-0 text-night-text backdrop:bg-night/85 backdrop:transition-opacity backdrop:duration-500 data-folding:backdrop:opacity-0 sm:h-auto sm:max-h-[calc(100dvh-4rem)] sm:w-[min(44rem,calc(100%-2rem))]"
 >
-  <div class="h-full overflow-y-auto border-night-line bg-night-panel sm:h-auto sm:max-h-[calc(100dvh-4rem)] sm:rounded-lg sm:border">
+  <div
+    class="h-full overflow-y-auto border-night-line bg-night-panel sm:h-auto sm:max-h-[calc(100dvh-4rem)] sm:rounded-lg sm:border in-data-folding:overflow-hidden in-data-folding:bg-night-tile in-data-folding:shadow-2xl in-data-folding:ring-2 in-data-folding:ring-night-edge"
+  >
     <div class="flex flex-col gap-7 px-4.5 pt-5 pb-8 sm:px-6 sm:pt-6">
       <header class="flex items-start justify-between gap-4">
         <h2 id="join-title" class="m-0 text-[clamp(32px,5vw,44px)] leading-[0.95] font-bold tracking-[-0.04em] text-balance">We’d like to get to know you</h2>
@@ -85,8 +87,12 @@ const input =
 </dialog>
 
 <script>
+  import { SENT, type Box, type SentProblem } from "../pool/flight";
+
   const dialog = document.querySelector<HTMLDialogElement>("dialog#join")!;
   const email = dialog.querySelector<HTMLInputElement>("#join-email")!;
+  const form = dialog.querySelector<HTMLFormElement>("form[method=post]")!;
+  const panel = dialog.firstElementChild as HTMLElement;
 
   function open(typed?: string | null) {
     if (typed && !email.value) email.value = typed;
@@ -116,6 +122,55 @@ const input =
 
   dialog.addEventListener("click", (event) => {
     if (event.target === dialog) dialog.close();
+  });
+
+  // The form folds itself up into a box the size of a day, which the board then drops into the pool or onto a day.
+  const folded = { width: 88, height: 72 };
+
+  async function fold(): Promise<Box> {
+    const { left, top, width, height } = panel.getBoundingClientRect();
+    const x = folded.width / width;
+    const y = folded.height / height;
+    dialog.dataset.folding = "";
+    const options = { fill: "forwards", easing: "cubic-bezier(.65,0,.35,1)" } as const;
+    const steps = [
+      panel.firstElementChild!.animate([{ opacity: 1 }, { opacity: 0 }], { ...options, duration: 220 }),
+      panel.animate(
+        [
+          { transform: "none" },
+          { transform: `perspective(1200px) rotateX(24deg) scale(0.94, ${Math.max(y, 0.22)})`, offset: 0.45 },
+          { transform: `perspective(1200px) rotateY(-24deg) scale(${x * 1.15}, ${y * 1.15})`, offset: 0.82 },
+          { transform: `scale(${x}, ${y})` },
+        ],
+        { ...options, duration: 760 },
+      ),
+    ];
+    await Promise.all(steps.map((step) => step.finished));
+    return { left: left + (width - folded.width) / 2, top: top + (height - folded.height) / 2, ...folded };
+  }
+
+  function showSent() {
+    form.dataset.sent = "";
+    const status = form.querySelector<HTMLElement>("[role=status]");
+    if (status) status.textContent = form.dataset.sentMessage ?? "";
+  }
+
+  form.addEventListener("sent", async (event) => {
+    const data = new FormData(form);
+    const problem = String(data.get("problem") ?? "").trim();
+    if (!problem) return;
+    const detail: SentProblem = { problem, name: String(data.get("name") ?? "").trim(), sponsoring: data.getAll("involved").includes("sponsor"), from: null };
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      dispatchEvent(new CustomEvent(SENT, { detail }));
+      return;
+    }
+    event.preventDefault();
+    detail.from = await fold();
+    dispatchEvent(new CustomEvent(SENT, { detail }));
+    dialog.close();
+    for (const animation of panel.getAnimations({ subtree: true })) animation.cancel();
+    delete dialog.dataset.folding;
+    showSent();
   });
 
   // Old /join links, and a Join box that posted before this script ran, arrive as /#join&email=…

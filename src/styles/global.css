@@ -98,12 +98,3 @@
     }
   }
 }
-
-/* The home and join pages split into a scrolling top and the pool as a floor, on screens tall enough to hold both. */
-@custom-variant floor {
-  @media (min-height: 500px) and (prefers-reduced-motion: no-preference) {
-    &:where(html:not([data-pool-stacked]) *) {
-      @slot;
-    }
-  }
-}

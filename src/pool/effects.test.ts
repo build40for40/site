@@ -1,5 +1,5 @@
 import { expect, test, vi } from "vitest";
-import { createLift, liftHeight } from "./effects";
+import { boxGrowth, createLift, liftHeight } from "./effects";
 
 const band = { height: 300, tile: 30 };
 
@@ -30,4 +30,12 @@ test("lifting new matches drops the ones that no longer match", () => {
   controller.setBodyHover.mockClear();
   lift.clear();
   expect(controller.setBodyHover.mock.calls).toEqual([["b", null]]);
+});
+
+test("funded boxes grow a pixel a pound, up to a limit", () => {
+  expect(boxGrowth(0)).toBe(0);
+  expect(boxGrowth(0.4)).toBe(0.4);
+  expect(boxGrowth(4)).toBe(4);
+  expect(boxGrowth(40)).toBe(40);
+  expect(boxGrowth(400)).toBe(72);
 });
