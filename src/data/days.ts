@@ -160,16 +160,13 @@ export const history: Record<number, ShippedIdea> = {
 
 export const pad = (n: number) => String(n).padStart(2, "0");
 
-export const hms = (ms: number) => {
-  const s = Math.max(0, Math.floor(ms / 1000));
-  return `${Math.floor(s / 3600)}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
-};
-
 export function countdownParts(ms: number): [number, string][] {
   const s = Math.max(0, Math.floor(ms / 1000));
   const parts: [number, string][] = [[Math.floor(s / 3600) % 24, "h"], [Math.floor(s / 60) % 60, "m"], [s % 60, "s"]];
   return s >= 86_400 ? [[Math.floor(s / 86_400), "d"], ...parts] : parts;
 }
+
+export const countdown = (ms: number) => countdownParts(ms).map(([value, unit]) => `${pad(value)}${unit}`).join(" ");
 
 export function mergedSponsors(sponsors: Sponsor[]) {
   const rows = new Map<string, number>();
