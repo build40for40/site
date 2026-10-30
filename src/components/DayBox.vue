@@ -145,11 +145,11 @@ const unsponsored = computed(() =>
 const panel = "flex min-w-0 flex-col gap-2.5 rounded-md bg-night-panel p-4";
 const kicker = "font-mono text-[11px] leading-snug font-medium tracking-wider text-night-muted uppercase";
 const mainButton =
-  "block cursor-pointer rounded-full border-0 bg-brand-lime text-brand-lime-ink hover:bg-brand-lime-hover px-4 py-3 text-center text-[15px] font-semibold no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime";
+  "block cursor-pointer rounded-full border-0 bg-brand-lime text-brand-lime-ink hover:bg-brand-lime-hover px-4 py-3 text-center text-[15px] font-semibold no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action";
 const smallLink = "self-center font-mono text-xs font-medium text-night-sub underline-offset-3 hover:text-night-text";
 const overlayPill =
-  "cursor-pointer rounded-full border border-night-edge bg-night/60 px-3 py-1.5 font-mono text-xs font-medium text-night-text hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime";
-const pill = "cursor-pointer rounded-full border border-night-edge bg-transparent font-mono text-xs font-medium text-night-text hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime";
+  "cursor-pointer rounded-full border border-night-edge bg-night/60 px-3 py-1.5 font-mono text-xs font-medium text-night-text hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action";
+const pill = "cursor-pointer rounded-full border border-night-edge bg-transparent font-mono text-xs font-medium text-night-text hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action";
 </script>
 
 <template>
@@ -157,7 +157,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
     id="day-box"
     tabindex="-1"
     :aria-label="entry.day ? `Day ${entry.day}` : idea?.title"
-    class="grid scroll-mt-4 gap-2 border-t-3 pt-2.5 outline-offset-4 [view-transition-name:day-box] focus-visible:outline-2 focus-visible:outline-brand-lime lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
+    class="grid scroll-mt-4 gap-2 border-t-3 pt-2.5 outline-offset-4 [view-transition-name:day-box] focus-visible:outline-2 focus-visible:outline-action lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
     :class="tones[entry.status].border"
   >
     <div class="col-span-full flex flex-wrap justify-between gap-x-3 gap-y-1" :class="kicker">
@@ -169,7 +169,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
     </div>
 
     <div class="relative flex min-w-0 flex-col self-start overflow-hidden rounded-md bg-night-panel">
-      <div class="flex aspect-video flex-col bg-player lg:min-h-100">
+      <div class="dark-screen flex aspect-video flex-col bg-player text-night-text lg:min-h-100">
         <div class="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-2.5 p-4 text-center">
           <template v-if="isShipped">
             <div v-if="video === 'shorts'" class="absolute inset-0 flex justify-center gap-2 px-3 pt-13 pb-3">
@@ -179,7 +179,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
                 :href="short.url"
                 target="_blank"
                 rel="noopener"
-                class="flex aspect-[9/16] h-full min-w-0 flex-col justify-between rounded-md bg-night-tile p-2.5 text-left text-night-text no-underline ring-night-edge hover:ring-1 focus-visible:outline-2 focus-visible:outline-brand-lime"
+                class="flex aspect-[9/16] h-full min-w-0 flex-col justify-between rounded-md bg-night-tile p-2.5 text-left text-night-text no-underline ring-night-edge hover:ring-1 focus-visible:outline-2 focus-visible:outline-action"
               >
                 <span class="font-mono text-[10px] tracking-wider text-night-muted uppercase">{{ short.platform }}</span>
                 <span class="self-center text-2xl" aria-hidden="true">▶</span>
@@ -197,7 +197,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
                 :key="value"
                 type="button"
                 :aria-pressed="video === value"
-                class="bg-night/60 px-3 py-1.5 aria-pressed:border-brand-lime aria-pressed:text-brand-lime"
+                class="bg-night/60 px-3 py-1.5 aria-pressed:border-action aria-pressed:text-action"
                 :class="pill"
                 @click="video = value as 'recording' | 'shorts'"
               >{{ text }}</button>
@@ -283,7 +283,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
           <button
             type="button"
             :aria-pressed="anonymous"
-            class="px-2.5! aria-pressed:border-brand-lime aria-pressed:text-brand-lime"
+            class="px-2.5! aria-pressed:border-action aria-pressed:text-action"
             :class="overlayPill"
             @click="anonymous = !anonymous"
           >Anonymous</button>
@@ -321,7 +321,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
       <template v-else>
         <template v-if="idea">
           <h2 class="m-0 text-[26px] leading-[1.04] font-semibold tracking-tight text-balance md:text-3xl">{{ dayPrefix }}{{ idea.title }}</h2>
-          <p class="m-0 line-clamp-3 text-[15px] leading-snug text-night-sub text-pretty" :title="idea.problem"><span class="text-brand-yellow">(</span>{{ idea.problem }}<span class="text-brand-yellow">)</span></p>
+          <p class="m-0 line-clamp-3 text-[15px] leading-snug text-night-sub text-pretty" :title="idea.problem"><span class="text-bracket">(</span>{{ idea.problem }}<span class="text-bracket">)</span></p>
         </template>
         <template v-else>
           <h2 class="m-0 text-[26px] leading-[1.04] font-semibold tracking-tight text-balance md:text-3xl">{{ dayPrefix }}Guest day</h2>
@@ -379,7 +379,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
                   :key="a"
                   type="button"
                   :aria-pressed="amount === a"
-                  class="px-1 py-2 aria-pressed:border-brand-lime aria-pressed:text-brand-lime"
+                  class="px-1 py-2 aria-pressed:border-action aria-pressed:text-action"
                   :class="pill"
                   @click="amount = a"
                 >{{ money(a) }}</button>
