@@ -118,7 +118,7 @@ npm run wrangler -- d1 execute 40for40 --remote --command "SELECT * FROM payment
 
 PostHog (EU) runs in cookieless mode: nothing is stored in the browser, and PostHog hashes IP, user agent and host into a visitor id that changes daily. The project needs **Cookieless server hash mode** on (Project settings > Web analytics), or every event is dropped.
 
-The browser sends page views, clicks, errors, `form_submitted`, `checkout_started` from a day and `stream_loaded`. The Worker sends `form_saved` once a form is stored, with the same cookieless fields so it joins the visitor's funnel. The Stripe webhook sends `payment_completed`, keyed by Checkout Session since it can't be tied to a visitor.
+The browser sends page views, clicks, errors, `form_submitted`, `join_opened` when the join form pops up, `checkout_started` from a day and `stream_loaded`. The Worker sends `form_saved` once a form is stored, with the same cookieless fields so it joins the visitor's funnel. The Stripe webhook sends `payment_completed`, keyed by Checkout Session since it can't be tied to a visitor.
 
 - **Build:** `PUBLIC_POSTHOG_PROJECT_TOKEN` and `PUBLIC_POSTHOG_HOST` in `.env` locally, and for CI as a repo secret (the token, since GitHub rejects it as a variable) and a repo variable (the host).
 - **Worker:** the same names. `PUBLIC_POSTHOG_HOST` is in `wrangler.jsonc`, and `PUBLIC_POSTHOG_PROJECT_TOKEN` is a secret (`.dev.vars` locally, `npm run wrangler -- secret put PUBLIC_POSTHOG_PROJECT_TOKEN` in production).

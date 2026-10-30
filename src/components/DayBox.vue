@@ -253,13 +253,13 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
         <p class="m-0 text-[15px] leading-snug text-pretty">Same rules as every day: 4 hours 40 minutes on the clock, live on Twitch.</p>
         <ShareButton v-if="share" v-bind="share" />
         <div class="mt-auto pt-2"><EmailBox intent="updates" :label="`Remind me on ${entry.date}`" button="Remind me" /></div>
-        <a href="/join" :class="smallLink">Suggest a guest</a>
+        <a href="#join" :class="smallLink">Suggest a guest</a>
       </template>
       <template v-else-if="entry.status === 'open'">
         <h2 class="m-0 text-[26px] leading-[1.04] font-semibold tracking-tight text-balance md:text-3xl">Sponsor this day</h2>
         <p class="m-0 text-[15px] leading-snug text-night-sub text-pretty">Nothing’s booked for {{ entry.date }} yet. Bring a problem and sponsor it, and the queue grows into this day.</p>
         <p class="m-0 text-[15px] leading-snug text-pretty">The idea with the most sponsorship goes first.</p>
-        <a href="/join" :class="mainButton">Bring your own problem</a>
+        <a href="#join" :class="mainButton">Bring your own problem</a>
       </template>
       <template v-else-if="idea">
         <h2 class="relative m-0 text-[26px] leading-[1.04] font-semibold tracking-tight text-balance md:text-3xl">{{ idea.title }}</h2>

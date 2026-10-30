@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { useId } from "vue";
 
-// "build" saves the email and carries it on to /join. "updates" just saves it.
+// "build" saves the email and carries it on to the join form. "updates" just saves it.
 defineProps<{ intent: "build" | "updates"; label: string; button: string; hint?: string }>();
 
 const id = useId();
 </script>
 
 <template>
-  <form method="post" action="/api/forms/subscribe" class="flex min-w-0 flex-col gap-2">
+  <form method="post" action="/api/forms/subscribe" :data-opens-join="intent === 'build' || undefined" class="flex min-w-0 flex-col gap-2">
     <input v-if="intent === 'updates'" type="hidden" name="next" value="thanks" />
     <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden" />
     <label :for="id" class="text-[15px] leading-snug font-semibold text-night-text">{{ label }}</label>

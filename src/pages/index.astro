@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import DayBoard from "../components/DayBoard.vue";
 import EmailBox from "../components/EmailBox.vue";
+import JoinModal from "../components/JoinModal.astro";
 import { history } from "../data/days";
 import { links } from "../data/site";
 
@@ -37,4 +38,5 @@ const footerLink = "text-night-muted underline-offset-3 hover:text-night-text";
       </footer>
     </div>
   </DayBoard>
+  <JoinModal />
 </Base>

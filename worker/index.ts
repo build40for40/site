@@ -251,7 +251,7 @@ export default {
       }
       if (data.get("next") === "thanks") return thanks;
       const typed = String(data.get("email") ?? "").trim();
-      return Response.redirect(new URL(typed ? `/join/#email=${encodeURIComponent(typed)}` : "/join/", url).href, 303);
+      return Response.redirect(new URL(typed ? `/#join&email=${encodeURIComponent(typed)}` : "/#join", url).href, 303);
     }
 
     if (typeof values === "string") return text(values, 400);

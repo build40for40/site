@@ -3,7 +3,6 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import DayBox from "./DayBox.vue";
 import DayTile from "./DayTile.vue";
 import ProblemsPool, { type PoolTile } from "./ProblemsPool.vue";
-import EmailBox from "./EmailBox.vue";
 import {
   DEFAULT_AMOUNT,
   buildBoard,
@@ -40,7 +39,6 @@ const selected = computed<Entry>(
 
 const shippedCount = computed(() => board.value.days.filter((d) => d.status === "shipped").length);
 const upcoming = computed(() => board.value.days.filter((d) => d.status === "queued").length);
-const open = computed(() => board.value.days.filter((d) => d.status === "open").length);
 
 const kicker = computed(() => {
   const { today, phase, isToday } = board.value;
@@ -49,15 +47,6 @@ const kicker = computed(() => {
   if (today < TOTAL_DAYS) return { tone: "text-night-muted", dot: "bg-shipped", text: `Day ${today} shipped · Day ${today + 1} starts 9:00 UK, ${dayDate(today + 1)}` };
   return { tone: "text-night-muted", dot: "bg-shipped", text: "That’s 40. What a ride." };
 });
-
-const submit = computed(() =>
-  open.value
-    ? { title: "Submit a problem", sub: `${open.value} more days need a problem to solve` }
-    : {
-        title: "Submit a new problem",
-        sub: `All 40 days are spoken for${pool.value.length ? `, ${pool.value.length} more in the pool` : ""}. Outfund one to jump the queue.`,
-      },
-);
 
 const legend = [
   { label: "shipped", dot: tones.shipped.dot },
@@ -248,14 +237,6 @@ const tileSub = (e: Entry) => {
               @sponsor="select(d.key, 'sponsor-button')"
             />
           </ul>
-
-          <div class="grid gap-3 rounded-lg border-[1.5px] border-dashed border-night-edge px-4 py-3.5 md:grid-cols-[1fr_minmax(320px,28rem)] md:items-end md:gap-12">
-            <div class="flex flex-col gap-1">
-              <span class="text-base font-semibold">{{ submit.title }}</span>
-              <span class="font-mono text-[11px] leading-snug text-night-muted">{{ submit.sub }}</span>
-            </div>
-            <EmailBox intent="build" label="Want us to build your idea?" button="Let’s go" />
-          </div>
         </div>
         <slot name="footer" />
       </div>

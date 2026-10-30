@@ -10,6 +10,7 @@ import workerDev from './worker/dev.mjs';
 export default defineConfig({
   site: 'https://build40for40.com',
   integrations: [vue(), workerDev()],
+  redirects: { '/join': '/#join' },
 
   fonts: [
     {
