@@ -8,7 +8,13 @@ const id = useId();
 </script>
 
 <template>
-  <form method="post" action="/api/forms/subscribe" :data-opens-join="intent === 'build' || undefined" class="flex min-w-0 flex-col gap-2">
+  <form
+    method="post"
+    action="/api/forms/subscribe"
+    :data-opens-join="intent === 'build' || undefined"
+    :data-sent-message="intent === 'updates' ? 'You’re on the list. Speak soon.' : undefined"
+    class="flex min-w-0 flex-col gap-2 data-sent:*:not-[[role=status]]:hidden"
+  >
     <input v-if="intent === 'updates'" type="hidden" name="next" value="thanks" />
     <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden" />
     <label :for="id" class="text-[15px] leading-snug font-semibold text-night-text">{{ label }}</label>
@@ -37,5 +43,6 @@ const id = useId();
       </button>
     </div>
     <p v-if="hint" :id="`${id}-hint`" class="m-0 font-mono text-[11px] leading-snug text-night-muted">{{ hint }}</p>
+    <p v-if="intent === 'updates'" role="status" class="m-0 text-[15px] leading-snug text-night-text empty:hidden"></p>
   </form>
 </template>

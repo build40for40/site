@@ -12,7 +12,7 @@ const input =
   aria-labelledby="join-title"
   class="m-auto h-dvh max-h-dvh w-full max-w-full overflow-hidden bg-transparent p-0 text-night-text backdrop:bg-night/85 sm:h-auto sm:max-h-[calc(100dvh-4rem)] sm:w-[min(44rem,calc(100%-2rem))]"
 >
-  <div class="h-full overflow-y-auto border-night-line bg-night-panel sm:max-h-[calc(100dvh-4rem)] sm:rounded-lg sm:border">
+  <div class="h-full overflow-y-auto border-night-line bg-night-panel sm:h-auto sm:max-h-[calc(100dvh-4rem)] sm:rounded-lg sm:border">
     <div class="flex flex-col gap-7 px-4.5 pt-5 pb-8 sm:px-6 sm:pt-6">
       <header class="flex items-start justify-between gap-4">
         <h2 id="join-title" class="m-0 text-[clamp(32px,5vw,44px)] leading-[0.95] font-bold tracking-[-0.04em] text-balance">We’d like to get to know you</h2>
@@ -28,7 +28,12 @@ const input =
         </form>
       </header>
 
-      <form method="post" action="/api/forms/join" class="flex flex-col gap-7 [&_label]:text-[15px] [&_label]:leading-snug [&_label]:font-semibold">
+      <form
+        method="post"
+        action="/api/forms/join"
+        data-sent-message="Got it. We’ll be in touch."
+        class="flex flex-col gap-7 data-sent:*:not-[[role=status]]:hidden [&_label]:text-[15px] [&_label]:leading-snug [&_label]:font-semibold"
+      >
         <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden" />
 
         <div class="flex flex-col gap-2">
@@ -73,6 +78,7 @@ const input =
         </fieldset>
 
         <SubmitButton class="self-start rounded-full border-0 bg-night-text px-6 py-3 text-[15px] font-semibold text-night hover:bg-night-sub focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text">Submit</SubmitButton>
+        <p role="status" class="m-0 text-[19px] leading-[1.4] text-night-text empty:hidden"></p>
       </form>
     </div>
   </div>
