@@ -15,17 +15,9 @@ export default defineConfig({
   fonts: [
     {
       provider: fontProviders.google(),
-      name: 'Bricolage Grotesque',
-      cssVariable: '--font-bricolage',
-      weights: [400, 600, 700],
-      subsets: ['latin'],
-      fallbacks: ['system-ui', 'sans-serif'],
-    },
-    {
-      provider: fontProviders.google(),
-      name: 'IBM Plex Mono',
-      cssVariable: '--font-plex-mono',
-      weights: [400, 500],
+      name: 'JetBrains Mono',
+      cssVariable: '--font-jetbrains-mono',
+      weights: [400, 500, 600, 700],
       subsets: ['latin'],
       fallbacks: ['ui-monospace', 'monospace'],
     },

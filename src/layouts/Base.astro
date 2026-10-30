@@ -33,8 +33,7 @@ const url = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:url" content={url} />
     <meta name="twitter:card" content="summary" />
     <meta name="theme-color" content={dark ? "#161513" : "#ffffff"} />
-    <Font cssVariable="--font-bricolage" preload />
-    <Font cssVariable="--font-plex-mono" />
+    <Font cssVariable="--font-jetbrains-mono" preload />
     <PostHog />
   </head>
   <body class:list={["font-sans antialiased", dark ? "bg-night text-night-text" : "bg-white text-ink"]}>
