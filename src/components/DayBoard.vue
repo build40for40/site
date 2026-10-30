@@ -182,7 +182,7 @@ const tileSub = (e: Entry) => {
         <div class="flex flex-wrap items-end justify-between gap-x-12 gap-y-4">
           <div class="flex flex-col gap-3">
             <slot name="title" />
-            <slot name="socials" />
+            <slot name="links" />
           </div>
           <div aria-label="Progress" class="flex w-full min-w-0 flex-col gap-2 md:w-auto md:max-w-[40rem] md:flex-1">
             <div class="flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-xs font-medium">
@@ -196,12 +196,6 @@ const tileSub = (e: Entry) => {
               <li v-for="item in legend" :key="item.label" class="flex items-center gap-1.5"><span class="size-[7px] rounded-full" :class="item.dot"></span>{{ item.label }}</li>
             </ul>
           </div>
-        </div>
-        <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-          <div class="flex items-center gap-2 font-mono text-xs font-medium tracking-wider uppercase" :class="kicker.tone">
-            <span class="size-[7px] shrink-0 rounded-full" :class="kicker.dot"></span>{{ kicker.text }}
-          </div>
-          <slot name="nav" />
         </div>
         <div class="flex flex-col gap-4">
           <section aria-label="About" class="rounded-lg border border-night-line bg-night-panel px-4.5 py-4 min-[900px]:px-6">
@@ -220,6 +214,7 @@ const tileSub = (e: Entry) => {
             :now="now"
             :amount="amount"
             :backed="backed === selected.key"
+            :headline="kicker"
             @sponsor="sponsorLocally"
             @again="backed = null"
             @pick="pick"

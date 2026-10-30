@@ -15,11 +15,9 @@ const navLink = "text-night-muted underline-offset-3 hover:text-night-text";
     <h1 slot="title" class="m-0 text-[clamp(40px,4.4vw,56px)] leading-[0.92] font-bold tracking-[-0.045em]">
       <span class="whitespace-nowrap">40 apps.</span> <span class="whitespace-nowrap">40 days.</span>
     </h1>
-    <nav slot="socials" aria-label="Socials" class="flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs">
+    <nav slot="links" aria-label="Links" class="flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs">
       <a href={links.twitch} target="_blank" rel="noopener" class={navLink}>Twitch</a>
       <a href={links.community} target="_blank" rel="noopener" class={navLink}>Discord</a>
-    </nav>
-    <nav slot="nav" aria-label="Contact" class="flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs">
       <a href={`mailto:${links.email}`} class={navLink}>{links.email}</a>
       <a href="/privacy" class={navLink}>Privacy notice</a>
     </nav>

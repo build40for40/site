@@ -30,6 +30,7 @@ const props = defineProps<{
   now: number;
   amount: number;
   backed: boolean;
+  headline: { tone: string; dot: string; text: string };
 }>();
 const emit = defineEmits<{ sponsor: [amount: number, anonymous: boolean]; pick: [key: string, amount: number]; again: [] }>();
 
@@ -43,6 +44,7 @@ const shippedIdea = computed(() => props.entry.idea as ShippedIdea);
 const sponsors = computed(() => idea.value?.sponsors ?? props.entry.sponsors ?? []);
 const total = computed(() => sponsors.value.reduce((sum, s) => sum + s.amount, 0));
 const isTodayEntry = computed(() => props.entry.day === props.today);
+const repeatsHeadline = computed(() => isTodayEntry.value && (props.entry.status === "live" || props.entry.status === "shipped"));
 const label = computed(() => statusLabel(props.entry, props.today));
 const glyph = computed(() => ({ live: "● ", shipped: "✓ " })[props.entry.status as "live" | "shipped"] ?? "");
 const where = computed(() => {
@@ -162,8 +164,11 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
     :class="tones[entry.status].border"
   >
     <div class="col-span-full flex flex-wrap justify-between gap-x-3 gap-y-1" :class="kicker">
-      <span>{{ where }}</span>
-      <span :class="tones[entry.status].text">{{ glyph }}{{ label }}</span>
+      <span v-if="isTodayEntry" class="flex items-center gap-2" :class="headline.tone">
+        <span class="size-[7px] shrink-0 rounded-full" :class="headline.dot"></span>{{ headline.text }}
+      </span>
+      <span v-else>{{ where }}</span>
+      <span v-if="!repeatsHeadline" :class="tones[entry.status].text">{{ glyph }}{{ label }}</span>
     </div>
 
     <div class="flex min-w-0 flex-col overflow-hidden rounded-md bg-night-panel md:row-span-2 xl:row-span-1">
