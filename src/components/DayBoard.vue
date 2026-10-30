@@ -179,14 +179,17 @@ const tileSub = (e: Entry) => {
   <div class="flex flex-col floor:h-dvh">
     <div class="floor:min-h-0 floor:flex-1 floor:overflow-y-auto">
       <div class="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 pt-7 pb-8 lg:px-12">
-        <div class="flex flex-wrap items-baseline gap-x-5 gap-y-2">
-          <slot name="title" />
-          <div class="flex items-center gap-2 font-mono text-xs font-medium tracking-wider uppercase" :class="kicker.tone">
-            <span class="size-[7px] shrink-0 rounded-full" :class="kicker.dot"></span>{{ kicker.text }}
+        <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+          <div class="flex flex-wrap items-baseline gap-x-5 gap-y-2">
+            <slot name="title" />
+            <div class="flex items-center gap-2 font-mono text-xs font-medium tracking-wider uppercase" :class="kicker.tone">
+              <span class="size-[7px] shrink-0 rounded-full" :class="kicker.dot"></span>{{ kicker.text }}
+            </div>
           </div>
+          <slot name="nav" />
         </div>
         <div class="flex flex-col gap-4">
-          <section aria-label="About" class="grid gap-4 rounded-lg border border-night-line bg-night-panel px-4.5 py-4 min-[900px]:grid-cols-[auto_minmax(320px,1fr)] min-[900px]:items-center min-[900px]:gap-12 min-[900px]:px-6">
+          <section aria-label="About" class="grid gap-4 rounded-lg border border-night-line bg-night-panel px-4.5 py-4 min-[900px]:grid-cols-[auto_minmax(320px,1fr)] min-[900px]:items-end min-[900px]:gap-12 min-[900px]:px-6">
             <slot />
             <div class="flex min-w-0 flex-col gap-2">
               <div class="flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-xs font-medium">
@@ -242,7 +245,6 @@ const tileSub = (e: Entry) => {
             />
           </ul>
         </div>
-        <slot name="footer" />
       </div>
     </div>
 

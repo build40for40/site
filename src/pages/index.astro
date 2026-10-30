@@ -7,7 +7,7 @@ import SendInPlace from "../components/forms/SendInPlace.astro";
 import { history } from "../data/days";
 import { links } from "../data/site";
 
-const footerLink = "text-night-muted underline-offset-3 hover:text-night-text";
+const navLink = "text-night-muted underline-offset-3 hover:text-night-text";
 ---
 
 <Base dark>
@@ -15,28 +15,24 @@ const footerLink = "text-night-muted underline-offset-3 hover:text-night-text";
     <h1 slot="title" class="m-0 text-[clamp(40px,4.4vw,56px)] leading-[0.92] font-bold tracking-[-0.045em]">
       <span class="whitespace-nowrap">40 apps.</span> <span class="whitespace-nowrap">40 days.</span>
     </h1>
-    <div class="flex flex-wrap items-center gap-x-5 gap-y-3">
-      <p class="m-0 text-[17px] leading-snug font-semibold">Want us to build your idea?</p>
-      <a
-        href="#join"
-        class="rounded-full bg-night-text px-5 py-2.5 text-[15px] font-semibold text-night no-underline hover:bg-night-sub focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text"
-        >Pitch a problem</a
-      >
-    </div>
-    <div slot="footer" class="mt-6 flex flex-col gap-6">
-      <section aria-label="Updates" class="grid gap-4 rounded-lg border border-night-line bg-night-panel px-4.5 py-5 md:grid-cols-[1fr_minmax(320px,28rem)] md:items-end md:gap-12 md:px-6">
-        <div class="flex flex-col gap-1.5">
-          <h2 class="m-0 text-2xl font-semibold tracking-tight">Not ready to sponsor?</h2>
-          <p class="m-0 max-w-[48ch] text-[15px] leading-snug text-night-sub text-pretty">Get what shipped each day, straight to your inbox. No spam, just apps.</p>
-        </div>
-        <EmailBox label="Your email" button="Sign me up" />
-      </section>
-      <footer class="flex flex-wrap gap-x-5 gap-y-2 border-t border-night-line pt-5 font-mono text-xs">
-        <a href={links.twitch} target="_blank" rel="noopener" class={footerLink}>Twitch</a>
-        <a href={links.community} target="_blank" rel="noopener" class={footerLink}>Discord</a>
-        <a href={`mailto:${links.email}`} class={footerLink}>{links.email}</a>
-        <a href="/privacy" class={footerLink}>Privacy notice</a>
-      </footer>
+    <nav slot="nav" aria-label="Elsewhere" class="flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs">
+      <a href={links.twitch} target="_blank" rel="noopener" class={navLink}>Twitch</a>
+      <a href={links.community} target="_blank" rel="noopener" class={navLink}>Discord</a>
+      <a href={`mailto:${links.email}`} class={navLink}>{links.email}</a>
+      <a href="/privacy" class={navLink}>Privacy notice</a>
+    </nav>
+    <div class="flex flex-wrap items-end gap-x-8 gap-y-4">
+      <div class="flex flex-col gap-2">
+        <p class="m-0 text-[15px] leading-snug font-semibold">Want us to build your idea?</p>
+        <a
+          href="#join"
+          class="self-start rounded-full bg-night-text px-5 py-2.5 text-[15px] font-semibold text-night no-underline hover:bg-night-sub focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text"
+          >Pitch a problem</a
+        >
+      </div>
+      <div class="w-80 max-w-full">
+        <EmailBox label="Not ready? Get what shipped each day" button="Sign me up" />
+      </div>
     </div>
   </DayBoard>
   <JoinModal />
