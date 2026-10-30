@@ -27,6 +27,7 @@ export const poolConfig = {
   },
   boxes: {
     fullAt: 400,
+    unfunded: 0.5,
   },
   search: {
     debounceMs: 400,

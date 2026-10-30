@@ -32,8 +32,8 @@ test("lifting new matches drops the ones that no longer match", () => {
   expect(controller.setBodyHover.mock.calls).toEqual([["b", null]]);
 });
 
-test("funded boxes grow with the money behind them, up to twice as wide at £400", () => {
-  expect(boxScale(0)).toBe(1);
+test("unfunded boxes are half size, and funded ones grow with the money behind them up to twice as wide at £400", () => {
+  expect(boxScale(0)).toBe(0.5);
   expect(boxScale(40)).toBe(1.32);
   expect(boxScale(100)).toBe(1.5);
   expect(boxScale(400)).toBe(2);

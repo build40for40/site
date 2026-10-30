@@ -10,9 +10,9 @@ interface Band {
 }
 
 // Funded ideas that miss the days come out bigger: twice as wide at fullAt, which is about the most anyone pays, and
-// on a square root so the first £40 already shows. Unfunded ones stay at 1.
-export function boxScale(raised: number, fullAt = poolConfig.boxes.fullAt) {
-  return raised > 0 ? Number((1 + Math.min(1, Math.sqrt(raised / fullAt))).toFixed(2)) : 1;
+// on a square root so the first £40 already shows. Unfunded ones are smaller still.
+export function boxScale(raised: number, { fullAt, unfunded } = poolConfig.boxes) {
+  return raised > 0 ? Number((1 + Math.min(1, Math.sqrt(raised / fullAt))).toFixed(2)) : unfunded;
 }
 
 // A score of 1 rises to the top of the pool, under room for its percentage, and lower scores in proportion towards
