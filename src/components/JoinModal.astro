@@ -97,6 +97,16 @@ const input =
     dialog.querySelector<HTMLElement>(email.value ? "#join-name" : "#join-email")?.focus();
   }
 
+  // The Join box saves the email in the background, then carries it into the form.
+  document.addEventListener("submit", (event) => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement) || !form.hasAttribute("data-opens-join")) return;
+    event.preventDefault();
+    const data = new FormData(form);
+    fetch(form.action, { method: "POST", body: data, redirect: "manual" }).catch(() => {});
+    open(String(data.get("email") ?? "").trim());
+  });
+
   document.addEventListener("click", (event) => {
     const link = event.target instanceof Element && event.target.closest('a[href="#join"]');
     if (!link) return;
@@ -108,7 +118,7 @@ const input =
     if (event.target === dialog) dialog.close();
   });
 
-  // Old /join links arrive as /#join.
+  // Old /join links, and a Join box that posted before this script ran, arrive as /#join&email=…
   function openFromHash() {
     const params = new URLSearchParams(location.hash.slice(1));
     if (!params.has("join")) return;

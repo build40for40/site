@@ -179,30 +179,30 @@ const tileSub = (e: Entry) => {
   <div class="flex flex-col floor:h-dvh">
     <div class="floor:min-h-0 floor:flex-1 floor:overflow-y-auto">
       <div class="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 pt-7 pb-8 lg:px-12">
-        <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-          <div class="flex flex-wrap items-baseline gap-x-5 gap-y-2">
-            <slot name="title" />
-            <div class="flex items-center gap-2 font-mono text-xs font-medium tracking-wider uppercase" :class="kicker.tone">
-              <span class="size-[7px] shrink-0 rounded-full" :class="kicker.dot"></span>{{ kicker.text }}
+        <div class="flex flex-wrap items-end justify-between gap-x-12 gap-y-4">
+          <slot name="title" />
+          <div aria-label="Progress" class="flex w-full min-w-0 flex-col gap-2 md:w-auto md:max-w-[40rem] md:flex-1">
+            <div class="flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-xs font-medium">
+              <span>{{ String(shippedCount).padStart(2, "0") }} / 40 SHIPPED</span>
+              <span class="text-night-muted">{{ upcoming }} upcoming<template v-if="pool.length"> · {{ pool.length }} in the pool</template></span>
             </div>
+            <div class="flex gap-[3px]" aria-hidden="true">
+              <span v-for="d in board.days" :key="d.key" class="h-2.5 flex-1 rounded-xs" :class="[tones[d.status].dot, d.status === 'live' && 'motion-safe:animate-pulse']"></span>
+            </div>
+            <ul class="m-0 flex list-none flex-wrap gap-x-4 gap-y-1.5 p-0 font-mono text-[11px] text-night-muted">
+              <li v-for="item in legend" :key="item.label" class="flex items-center gap-1.5"><span class="size-[7px] rounded-full" :class="item.dot"></span>{{ item.label }}</li>
+            </ul>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+          <div class="flex items-center gap-2 font-mono text-xs font-medium tracking-wider uppercase" :class="kicker.tone">
+            <span class="size-[7px] shrink-0 rounded-full" :class="kicker.dot"></span>{{ kicker.text }}
           </div>
           <slot name="nav" />
         </div>
         <div class="flex flex-col gap-4">
-          <section aria-label="About" class="grid gap-4 rounded-lg border border-night-line bg-night-panel px-4.5 py-4 min-[900px]:grid-cols-[auto_minmax(320px,1fr)] min-[900px]:items-end min-[900px]:gap-12 min-[900px]:px-6">
+          <section aria-label="About" class="rounded-lg border border-night-line bg-night-panel px-4.5 py-4 min-[900px]:px-6">
             <slot />
-            <div class="flex min-w-0 flex-col gap-2">
-              <div class="flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-xs font-medium">
-                <span>{{ String(shippedCount).padStart(2, "0") }} / 40 SHIPPED</span>
-                <span class="text-night-muted">{{ upcoming }} upcoming<template v-if="pool.length"> · {{ pool.length }} in the pool</template></span>
-              </div>
-              <div class="flex gap-[3px]" aria-hidden="true">
-                <span v-for="d in board.days" :key="d.key" class="h-2.5 flex-1 rounded-xs" :class="[tones[d.status].dot, d.status === 'live' && 'motion-safe:animate-pulse']"></span>
-              </div>
-              <ul class="m-0 flex list-none flex-wrap gap-x-4 gap-y-1.5 p-0 font-mono text-[11px] text-night-muted">
-                <li v-for="item in legend" :key="item.label" class="flex items-center gap-1.5"><span class="size-[7px] rounded-full" :class="item.dot"></span>{{ item.label }}</li>
-              </ul>
-            </div>
           </section>
 
           <DayBox

@@ -21,14 +21,15 @@ const navLink = "text-night-muted underline-offset-3 hover:text-night-text";
       <a href={`mailto:${links.email}`} class={navLink}>{links.email}</a>
       <a href="/privacy" class={navLink}>Privacy notice</a>
     </nav>
-    <div class="flex flex-wrap items-end gap-x-8 gap-y-4">
-      <div class="flex flex-col gap-2">
-        <p class="m-0 text-[15px] leading-snug font-semibold">Want us to build your idea?</p>
-        <a
-          href="#join"
-          class="self-start rounded-full bg-night-text px-5 py-2.5 text-[15px] font-semibold text-night no-underline hover:bg-night-sub focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text"
-          >Pitch a problem</a
-        >
+    <div class="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+      <div class="w-[30rem] max-w-full">
+        <EmailBox opensJoin label="Want us to build your idea?" button="Let’s go">
+          <a
+            href="#join"
+            class="shrink-0 rounded-full bg-night-text px-5 py-2.5 text-[15px] font-semibold text-night no-underline hover:bg-night-sub focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text"
+            >Pitch a problem</a
+          >
+        </EmailBox>
       </div>
       <div class="w-80 max-w-full">
         <EmailBox label="Not ready? Get what shipped each day" button="Sign me up" />
