@@ -10,6 +10,8 @@ type Config = typeof poolConfig.physics & {
   autoStart?: boolean;
   autoPause?: boolean;
   boiling?: boolean;
+  // Where new ideas drop in, in pixels from the top of the container.
+  entry?: () => number;
 };
 
 interface BodyOptions {
@@ -197,7 +199,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     for (const t of bodies.values()) {
       if (t.shown || clock < t.spawnAt) continue;
       if (t.pickSpawn) {
-        const y = t.height / 2 + 1;
+        const y = (config.entry?.() ?? 0) + t.height / 2 + 1;
         const tries = Array.from({ length: 6 }, () => t.width / 2 + Math.random() * Math.max(0, size.width - t.width));
         const x = tries.find((x) => !overlaps(t, x, y));
         if (x === undefined && clock - t.spawnAt < 2000) continue;
@@ -209,6 +211,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
       t.body.setEnabled(true);
       t.body.wakeUp();
       t.element.style.opacity = "";
+      t.element.style.pointerEvents = "";
     }
   }
 
@@ -377,6 +380,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
       body.setEnabled(false);
       element.dataset.bodyId = id;
       element.style.opacity = "0";
+      element.style.pointerEvents = "none";
       bodies.set(id, tracked);
       if (!options.delayMs) spawnDue();
       render(1);
@@ -424,6 +428,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
       bodies.delete(id);
       t.element.style.transform = "";
       t.element.style.opacity = "";
+      t.element.style.pointerEvents = "";
       delete t.element.dataset.bodyId;
       delete t.element.dataset.arrived;
     },

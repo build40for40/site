@@ -78,6 +78,19 @@ describe("bodies", () => {
     expect(controller.bodyState("one")!.y - controller.bodyState("two")!.y).toBeGreaterThan(TILE.height * 0.9);
   });
 
+  test("drop in from the entry height rather than the very top", () => {
+    const container = document.createElement("ul");
+    Object.defineProperty(container, "clientWidth", { get: () => W });
+    Object.defineProperty(container, "clientHeight", { get: () => H });
+    document.body.append(container);
+    controller = initializePhysics(container, { autoStart: false, autoPause: false, boiling: false, entry: () => 250 });
+    const element = document.createElement("li");
+    container.append(element);
+    controller.registerBody("a", element, TILE);
+    expect(element.style.pointerEvents).toBe("");
+    expect(controller.bodyState("a")!.y).toBeCloseTo(250 + TILE.height / 2 + 1);
+  });
+
   test("hover at a height, turn upright, and drop back when it's cleared", () => {
     const { add, controller } = setup();
     const element = add("a", { x: 200, y: H - 30 });

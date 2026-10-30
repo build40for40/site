@@ -62,6 +62,7 @@ const announcement = computed(() => {
 // The band stays shut until there's something to show, then the lava slides up from the floor and the ideas rain in
 // once it's up. Sliding rather than growing keeps everything else on the page still.
 const floor = ref<HTMLElement>();
+const lava = "bg-linear-to-b from-night from-15% via-lava-deep to-lava";
 const band = ref<HTMLElement>();
 const shown = ref(false);
 let loaded = false;
@@ -120,8 +121,8 @@ async function start() {
   }
   const [{ initializePhysics }, { createLift }] = modules;
   if (!physical.value || !list.value) return;
-  controller = initializePhysics(list.value);
-  lift = createLift(controller, () => ({ height: size.value.height, tile: tile.value }));
+  controller = initializePhysics(list.value, { entry });
+  lift = createLift({ setBodyHover: (id, y) => controller?.setBodyHover(id, y === null ? null : y + entry()) }, () => ({ height: size.value.height - entry(), tile: tile.value }));
   register(props.tiles.map((t) => t.id));
   active.value = true;
   lift.apply(scored.value);
@@ -162,6 +163,11 @@ function settled() {
   });
 }
 
+// The balls fly over the whole board, but they rain in and rest in the pool at the bottom of it.
+function entry() {
+  return floor.value && list.value ? floor.value.getBoundingClientRect().top - list.value.getBoundingClientRect().top : 0;
+}
+
 async function receive(id: string, ghost: HTMLElement) {
   await settled();
   await nextTick();
@@ -173,8 +179,9 @@ async function receive(id: string, ghost: HTMLElement) {
     const from = boxOf(ghost);
     const x = Math.min(Math.max(from.left + from.width / 2 - box.left, width / 2), box.width - width / 2);
     const spin = (Math.random() - 0.5) * 1.2;
-    await fall(ghost, from, { left: box.left + x - width / 2, top: box.top + 1, width, height }, spin);
-    controller.drop(id, { x, y: height / 2 + 1 }, { x: 0, y: poolConfig.physics.drop.speed }, spin);
+    const y = entry() + height / 2 + 1;
+    await fall(ghost, from, { left: box.left + x - width / 2, top: box.top + y - height / 2, width, height }, spin);
+    controller.drop(id, { x, y }, { x: 0, y: poolConfig.physics.drop.speed }, spin);
   } else if (element) {
     element.scrollIntoView({ block: "nearest" });
     await lob(ghost, boxOf(ghost), boxOf(element));
@@ -360,12 +367,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="floor" :class="[!tiles.length && 'hidden', physical && 'h-[clamp(12rem,30dvh,17rem)] overflow-hidden']">
+  <div ref="floor" :class="[!tiles.length && 'hidden', !shown && 'invisible', physical ? 'h-[clamp(12rem,30dvh,17rem)] overflow-hidden' : lava]">
     <section
       ref="band"
       aria-labelledby="pool-title"
-      class="relative flex flex-col bg-linear-to-b from-night from-15% via-lava-deep to-lava text-night-text transition-transform duration-700 ease-out"
-      :class="[physical && 'h-full', !shown && ['invisible', physical && 'translate-y-full']]"
+      class="relative flex flex-col text-night-text transition-transform duration-700 ease-out"
+      :class="physical && ['h-full', lava, !shown && 'translate-y-full']"
     >
       <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 pt-3 pb-2 lg:px-12">
         <div class="flex items-baseline gap-3">
@@ -385,45 +392,6 @@ onBeforeUnmount(() => {
         ></span>
       </div>
 
-      <ul ref="list" class="m-0 list-none p-0" :class="physical ? 'relative min-h-0 flex-1 overflow-clip' : 'flex flex-wrap items-end gap-2 px-4 pt-1 pb-6 lg:px-12'">
-        <li
-          v-for="t in tiles"
-          :key="t.key"
-          :ref="(element) => setTile(t.id, element)"
-          class="group aspect-square w-[calc(1.25rem+var(--grow))] rounded-full sm:w-[calc(1.5rem+var(--grow))]"
-          :style="{ '--grow': `${boxGrowth(t.raised)}px` }"
-          :class="[
-            physical ? 'absolute top-0 left-0 will-change-transform focus-within:z-10' : 'relative',
-            physical && !active ? 'opacity-0 focus-within:opacity-100' : !physical && matches && !percents.has(t.id) && 'opacity-40',
-            !physical && held.has(t.id) && 'invisible',
-          ]"
-        >
-          <button
-            type="button"
-            :data-pool-ball="t.id"
-            :aria-label="t.label"
-            :aria-expanded="open === t.id"
-            :aria-describedby="open === t.id ? 'pool-tip' : undefined"
-            class="absolute inset-0 cursor-pointer overflow-hidden rounded-full border-0 bg-night-panel p-0 select-none after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:bg-linear-135 after:from-night-text/60 after:via-night-text/5 after:via-45% after:to-transparent after:ring-1 after:ring-night-text/30 after:ring-inset hover:brightness-115 active:cursor-grabbing [&>svg]:size-full motion-safe:hover:animate-wiggle motion-safe:aria-expanded:animate-pop focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-expanded:outline-2 aria-expanded:outline-offset-2 aria-expanded:outline-night-text"
-            :class="physical && 'touch-none'"
-            @click="clicked(t.id, $event)"
-            @pointerdown="pressed(t.id, $event)"
-            @pointermove="moved"
-            @pointerup="lifted"
-            @pointercancel="lifted"
-            @focus="focused(t.id, $event)"
-            @blur="blurred(t.id, $event)"
-            v-html="artwork.get(t.id)"
-          ></button>
-          <span
-            v-if="physical && percents.has(t.id)"
-            aria-hidden="true"
-            class="pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded-full bg-night-text px-1.5 font-mono text-[10px] leading-4 font-medium text-night opacity-0 transition-opacity duration-300 group-data-arrived:animate-pop group-data-arrived:opacity-100"
-            >{{ percents.get(t.id) }}%</span
-          >
-        </li>
-      </ul>
-
       <div
         v-if="openTile"
         id="pool-tip"
@@ -436,5 +404,50 @@ onBeforeUnmount(() => {
         <p v-if="blurb" class="m-0 mt-1 text-sm leading-snug text-night-panel">{{ blurb }}</p>
       </div>
     </section>
+
+    <!-- Outside the band so the balls can fly over the rest of the board. Only the balls take clicks. -->
+    <ul
+      ref="list"
+      aria-labelledby="pool-title"
+      class="m-0 list-none p-0"
+      :class="physical ? 'pointer-events-none absolute inset-0 z-20 overflow-clip' : 'flex flex-wrap items-end gap-2 px-4 pt-1 pb-6 lg:px-12'"
+    >
+      <li
+        v-for="t in tiles"
+        :key="t.key"
+        :ref="(element) => setTile(t.id, element)"
+        class="group aspect-square w-[calc(1.25rem+var(--grow))] rounded-full sm:w-[calc(1.5rem+var(--grow))]"
+        :style="{ '--grow': `${boxGrowth(t.raised)}px` }"
+        :class="[
+          physical ? 'pointer-events-auto absolute top-0 left-0 will-change-transform focus-within:z-10' : 'relative',
+          physical && !active ? 'opacity-0 focus-within:opacity-100' : !physical && matches && !percents.has(t.id) && 'opacity-40',
+          !physical && held.has(t.id) && 'invisible',
+        ]"
+      >
+        <button
+          type="button"
+          :data-pool-ball="t.id"
+          :aria-label="t.label"
+          :aria-expanded="open === t.id"
+          :aria-describedby="open === t.id ? 'pool-tip' : undefined"
+          class="absolute inset-0 cursor-pointer overflow-hidden rounded-full border-0 bg-night-panel p-0 select-none after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:bg-linear-135 after:from-night-text/60 after:via-night-text/5 after:via-45% after:to-transparent after:ring-1 after:ring-night-text/30 after:ring-inset hover:brightness-115 active:cursor-grabbing [&>svg]:size-full motion-safe:hover:animate-wiggle motion-safe:aria-expanded:animate-pop focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-expanded:outline-2 aria-expanded:outline-offset-2 aria-expanded:outline-night-text"
+          :class="physical && 'touch-none'"
+          @click="clicked(t.id, $event)"
+          @pointerdown="pressed(t.id, $event)"
+          @pointermove="moved"
+          @pointerup="lifted"
+          @pointercancel="lifted"
+          @focus="focused(t.id, $event)"
+          @blur="blurred(t.id, $event)"
+          v-html="artwork.get(t.id)"
+        ></button>
+        <span
+          v-if="physical && percents.has(t.id)"
+          aria-hidden="true"
+          class="pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded-full bg-night-text px-1.5 font-mono text-[10px] leading-4 font-medium text-night opacity-0 transition-opacity duration-300 group-data-arrived:animate-pop group-data-arrived:opacity-100"
+          >{{ percents.get(t.id) }}%</span
+        >
+      </li>
+    </ul>
   </div>
 </template>

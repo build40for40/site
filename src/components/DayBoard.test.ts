@@ -72,12 +72,12 @@ afterEach(() => {
 async function board() {
   const { default: DayBoard } = await import("./DayBoard.vue");
   wrapper = mount(DayBoard, { props: { history: {}, builtAt: Date.now() }, attachTo: document.body });
-  await vi.waitFor(() => expect(wrapper!.findAll("section[aria-labelledby=pool-title] li")).toHaveLength(10), { timeout: 3000 });
+  await vi.waitFor(() => expect(wrapper!.findAll("ul[aria-labelledby=pool-title] li")).toHaveLength(10), { timeout: 3000 });
   await flushPromises();
   return wrapper;
 }
 
-const pool = (w: VueWrapper) => w.find("section[aria-labelledby=pool-title] ul");
+const pool = (w: VueWrapper) => w.find("ul[aria-labelledby=pool-title]");
 const poolTitles = (w: VueWrapper) => pool(w).findAll("button").map((b) => b.attributes("aria-label")!.match(/: (.+),/)![1]);
 
 describe("the problems pool", () => {
@@ -85,7 +85,7 @@ describe("the problems pool", () => {
     const w = await board();
     expect(poolTitles(w)).toEqual(Array.from({ length: 10 }, (_, i) => `Idea ${34 + i}`));
     await vi.waitFor(() => expect(bodies.registered).toHaveLength(10));
-    expect(pool(w).classes()).toContain("relative");
+    expect(pool(w).classes()).toContain("absolute");
   });
 
   test("sponsoring moves an idea into the days and bumps the last one into the pool", async () => {
@@ -114,7 +114,7 @@ describe("the problems pool", () => {
   test("is laid out for physics from the start, with ideas hidden until they drop in", async () => {
     vi.doMock("../pool/physics", () => new Promise(() => {}));
     const w = await board();
-    expect(pool(w).classes()).toContain("relative");
+    expect(pool(w).classes()).toContain("absolute");
     expect(pool(w).findAll("li").every((li) => li.classes().includes("opacity-0"))).toBe(true);
   });
 

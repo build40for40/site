@@ -223,7 +223,7 @@ const tileSub = (e: Entry) => {
 </script>
 
 <template>
-  <div>
+  <div class="relative">
     <div class="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 pt-7 pb-8 lg:px-12">
       <div class="flex flex-wrap items-end justify-between gap-x-12 gap-y-4">
         <div class="flex flex-col gap-3">
