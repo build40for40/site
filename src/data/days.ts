@@ -77,7 +77,9 @@ export function clock(now: number): { today: number; phase: Phase; isToday: bool
 
 export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, now: number, guestSponsors: Record<number, Sponsor[]> = {}) {
   const { today, phase, isToday } = clock(now);
-  const ranked = ideas.toSorted((a, b) => raised(b) - raised(a));
+  // Only ideas with money behind them get a day. Everything at £0 waits in the pool, after any funded overflow.
+  const ranked = ideas.filter((idea) => raised(idea) > 0).toSorted((a, b) => raised(b) - raised(a));
+  const unfunded = ideas.filter((idea) => raised(idea) === 0);
   const days: Day[] = [];
   let next = 0;
   let rank = 0;
@@ -98,7 +100,7 @@ export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, 
     }
   }
 
-  const pool: PoolIdea[] = ranked.slice(next).map((idea) => ({ key: `pool-${idea.id}`, idea }));
+  const pool: PoolIdea[] = [...ranked.slice(next), ...unfunded].map((idea) => ({ key: `pool-${idea.id}`, idea }));
   return { today, phase, isToday, days, pool };
 }
 
