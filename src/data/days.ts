@@ -196,11 +196,11 @@ export function statusLabel(entry: Entry, today: number) {
   return { shipped: "Shipped", live: "Live now", guest: "Guest day", open: "Up for grabs", pool: "In the pool" }[entry.status];
 }
 
-export const tones: Record<EntryStatus, { glow: string; dot: string; text: string; border: string; ring: string }> = {
-  shipped: { glow: "from-shipped/45 to-shipped/5", dot: "bg-shipped", text: "text-shipped", border: "border-shipped", ring: "ring-shipped" },
-  live: { glow: "from-live/45 to-live/5", dot: "bg-live", text: "text-live", border: "border-live", ring: "ring-live" },
-  queued: { glow: "from-queued/25 to-transparent", dot: "bg-queued", text: "text-queued", border: "border-queued", ring: "ring-queued" },
-  guest: { glow: "from-guest/45 to-guest/5", dot: "bg-guest", text: "text-guest", border: "border-guest", ring: "ring-guest" },
-  open: { glow: "", dot: "ring-1 ring-night-edge ring-inset", text: "text-night-sub", border: "border-night-edge", ring: "ring-night-edge" },
-  pool: { glow: "", dot: "ring-1 ring-queued ring-inset", text: "text-night-sub", border: "border-night-edge", ring: "ring-night-edge" },
+export const tones: Record<EntryStatus, { dot: string; text: string; border: string; ring: string }> = {
+  shipped: { dot: "bg-shipped", text: "text-shipped", border: "border-shipped", ring: "ring-shipped" },
+  live: { dot: "bg-live", text: "text-live", border: "border-live", ring: "ring-live" },
+  queued: { dot: "bg-queued", text: "text-queued", border: "border-queued", ring: "ring-queued" },
+  guest: { dot: "bg-guest", text: "text-guest", border: "border-guest", ring: "ring-guest" },
+  open: { dot: "ring-1 ring-night-edge ring-inset", text: "text-night-sub", border: "border-night-edge", ring: "ring-night-edge" },
+  pool: { dot: "ring-1 ring-queued ring-inset", text: "text-night-sub", border: "border-night-edge", ring: "ring-night-edge" },
 };

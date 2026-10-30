@@ -21,16 +21,16 @@ defineEmits<{ select: []; sponsor: [] }>();
       :aria-label="label"
       :aria-pressed="selected"
       :title="title"
-      class="absolute inset-0 flex cursor-pointer flex-col gap-0.5 overflow-hidden rounded-md border-0 bg-night-tile bg-linear-155 px-2 py-1.5 text-left text-night-text hover:brightness-115 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text"
+      class="absolute inset-0 flex cursor-pointer flex-col gap-0.5 overflow-hidden rounded-md border-0 bg-night-tile px-2 pt-2 pb-1.5 text-left text-night-text hover:brightness-115 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime"
       :class="[
-        tones[status].glow,
         status === 'open' && 'border-[1.5px] border-dashed border-night-line bg-transparent hover:border-night-edge',
         status === 'pool' && 'bg-night-panel ring-1 ring-night-line ring-inset',
         today && ['ring-2', tones[status].ring],
-        selected && 'outline-2 outline-offset-2 outline-night-text',
+        selected && 'outline-2 outline-offset-2 outline-brand-lime',
       ]"
       @click="$emit('select')"
     >
+      <span v-if="status !== 'open' && status !== 'pool'" aria-hidden="true" class="absolute inset-x-0 top-0 h-[3px]" :class="tones[status].dot"></span>
       <span v-if="number" class="font-mono text-[11px] font-medium" :class="status === 'open' ? 'text-night-muted' : 'text-night-sub'">{{ pad(number) }}</span>
       <span v-if="title" class="line-clamp-2 text-xs leading-[1.15] font-semibold">{{ title }}</span>
       <span v-if="sub" class="mt-auto truncate font-mono text-[11px] font-medium text-night-sub">{{ sub }}</span>

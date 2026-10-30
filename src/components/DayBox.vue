@@ -145,11 +145,11 @@ const unsponsored = computed(() =>
 const panel = "flex min-w-0 flex-col gap-2.5 rounded-md bg-night-panel p-4";
 const kicker = "font-mono text-[11px] leading-snug font-medium tracking-wider text-night-muted uppercase";
 const mainButton =
-  "block cursor-pointer rounded-full border-0 bg-night-text px-4 py-3 text-center text-[15px] font-semibold text-night no-underline hover:bg-night-sub focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text";
+  "block cursor-pointer rounded-full border-0 bg-brand-lime text-brand-lime-ink hover:bg-brand-lime-hover px-4 py-3 text-center text-[15px] font-semibold no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime";
 const smallLink = "self-center font-mono text-xs font-medium text-night-sub underline-offset-3 hover:text-night-text";
 const overlayPill =
-  "cursor-pointer rounded-full border border-night-edge bg-night/60 px-3 py-1.5 font-mono text-xs font-medium text-night-text hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text";
-const pill = "cursor-pointer rounded-full border border-night-edge bg-transparent font-mono text-xs font-medium text-night-text hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text";
+  "cursor-pointer rounded-full border border-night-edge bg-night/60 px-3 py-1.5 font-mono text-xs font-medium text-night-text hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime";
+const pill = "cursor-pointer rounded-full border border-night-edge bg-transparent font-mono text-xs font-medium text-night-text hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime";
 </script>
 
 <template>
@@ -157,7 +157,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
     id="day-box"
     tabindex="-1"
     :aria-label="entry.day ? `Day ${entry.day}` : idea?.title"
-    class="grid scroll-mt-4 gap-2 border-t-3 pt-2.5 outline-offset-4 [view-transition-name:day-box] focus-visible:outline-2 focus-visible:outline-night-text lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
+    class="grid scroll-mt-4 gap-2 border-t-3 pt-2.5 outline-offset-4 [view-transition-name:day-box] focus-visible:outline-2 focus-visible:outline-brand-lime lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
     :class="tones[entry.status].border"
   >
     <div class="col-span-full flex flex-wrap justify-between gap-x-3 gap-y-1" :class="kicker">
@@ -179,7 +179,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
                 :href="short.url"
                 target="_blank"
                 rel="noopener"
-                class="flex aspect-[9/16] h-full min-w-0 flex-col justify-between rounded-md bg-night-tile p-2.5 text-left text-night-text no-underline ring-night-edge hover:ring-1 focus-visible:outline-2 focus-visible:outline-night-text"
+                class="flex aspect-[9/16] h-full min-w-0 flex-col justify-between rounded-md bg-night-tile p-2.5 text-left text-night-text no-underline ring-night-edge hover:ring-1 focus-visible:outline-2 focus-visible:outline-brand-lime"
               >
                 <span class="font-mono text-[10px] tracking-wider text-night-muted uppercase">{{ short.platform }}</span>
                 <span class="self-center text-2xl" aria-hidden="true">▶</span>
@@ -188,7 +188,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
             </div>
             <template v-else>
               <img :src="shippedIdea.screenshot" alt="" class="absolute inset-0 size-full object-cover object-top opacity-35" />
-              <a :href="shippedIdea.recordingUrl" target="_blank" rel="noopener" class="relative rounded-full bg-night-text px-5 py-3 text-[15px] font-semibold text-night no-underline hover:bg-night-sub">▶ Watch the full build</a>
+              <a :href="shippedIdea.recordingUrl" target="_blank" rel="noopener" class="relative rounded-full bg-brand-lime text-brand-lime-ink hover:bg-brand-lime-hover px-5 py-3 text-[15px] font-semibold no-underline">▶ Watch the full build</a>
               <p class="relative m-0 font-mono text-xs text-night-sub">All {{ shippedIdea.buildTime }} of it, on Twitch.</p>
             </template>
             <div class="absolute top-2.5 left-2.5 z-1 flex gap-1.5" role="group" aria-label="Video">
@@ -197,7 +197,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
                 :key="value"
                 type="button"
                 :aria-pressed="video === value"
-                class="bg-night/60 px-3 py-1.5 aria-pressed:border-night-text aria-pressed:bg-night-text aria-pressed:text-night"
+                class="bg-night/60 px-3 py-1.5 aria-pressed:border-brand-lime aria-pressed:text-brand-lime"
                 :class="pill"
                 @click="video = value as 'recording' | 'shorts'"
               >{{ text }}</button>
@@ -283,7 +283,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
           <button
             type="button"
             :aria-pressed="anonymous"
-            class="px-2.5! aria-pressed:border-night-text aria-pressed:bg-night-text aria-pressed:text-night"
+            class="px-2.5! aria-pressed:border-brand-lime aria-pressed:text-brand-lime"
             :class="overlayPill"
             @click="anonymous = !anonymous"
           >Anonymous</button>
@@ -321,7 +321,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
       <template v-else>
         <template v-if="idea">
           <h2 class="m-0 text-[26px] leading-[1.04] font-semibold tracking-tight text-balance md:text-3xl">{{ dayPrefix }}{{ idea.title }}</h2>
-          <p class="m-0 line-clamp-3 text-[15px] leading-snug text-night-sub text-pretty" :title="idea.problem">“{{ idea.problem }}”</p>
+          <p class="m-0 line-clamp-3 text-[15px] leading-snug text-night-sub text-pretty" :title="idea.problem"><span class="text-brand-yellow">(</span>{{ idea.problem }}<span class="text-brand-yellow">)</span></p>
         </template>
         <template v-else>
           <h2 class="m-0 text-[26px] leading-[1.04] font-semibold tracking-tight text-balance md:text-3xl">{{ dayPrefix }}Guest day</h2>
@@ -379,7 +379,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
                   :key="a"
                   type="button"
                   :aria-pressed="amount === a"
-                  class="px-1 py-2 aria-pressed:border-night-text aria-pressed:bg-night-text aria-pressed:text-night"
+                  class="px-1 py-2 aria-pressed:border-brand-lime aria-pressed:text-brand-lime"
                   :class="pill"
                   @click="amount = a"
                 >{{ money(a) }}</button>
