@@ -23,7 +23,7 @@ const id = useId();
       />
       <button
         type="submit"
-        class="shrink-0 cursor-pointer rounded-full border-0 bg-brand-lime text-brand-lime-ink hover:bg-brand-lime-hover px-5 text-[15px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action"
+        class="shrink-0 cursor-pointer rounded-full border-0 bg-brand-lime text-brand-lime-ink hover:bg-brand-lime-hover px-5 text-[15px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime"
       >
         {{ button }}
       </button>

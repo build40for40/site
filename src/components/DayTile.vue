@@ -21,12 +21,12 @@ defineEmits<{ select: []; sponsor: [] }>();
       :aria-label="label"
       :aria-pressed="selected"
       :title="title"
-      class="absolute inset-0 flex cursor-pointer flex-col gap-0.5 overflow-hidden rounded-md border-0 bg-night-tile px-2 pt-2 pb-1.5 text-left text-night-text hover:brightness-115 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action"
+      class="absolute inset-0 flex cursor-pointer flex-col gap-0.5 overflow-hidden rounded-md border-0 bg-night-tile px-2 pt-2 pb-1.5 text-left text-night-text hover:brightness-115 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime"
       :class="[
         status === 'open' && 'border-[1.5px] border-dashed border-night-line bg-transparent hover:border-night-edge',
         status === 'pool' && 'bg-night-panel ring-1 ring-night-line ring-inset',
         today && ['ring-2', tones[status].ring],
-        selected && 'outline-2 outline-offset-2 outline-action',
+        selected && 'outline-2 outline-offset-2 outline-brand-lime',
       ]"
       @click="$emit('select')"
     >
