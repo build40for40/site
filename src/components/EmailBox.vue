@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { useId } from "vue";
 
-// "build" saves the email and carries it on to the join form. "updates" just saves it.
-defineProps<{ intent: "build" | "updates"; label: string; button: string; hint?: string }>();
+defineProps<{ label: string; button: string }>();
 
 const id = useId();
 </script>
@@ -11,11 +10,10 @@ const id = useId();
   <form
     method="post"
     action="/api/forms/subscribe"
-    :data-opens-join="intent === 'build' || undefined"
-    :data-sent-message="intent === 'updates' ? 'You’re on the list. Speak soon.' : undefined"
+    data-sent-message="You’re on the list. Speak soon."
     class="flex min-w-0 flex-col gap-2 data-sent:*:not-[[role=status]]:hidden"
   >
-    <input v-if="intent === 'updates'" type="hidden" name="next" value="thanks" />
+    <input type="hidden" name="next" value="thanks" />
     <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden" />
     <label :for="id" class="text-[15px] leading-snug font-semibold text-night-text">{{ label }}</label>
     <div class="flex gap-1.5">
@@ -23,11 +21,10 @@ const id = useId();
         :id="id"
         name="email"
         type="email"
-        :required="intent === 'updates'"
+        required
         maxlength="254"
         autocomplete="email"
         placeholder="you@example.com"
-        :aria-describedby="hint ? `${id}-hint` : undefined"
         class="min-w-0 flex-1 rounded-full border border-night-edge bg-night px-4 py-2.5 text-[15px] text-night-text placeholder:text-night-muted focus-visible:border-night-text focus-visible:outline-none"
       />
       <button
@@ -42,7 +39,6 @@ const id = useId();
         </svg>
       </button>
     </div>
-    <p v-if="hint" :id="`${id}-hint`" class="m-0 font-mono text-[11px] leading-snug text-night-muted">{{ hint }}</p>
-    <p v-if="intent === 'updates'" role="status" class="m-0 text-[15px] leading-snug text-night-text empty:hidden"></p>
+    <p role="status" class="m-0 text-[15px] leading-snug text-night-text empty:hidden"></p>
   </form>
 </template>

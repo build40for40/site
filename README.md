@@ -76,7 +76,7 @@ Every form posts to `/api/forms/<form>` (`subscribe`, `join`, `help`, `guest`, `
 
 Everything lives in the `40for40` D1 database, with the schema in `worker/migrations/`:
 
-- **`people`:** one row per email. The Join box creates it, and later forms fill in or change answers without clearing ones they leave out, keeping the original `joined_at`. `involved` is a JSON array and `sponsor` is the amount in pence picked before checkout.
+- **`people`:** one row per email. The first form someone sends creates it, and later forms fill in or change answers without clearing ones they leave out, keeping the original `joined_at`. `involved` is a JSON array and `sponsor` is the amount in pence picked before checkout.
 - **`problems`:** one row per problem submitted, so a second problem from the same person never replaces the first.
 - **`payments`:** one row per paid Stripe Checkout Session, written by the webhook.
 - **`help_offers`** and **`guest_applications`:** one row per submission of the hidden help and guest forms.

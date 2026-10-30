@@ -292,7 +292,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="floor:h-1/3 floor:shrink-0 floor:overflow-hidden" :class="!tiles.length && 'hidden'">
+  <div class="floor:h-[clamp(9rem,22dvh,13rem)] floor:shrink-0 floor:overflow-hidden" :class="!tiles.length && 'hidden'">
     <section
       ref="band"
       aria-labelledby="pool-title"

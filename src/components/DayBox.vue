@@ -252,7 +252,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
         <p class="m-0 text-[15px] leading-snug text-night-sub text-pretty">A special guest brings their own problem and builds it with us. It stays a secret until 9:00 on {{ entry.date }}.</p>
         <p class="m-0 text-[15px] leading-snug text-pretty">Same rules as every day: 4 hours 40 minutes on the clock, live on Twitch.</p>
         <ShareButton v-if="share" v-bind="share" />
-        <div class="mt-auto pt-2"><EmailBox intent="updates" :label="`Remind me on ${entry.date}`" button="Remind me" /></div>
+        <div class="mt-auto pt-2"><EmailBox :label="`Remind me on ${entry.date}`" button="Remind me" /></div>
         <a href="#join" :class="smallLink">Suggest a guest</a>
       </template>
       <template v-else-if="entry.status === 'open'">
@@ -273,7 +273,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
         </p>
 
         <div v-if="entry.status === 'queued'" class="mt-auto pt-2">
-          <EmailBox intent="updates" :label="`Get a ping when Day ${entry.day} goes live`" button="Ping me" />
+          <EmailBox :label="`Get a ping when Day ${entry.day} goes live`" button="Ping me" />
         </div>
         <template v-else-if="entry.status === 'live'">
           <div class="mt-auto flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-t border-night-line pt-2.5">
