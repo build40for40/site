@@ -9,20 +9,32 @@
   --color-body: #4a4740;
   --color-muted: #6b675f;
 
-  --color-night: #161513;
-  --color-night-panel: #201e1b;
-  --color-night-tile: #2a2825;
-  --color-night-line: #2e2c28;
-  --color-night-edge: #4a4640;
-  --color-night-muted: #a29d92;
-  --color-night-sub: #c9c4b9;
+  --color-night: #081633;
+  --color-night-panel: #10224a;
+  --color-night-tile: #172c58;
+  --color-night-line: #1e3260;
+  --color-night-edge: #2e4170;
+  --color-night-muted: #9aa6c4;
+  --color-night-sub: #c9cfe0;
   --color-night-text: #f2f0ea;
-  --color-player: #0d0c0b;
+  --color-player: #040b1c;
 
-  --color-shipped: oklch(0.64 0.14 150);
-  --color-live: oklch(0.66 0.16 45);
-  --color-queued: oklch(0.6 0.01 80);
-  --color-guest: oklch(0.62 0.14 255);
+  /* The 40(40) logo. Lime is the one action colour; pink stays in the logo. */
+  --color-brand-navy: #002d69;
+  --color-brand-lime: #a6e22e;
+  --color-brand-lime-hover: #bdf05a;
+  --color-brand-lime-ink: #1a2e05;
+  --color-brand-yellow: #ffd400;
+  --color-brand-pink: #ff7fcf;
+  /* Lime and yellow as text, borders and outlines: deepen in light mode so they stay readable. */
+  --color-action: #a6e22e;
+  --color-bracket: #ffd400;
+
+  /* Day states are signals only: dots, strips, badges, never buttons. */
+  --color-shipped: oklch(0.68 0.12 170);
+  --color-live: oklch(0.69 0.19 38);
+  --color-queued: oklch(0.66 0.06 265);
+  --color-guest: oklch(0.7 0.15 285);
 
   --color-pop-red: oklch(0.66 0.22 25);
   --color-pop-orange: oklch(0.75 0.18 55);
@@ -97,4 +109,42 @@
       opacity: 1;
     }
   }
+}
+
+/* The visitor's device decides: light mode swaps the palette, nothing on the page to toggle. */
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-night: #eef2fa;
+    --color-night-panel: #ffffff;
+    --color-night-tile: #dde5f3;
+    --color-night-line: #d5dcea;
+    --color-night-edge: #b9c4dc;
+    --color-night-muted: #56648a;
+    --color-night-sub: #33416a;
+    --color-night-text: #0b1a3a;
+    --color-action: #4a7a00;
+    --color-bracket: #8f6a00;
+    --color-shipped: oklch(0.52 0.1 170);
+    --color-live: oklch(0.55 0.18 38);
+    --color-queued: oklch(0.5 0.06 265);
+    --color-guest: oklch(0.5 0.18 285);
+  }
+}
+
+/* The video frame is a screen: always the dark palette, whatever the device says. */
+@utility dark-screen {
+  --color-night: #081633;
+  --color-night-panel: #10224a;
+  --color-night-tile: #172c58;
+  --color-night-line: #1e3260;
+  --color-night-edge: #2e4170;
+  --color-night-muted: #9aa6c4;
+  --color-night-sub: #c9cfe0;
+  --color-night-text: #f2f0ea;
+  --color-action: #a6e22e;
+  --color-bracket: #ffd400;
+  --color-shipped: oklch(0.68 0.12 170);
+  --color-live: oklch(0.69 0.19 38);
+  --color-queued: oklch(0.66 0.06 265);
+  --color-guest: oklch(0.7 0.15 285);
 }

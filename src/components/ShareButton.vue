@@ -36,7 +36,7 @@ async function copy() {
 }
 
 const pill =
-  "cursor-pointer rounded-full border border-night-edge bg-night/60 px-3 py-1.5 font-mono text-xs font-medium text-night-text no-underline hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text";
+  "cursor-pointer rounded-full border border-night-edge bg-night/60 px-3 py-1.5 font-mono text-xs font-medium text-night-text no-underline hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action";
 </script>
 
 <template>

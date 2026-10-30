@@ -8,13 +8,16 @@ import { history } from "../data/days";
 import { links } from "../data/site";
 
 const navLink = "text-night-muted underline-offset-3 hover:text-night-text";
-const cta = "rounded-full border px-4 py-2 text-sm font-semibold no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text";
+const cta = "rounded-full border px-4 py-2 text-sm font-semibold no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action";
 ---
 
 <Base dark>
   <DayBoard client:load history={history} builtAt={Date.now()}>
-    <h1 slot="title" class="m-0 text-[clamp(40px,4.4vw,56px)] leading-[0.92] font-bold tracking-[-0.045em]">
-      <span class="whitespace-nowrap">40 apps.</span> <span class="whitespace-nowrap">40 days.</span>
+    <h1 slot="title" class="m-0 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[clamp(40px,4.4vw,56px)] leading-[0.92] font-bold tracking-[-0.045em]">
+      <span role="img" aria-label="40 for 40" class="font-mono font-medium tracking-normal whitespace-nowrap not-dark:rounded-lg not-dark:bg-brand-navy not-dark:px-3 not-dark:py-1.5">
+        <span class="text-brand-lime">40</span><span class="text-brand-yellow">(</span><span class="text-brand-pink">40</span><span class="text-brand-yellow">)</span>
+      </span>
+      <span><span class="whitespace-nowrap">40 apps.</span> <span class="whitespace-nowrap">40 days.</span></span>
     </h1>
     <nav slot="links" aria-label="Links" class="flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs">
       <a href={links.twitch} target="_blank" rel="noopener" class={navLink}>Twitch</a>
@@ -23,7 +26,7 @@ const cta = "rounded-full border px-4 py-2 text-sm font-semibold no-underline fo
       <a href="/privacy" class={navLink}>Privacy notice</a>
     </nav>
     <div slot="links" class="flex gap-2">
-      <a href="#join" class:list={[cta, "border-night-text bg-night-text text-night hover:border-night-sub hover:bg-night-sub"]}>I have a problem</a>
+      <a href="#join" class:list={[cta, "border-brand-lime bg-brand-lime text-brand-lime-ink hover:border-brand-lime-hover hover:bg-brand-lime-hover"]}>I have a problem</a>
       <a href="#problems" class:list={[cta, "border-night-edge text-night-text hover:border-night-text"]}>Browse</a>
     </div>
     <JoinForm slot="join" />

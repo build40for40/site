@@ -249,7 +249,6 @@ export default {
       ctx.waitUntil(capture(env, event, "$posthog_cookieless", { ...cookieless(request), ...properties }));
 
     // Join works with or without an email: save valid ones, then carry whatever was typed to the full form.
-    // Boxes that only want updates send next=thanks and skip the full form.
     if (form === "subscribe") {
       if (typeof values !== "string" && values.email) {
         await env.DB.prepare("INSERT INTO people (email, joined_at, updated_at) VALUES (?1, ?2, ?2) ON CONFLICT DO NOTHING")
@@ -257,7 +256,6 @@ export default {
           .run();
         track("form_saved", { form_type: form });
       }
-      if (data.get("next") === "thanks") return home;
       const typed = String(data.get("email") ?? "").trim();
       return Response.redirect(new URL(typed ? `/#join&email=${encodeURIComponent(typed)}` : "/#join", url).href, 303);
     }
