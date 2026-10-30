@@ -8,6 +8,7 @@ interface Row {
   problem: string;
   name: string | null;
   email: string;
+  created_at: string;
   amounts: string;
 }
 
@@ -47,7 +48,7 @@ export async function listProblems(db: D1Database, { offset, limit, seedSecret }
   const start = Math.max(0, Math.floor(offset) || 0);
   const { results } = await db
     .prepare(
-      `SELECT p.id, p.title, p.problem, people.name, p.email,
+      `SELECT p.id, p.title, p.problem, people.name, p.email, p.created_at,
          coalesce(json_group_array(pay.amount) FILTER (WHERE pay.id IS NOT NULL), '[]') AS amounts
        FROM problems p
        LEFT JOIN people ON people.email = p.email
@@ -65,6 +66,7 @@ export async function listProblems(db: D1Database, { offset, limit, seedSecret }
       title: row.title?.trim() || excerpt(row.problem),
       problem: row.problem,
       owner: firstName(row.name),
+      submittedAt: row.created_at,
       // Payments don't store how people chose to be credited yet.
       sponsors: (JSON.parse(row.amounts) as number[]).map((cents) => ({ name: "Anonymous", amount: cents / 100 })),
       ...(seedSecret ? { seed: await submitterSeed(row.email, row.id, seedSecret) } : {}),

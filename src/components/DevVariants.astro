@@ -5,9 +5,10 @@ const times = [
   { label: "Between days", value: "2026-11-10T19:00:00Z" },
 ];
 const counts = [
-  { label: "Day grid", param: "grid" },
-  { label: "Pool", param: "pool" },
+  { label: "Days", param: "grid", upTo: 1500 },
+  { label: "Pool", param: "pool", upTo: 0 },
 ];
+const step = "grid size-5 cursor-pointer place-items-center rounded-full border border-night-edge bg-night p-0 text-night-sub hover:border-night-text hover:text-night-text";
 ---
 
 <nav
@@ -29,23 +30,23 @@ const counts = [
     }
   </div>
   {
-    counts.map(({ label, param }) => (
-      <label class="flex items-center gap-1.5 uppercase">
-        {label}
-        <input
-          type="number"
-          min="0"
-          max="57"
-          placeholder="all"
-          name={param}
-          class="w-14 rounded-full border border-night-edge bg-night px-2 py-0.5 text-night-text placeholder:text-night-muted"
-        />
-      </label>
+    counts.map(({ label, param, upTo }) => (
+      <div class="flex items-center gap-1">
+        <span class="mr-1 uppercase">{label}</span>
+        <button type="button" data-fewer={param} aria-label={`One fewer in ${label.toLowerCase()}`} class={step}>
+          −
+        </button>
+        <button type="button" data-send={upTo} aria-label={`Send a test problem to ${label.toLowerCase()}`} class={step}>
+          +
+        </button>
+      </div>
     ))
   }
 </nav>
 
 <script>
+  import { DEV_FEWER, DEV_SEND } from "../pool/flight";
+
   const current = new URLSearchParams(location.search);
 
   function go(param: string, value: string) {
@@ -62,8 +63,13 @@ const counts = [
     if ((current.get("now") ?? "") === value) link.setAttribute("aria-current", "true");
   }
 
-  for (const input of document.querySelectorAll<HTMLInputElement>("nav[aria-label='Dev variants'] input")) {
-    input.value = current.get(input.name) ?? "";
-    input.addEventListener("change", () => location.assign(go(input.name, input.value)));
+  // Spread evenly on a log scale, so a test send is as likely to land near the top of the days as near the bottom.
+  const anyAmount = (upTo: number) => (upTo ? Math.max(1, Math.round(upTo ** Math.random())) : 0);
+
+  for (const button of document.querySelectorAll<HTMLButtonElement>("nav[aria-label='Dev variants'] button")) {
+    const { fewer, send } = button.dataset;
+    button.addEventListener("click", () =>
+      dispatchEvent(fewer ? new CustomEvent(DEV_FEWER, { detail: fewer }) : new CustomEvent(DEV_SEND, { detail: { amount: anyAmount(Number(send)) } })),
+    );
   }
 </script>

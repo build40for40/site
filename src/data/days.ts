@@ -14,8 +14,7 @@ export interface Idea {
   owner?: string;
   sponsors: Sponsor[];
   seed?: string;
-  // Ticked sponsor when they sent it in, so it holds a day while the payment catches up.
-  pledged?: boolean;
+  submittedAt?: string;
 }
 
 export interface Short {
@@ -81,14 +80,10 @@ export function clock(now: number): { today: number; phase: Phase; isToday: bool
 export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, now: number, guestSponsors: Record<number, Sponsor[]> = {}) {
   const { today, phase, isToday } = clock(now);
   const started = (day: number) => day < today || (day === today && phase !== "before");
-  // Only ideas with money behind them get a day. Everything at $0 waits in the pool, after any funded overflow. Ticking
-  // sponsor on the join form always earns a day: the next free one, or the last one if they're all taken, which bumps
-  // the lowest funded idea into the pool.
-  const funded = ideas.filter((idea) => raised(idea) > 0).toSorted((a, b) => raised(b) - raised(a));
-  const pledged = ideas.filter((idea) => idea.pledged && raised(idea) === 0);
-  const unfunded = ideas.filter((idea) => !idea.pledged && raised(idea) === 0);
-  const slots = Array.from({ length: TOTAL_DAYS }, (_, i) => i + 1).filter((day) => !GUEST_DAYS.has(day) && !(started(day) && history[day])).length;
-  const ranked = funded.toSpliced(Math.max(0, Math.min(funded.length, slots - pledged.length)), 0, ...pledged);
+  // Only ideas with money behind them get a day, the most first and the oldest first on a tie. Everything at $0 waits
+  // in the pool, after any funded overflow.
+  const ranked = ideas.filter((idea) => raised(idea) > 0).toSorted((a, b) => raised(b) - raised(a) || (a.submittedAt ?? "").localeCompare(b.submittedAt ?? ""));
+  const unfunded = ideas.filter((idea) => raised(idea) === 0);
   const days: Day[] = [];
   let next = 0;
   let rank = 0;

@@ -20,7 +20,7 @@ import {
 } from "../data/days";
 import { TOTAL_DAYS, money } from "../data/site";
 import { loadIdeas } from "../pool/data";
-import { JOIN_CLOSE, SENT, boxOf, lob, type Box, type SentProblem } from "../pool/flight";
+import { DEV_FEWER, JOIN_CLOSE, SENT, boxOf, lob, pop, shift, type Box, type SentProblem } from "../pool/flight";
 import { excerpt } from "../../worker/problems";
 
 const props = defineProps<{ history: Record<number, ShippedIdea>; builtAt: number }>();
@@ -38,14 +38,24 @@ const amount = ref(DEFAULT_AMOUNT);
 const devCounts = ref<{ grid?: number; pool?: number }>({});
 
 // Dev only: ?grid=12 keeps the 12 best-funded ideas and ?pool=5 keeps 5 at $0, topped up from the funded ones it dropped.
+// The tweak bar's minus buttons count them down. Problems sent from this page always stay.
+const sentHere = (idea: Idea) => idea.id.startsWith("sent-");
 const submitted = computed(() => {
   const { grid, pool } = devCounts.value;
   if (grid === undefined && pool === undefined) return ideas.value;
-  const funded = ideas.value.filter((i) => raised(i) > 0);
-  const unfunded = ideas.value.filter((i) => !raised(i));
+  const loaded = ideas.value.filter((i) => !sentHere(i));
+  const funded = loaded.filter((i) => raised(i) > 0);
+  const unfunded = loaded.filter((i) => !raised(i));
   const spare = [...unfunded, ...funded.slice(grid ?? funded.length).map((i) => ({ ...i, sponsors: [] }))];
-  return [...funded.slice(0, grid), ...spare.slice(0, pool ?? unfunded.length)];
+  return [...funded.slice(0, grid), ...spare.slice(0, pool ?? unfunded.length), ...ideas.value.filter(sentHere)];
 });
+
+function fewer(event: Event) {
+  const param = (event as CustomEvent<"grid" | "pool">).detail;
+  const shown =
+    param === "grid" ? board.value.days.filter((d) => d.status === "queued" && !sentHere(d.idea!)).length : ideas.value.filter((i) => !sentHere(i) && !raised(i)).length;
+  devCounts.value = { ...devCounts.value, [param]: Math.max(0, (devCounts.value[param] ?? shown) - 1) };
+}
 const board = computed(() => buildBoard(submitted.value, history.value, now.value, guestSponsors.value));
 const pool = computed<Entry[]>(() => board.value.pool.map(({ key, idea }) => ({ key, idea, status: "pool" })));
 const nextDay = computed(() => {
@@ -91,6 +101,7 @@ onMounted(() => {
   if (import.meta.env.DEV) {
     const count = (name: string) => (params.has(name) ? Number(params.get(name)) : undefined);
     devCounts.value = { grid: count("grid"), pool: count("pool") };
+    addEventListener(DEV_FEWER, fewer);
   }
   const offset = Number.isNaN(override) ? 0 : override - Date.now();
   now.value = Date.now() + offset;
@@ -132,20 +143,28 @@ onBeforeUnmount(() => {
   clearInterval(timer);
   loader.abort();
   removeEventListener(SENT, arrive);
+  removeEventListener(DEV_FEWER, fewer);
 });
 
-// A problem sent from the join form lands on the board straight away: on a day if they're sponsoring it, otherwise
-// in the pool. When the form folded into a box, the box lobs onto the day, or curls into a ball and drops from where
-// it is. Whatever the day box was showing stays put.
+// A problem sent from the join form lands on the board straight away: on a day by how much they're sponsoring it,
+// otherwise in the pool. When the form folded into a box, the box lobs onto its day while the days after it shift
+// along one, or curls into a ball and drops from where it is. Whatever the day box was showing stays put.
 const problems = ref<InstanceType<typeof ProblemsPool>>();
 const flight = ref<{ title: string; from: Box } | null>(null);
 const ghost = ref<HTMLElement>();
 const incoming = ref<string | null>(null);
 const landed = ref<string | null>(null);
+const evicted = ref<{ idea: Idea; from: Box } | null>(null);
+const evictedGhost = ref<HTMLElement>();
 
 async function arrive(event: Event) {
-  const { problem, name, sponsoring, from } = (event as CustomEvent<SentProblem>).detail;
-  const idea: Idea = { id: `sent-${crypto.randomUUID()}`, title: excerpt(problem), problem, owner: name.split(/\s+/)[0] || undefined, sponsors: [], pledged: sponsoring };
+  const { problem, name, amount, from, test } = (event as CustomEvent<SentProblem>).detail;
+  const owner = name.split(/\s+/)[0] || undefined;
+  const sponsors = amount ? [{ name: owner ?? "Anonymous", amount }] : [];
+  // Test sends from the tweak bar count as the oldest, so they win ties.
+  const submittedAt = new Date(test ? 0 : Date.now()).toISOString();
+  const idea: Idea = { id: `sent-${crypto.randomUUID()}`, title: excerpt(problem), problem, owner, sponsors, submittedAt };
+  const placed = new Map(board.value.days.flatMap((d) => (d.idea ? [[d.idea.id, d.key] as const] : [])));
   if (from) {
     flight.value = { title: idea.title, from };
     problems.value?.hold(idea.id);
@@ -153,12 +172,29 @@ async function arrive(event: Event) {
   ideas.value.push(idea);
   if (!from) return;
   const day = board.value.days.find((d) => d.idea?.id === idea.id);
+  const slot = day && slotOf(day.key);
+  slot?.scrollIntoView({ block: "nearest", behavior: "instant" });
+  const moves = board.value.days.flatMap((d) => {
+    const was = d.idea && placed.get(d.idea.id);
+    const old = was && was !== d.key ? slotOf(was) : undefined;
+    const element = old && slotOf(d.key);
+    return old && element ? [{ element, from: boxOf(old) }] : [];
+  });
+  // The idea pushed off the last day slides into a box past the end of the grid, then gets spat out of it.
+  const out = slot && board.value.pool.find((p) => placed.has(p.idea.id))?.idea;
+  const outSlot = out && slotOf(placed.get(out.id)!);
+  if (out && outSlot) {
+    problems.value?.hold(out.id);
+    evicted.value = { idea: out, from: beyond() };
+  }
   if (day) incoming.value = day.key;
   await nextTick();
+  if (evictedGhost.value && outSlot) moves.push({ element: evictedGhost.value, from: boxOf(outSlot) });
+  const shifted = Promise.all(moves.map(({ element, from }) => shift(element, from)));
   if (ghost.value) {
     ghost.value.animate([{ scale: 1 }, { scale: 1.12 }, { scale: 1 }], { duration: 260, easing: "ease-out" });
-    if (day) await lobOnto(day.key, ghost.value);
-    else await problems.value?.receive(idea.id, ghost.value);
+    if (slot) await lob(ghost.value, boxOf(ghost.value), boxOf(slot));
+    else if (!day) await problems.value?.receive(idea.id, ghost.value);
   }
   flight.value = null;
   incoming.value = null;
@@ -166,14 +202,24 @@ async function arrive(event: Event) {
     landed.value = day.key;
     setTimeout(() => (landed.value = null), 400);
   }
+  await shifted;
+  if (out && evictedGhost.value) {
+    await pop(evictedGhost.value, boxOf(evictedGhost.value));
+    await problems.value?.receive(out.id, evictedGhost.value);
+  }
+  evicted.value = null;
 }
 
-// The box lands on the day's tile in the grid, or on its notch in the progress bar on phones, where the grid is hidden.
-async function lobOnto(key: string, element: HTMLElement) {
-  const target = [...document.querySelectorAll(`[data-day-slot="${key}"]`)].findLast((slot) => slot.getClientRects().length);
-  if (!target) return;
-  target.scrollIntoView({ block: "nearest" });
-  await lob(element, boxOf(element), boxOf(target));
+// A day's tile in the grid, or its notch in the progress bar on phones, where the grid is hidden.
+const slotOf = (key: string) => [...document.querySelectorAll(`[data-day-slot="${key}"]`)].findLast((slot) => slot.getClientRects().length);
+
+// Where the grid would put one more day.
+function beyond(): Box {
+  const slots = board.value.days.flatMap((d) => slotOf(d.key) ?? []).map(boxOf);
+  const last = slots.at(-1)!;
+  const columns = slots.findIndex((s) => s.top !== slots[0].top);
+  if (columns === -1 || slots.length % columns) return { ...last, left: last.left + slots[1].left - slots[0].left };
+  return { ...last, left: slots[0].left, top: last.top + slots[columns].top - slots[0].top };
 }
 
 function swap(change: () => void, focusId: string) {
@@ -330,6 +376,21 @@ const tileSub = (e: Entry) => {
     </div>
 
     <ProblemsPool ref="problems" :tiles="poolTiles" />
+
+    <div
+      v-if="evicted"
+      ref="evictedGhost"
+      aria-hidden="true"
+      class="pointer-events-none fixed z-40 flex flex-col gap-0.5 overflow-hidden rounded-md text-night-text"
+      :class="evicted.from.height < 24 ? tones.queued.dot : 'bg-night-tile px-2 pt-2 pb-1.5 shadow-lg'"
+      :style="{ left: `${evicted.from.left}px`, top: `${evicted.from.top}px`, width: `${evicted.from.width}px`, height: `${evicted.from.height}px` }"
+    >
+      <template v-if="evicted.from.height >= 24">
+        <span class="absolute inset-x-0 top-0 h-[3px]" :class="tones.queued.dot"></span>
+        <span class="line-clamp-2 text-xs leading-[1.15] font-semibold wrap-break-word">{{ evicted.idea.title }}</span>
+        <span class="mt-auto truncate font-mono text-[11px] leading-none font-medium text-night-sub">{{ money(raised(evicted.idea)) }}</span>
+      </template>
+    </div>
 
     <div
       v-if="flight"

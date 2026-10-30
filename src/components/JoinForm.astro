@@ -39,8 +39,8 @@ const input =
     <form
       method="post"
       action="/api/forms/join"
-      data-sent-message="Got it. We’ll be in touch."
-      class="group/join grid items-start gap-x-10 gap-y-5 data-sent:*:not-[[role=status]]:hidden lg:grid-cols-2 [&_label]:text-[15px] [&_label]:leading-snug [&_label]:font-semibold"
+      data-send-in-place
+      class="group/join grid items-start gap-x-10 gap-y-5 lg:grid-cols-2 [&_label]:text-[15px] [&_label]:leading-snug [&_label]:font-semibold"
     >
       <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden" />
 
@@ -138,7 +138,8 @@ const input =
 </section>
 
 <script>
-  import { JOIN_CLOSE, SENT, type Box, type SentProblem } from "../pool/flight";
+  import { money } from "../data/site";
+  import { DEV_SEND, JOIN_CLOSE, SENT, type Box, type SentProblem } from "../pool/flight";
 
   // Vue sets the board's slot HTML again as it hydrates, so the form is wired up once that's done.
   const island = document.querySelector("section#join")?.closest("astro-island");
@@ -148,6 +149,7 @@ const input =
   function setup() {
     const panel = document.querySelector<HTMLElement>("section#join")!;
     const email = panel.querySelector<HTMLInputElement>("#join-email")!;
+    const name = panel.querySelector<HTMLInputElement>("#join-name")!;
     const form = panel.querySelector<HTMLFormElement>("form[method=post]")!;
     const submit = form.querySelector<HTMLButtonElement>("[data-submit]")!;
 
@@ -232,29 +234,50 @@ const input =
       return { left: left + (width - folded.width) / 2, top: top + (height - folded.height) / 2, ...folded };
     }
 
-    function showSent() {
-      form.dataset.sent = "";
-      const status = form.querySelector<HTMLElement>("[role=status]");
-      if (status) status.textContent = form.dataset.sentMessage ?? "";
+    // Once it's sent the form starts over for the next problem, keeping who they are.
+    function reset() {
+      const kept = [email.value, name.value];
+      form.reset();
+      [email.value, name.value] = kept;
+      submit.ariaBusy = null;
+      gate();
     }
 
-    form.addEventListener("sent", async (event) => {
+    async function send(amount: number, test?: boolean) {
       const data = new FormData(form);
       const problem = String(data.get("problem") ?? "").trim();
-      if (!problem) return;
-      const detail: SentProblem = { problem, name: String(data.get("name") ?? "").trim(), sponsoring: data.get("backing") === "sponsor", from: null };
-      if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      if (problem) {
+        const detail: SentProblem = { problem, name: String(data.get("name") ?? "").trim(), amount, from: null, test };
+        if (!matchMedia("(prefers-reduced-motion: reduce)").matches) detail.from = await fold();
         dispatchEvent(new CustomEvent(SENT, { detail }));
-        return;
       }
-      event.preventDefault();
-      detail.from = await fold();
-      dispatchEvent(new CustomEvent(SENT, { detail }));
       close();
       for (const animation of panel.getAnimations({ subtree: true })) animation.cancel();
       delete panel.dataset.folding;
-      showSent();
+      reset();
+    }
+
+    form.addEventListener("sent", () => {
+      const data = new FormData(form);
+      send(data.get("backing") === "sponsor" ? Number(data.get("sponsor")) / 100 : 0);
     });
+
+    // Dev only: the + buttons in the tweak bar fill the form in and send it without saving anything.
+    if (import.meta.env.DEV) {
+      let tests = 0;
+      addEventListener(DEV_SEND, async (event) => {
+        if (panel.hasAttribute("data-folding")) return;
+        const { amount } = (event as CustomEvent<{ amount: number }>).detail;
+        open();
+        email.value ||= "test@example.com";
+        name.value ||= "Test";
+        form.querySelector<HTMLTextAreaElement>("#join-problem")!.value = `Test problem ${++tests}, ${amount ? `sponsored at ${money(amount)}` : "for the pool"}`;
+        form.querySelector<HTMLInputElement>(`[name=backing][value=${amount ? "sponsor" : "share"}]`)!.checked = true;
+        gate();
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        send(amount, true);
+      });
+    }
 
     // Old /join links, and a Join box that posted before this script ran, arrive as /#join&email=…
     function openFromHash() {

@@ -11,17 +11,9 @@ test("$0 problems go to the pool even while days are free, and funded ones fill 
   expect(board.pool.map((p) => p.idea.id)).toEqual(["free"]);
 });
 
-test("a problem sent in by someone sponsoring it holds the next free day while the payment catches up", () => {
-  const board = buildBoard([idea("free", 0), { ...idea("mine", 0), pledged: true }, idea("big", 50)], {}, beforeDayOne);
-  expect(board.days.filter((d) => d.idea).map((d) => d.idea!.id)).toEqual(["big", "mine"]);
-  expect(board.pool.map((p) => p.idea.id)).toEqual(["free"]);
-});
 
-test("when the days are full, a problem sent in by someone sponsoring it takes the last one and bumps the lowest funded into the pool", () => {
-  const funded = Array.from({ length: 40 }, (_, i) => idea(`funded-${i}`, 100 - i));
-  const board = buildBoard([...funded, { ...idea("mine", 0), pledged: true }], {}, beforeDayOne);
-  const taken = board.days.filter((d) => d.idea).map((d) => d.idea!.id);
-  expect(taken).toHaveLength(34);
-  expect(taken.at(-1)).toBe("mine");
-  expect(board.pool[0].idea.id).toBe("funded-33");
+test("on a tie, the idea sent in first gets the earlier day", () => {
+  const sent = (id: string, submittedAt: string) => ({ ...idea(id, 10), submittedAt });
+  const board = buildBoard([sent("later", "2026-10-02T09:00:00.000Z"), sent("first", "2026-10-01T09:00:00.000Z")], {}, beforeDayOne);
+  expect(board.days.filter((d) => d.idea).map((d) => d.idea!.id)).toEqual(["first", "later"]);
 });
