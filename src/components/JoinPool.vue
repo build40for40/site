@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import ProblemsPool, { type PoolTile } from "./ProblemsPool.vue";
-import { buildBoard, history, type Idea } from "../data/days";
+import { buildBoard, history, raised, type Idea } from "../data/days";
+import { money } from "../data/site";
 import { poolConfig } from "../pool/config";
 import { loadIdeas } from "../pool/data";
 import { createSearch, type Match } from "../pool/search";
@@ -20,6 +21,7 @@ const tiles = computed<PoolTile[]>(() =>
     problem: idea!.problem,
     seed: idea!.seed,
     label: `Unfunded: ${idea!.title}`,
+    sub: money(raised(idea!)),
   })),
 );
 

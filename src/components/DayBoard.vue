@@ -17,6 +17,8 @@ import {
 } from "../data/days";
 import { TOTAL_DAYS, money } from "../data/site";
 import { loadIdeas } from "../pool/data";
+import { SENT, boxOf, lob, type Box, type SentProblem } from "../pool/flight";
+import { excerpt } from "../../worker/problems";
 
 const props = defineProps<{ history: Record<number, ShippedIdea>; builtAt: number }>();
 
@@ -63,6 +65,7 @@ onMounted(() => {
   const offset = Number.isNaN(override) ? 0 : override - Date.now();
   now.value = Date.now() + offset;
   timer = setInterval(() => (now.value = Date.now() + offset), 1000);
+  addEventListener(SENT, arrive);
   openShared();
   loadIdeas({
     signal: loader.signal,
@@ -98,7 +101,50 @@ function openShared() {
 onBeforeUnmount(() => {
   clearInterval(timer);
   loader.abort();
+  removeEventListener(SENT, arrive);
 });
+
+// A problem sent from the join form lands on the board straight away: on a day if they're sponsoring it, otherwise
+// in the pool. When the form folded into a box, the box flies there first.
+const problems = ref<InstanceType<typeof ProblemsPool>>();
+const flight = ref<{ title: string; from: Box } | null>(null);
+const ghost = ref<HTMLElement>();
+const incoming = ref<string | null>(null);
+const landed = ref<string | null>(null);
+
+async function arrive(event: Event) {
+  const { problem, name, sponsoring, from } = (event as CustomEvent<SentProblem>).detail;
+  const idea: Idea = { id: `sent-${crypto.randomUUID()}`, title: excerpt(problem), problem, owner: name.split(/\s+/)[0] || undefined, sponsors: [], pledged: sponsoring };
+  if (from) {
+    flight.value = { title: idea.title, from };
+    problems.value?.hold(idea.id);
+  }
+  ideas.value.push(idea);
+  if (!from) return;
+  const day = board.value.days.find((d) => d.idea?.id === idea.id);
+  if (day) incoming.value = day.key;
+  await nextTick();
+  if (ghost.value) {
+    ghost.value.animate([{ scale: 1 }, { scale: 1.12 }, { scale: 1 }], { duration: 260, easing: "ease-out" });
+    if (day) await lobOnto(day.key, ghost.value);
+    else await problems.value?.receive(idea.id, ghost.value);
+  }
+  flight.value = null;
+  incoming.value = null;
+  if (day) {
+    landed.value = day.key;
+    setTimeout(() => (landed.value = null), 400);
+  }
+  select(day?.key ?? `pool-${idea.id}`);
+}
+
+// The box lands on the day's tile in the grid, or on its notch in the progress bar on phones, where the grid is hidden.
+async function lobOnto(key: string, element: HTMLElement) {
+  const target = [...document.querySelectorAll(`[data-day-slot="${key}"]`)].findLast((slot) => slot.getClientRects().length);
+  if (!target) return;
+  target.scrollIntoView({ block: "nearest" });
+  await lob(element, boxOf(element), boxOf(target));
+}
 
 function swap(change: () => void, focusId: string) {
   const apply = async () => {
@@ -164,6 +210,7 @@ const poolTiles = computed<PoolTile[]>(() =>
     problem: p.idea!.problem,
     seed: p.idea!.seed,
     label: tileLabel(p),
+    sub: tileSub(p),
   })),
 );
 
@@ -190,7 +237,13 @@ const tileSub = (e: Entry) => {
               <span class="text-night-muted">{{ upcoming }} upcoming<template v-if="pool.length"> · {{ pool.length }} in the pool</template></span>
             </div>
             <div class="flex gap-[3px]" aria-hidden="true">
-              <span v-for="d in board.days" :key="d.key" class="h-2.5 flex-1 rounded-xs" :class="[tones[d.status].dot, d.status === 'live' && 'motion-safe:animate-pulse']"></span>
+              <span
+                v-for="d in board.days"
+                :key="d.key"
+                :data-day-slot="d.key"
+                class="h-2.5 flex-1 rounded-xs"
+                :class="[tones[d.status].dot, d.status === 'live' && 'motion-safe:animate-pulse', incoming === d.key && 'invisible', landed === d.key && 'animate-pop']"
+              ></span>
             </div>
             <ul class="m-0 flex list-none flex-wrap gap-x-4 gap-y-1.5 p-0 font-mono text-[11px] text-night-muted">
               <li v-for="item in legend" :key="item.label" class="flex items-center gap-1.5"><span class="size-[7px] rounded-full" :class="item.dot"></span>{{ item.label }}</li>
@@ -229,7 +282,8 @@ const tileSub = (e: Entry) => {
               v-for="d in board.days"
               :key="d.key"
               class="h-18"
-              :class="loading && 'opacity-60 motion-safe:animate-pulse'"
+              :class="[loading && 'opacity-60 motion-safe:animate-pulse', incoming === d.key && 'invisible', landed === d.key && 'animate-pop']"
+              :data-day-slot="d.key"
               :status="d.status"
               :label="tileLabel(d)"
               :selected="d.key === selected.key"
@@ -246,6 +300,17 @@ const tileSub = (e: Entry) => {
       </div>
     </div>
 
-    <ProblemsPool :tiles="poolTiles" />
+    <ProblemsPool ref="problems" :tiles="poolTiles" />
+
+    <div
+      v-if="flight"
+      ref="ghost"
+      aria-hidden="true"
+      class="pointer-events-none fixed z-50 flex flex-col gap-0.5 overflow-hidden rounded-md bg-night-tile bg-linear-155 from-night-text/10 to-transparent px-2 py-1.5 text-night-text shadow-lg ring-1 ring-night-edge ring-inset"
+      :style="{ left: `${flight.from.left}px`, top: `${flight.from.top}px`, width: `${flight.from.width}px`, height: `${flight.from.height}px` }"
+    >
+      <span class="font-mono text-[11px] font-medium text-night-sub">Yours</span>
+      <span class="line-clamp-2 text-xs leading-[1.15] font-semibold">{{ flight.title }}</span>
+    </div>
   </div>
 </template>

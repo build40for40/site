@@ -10,3 +10,9 @@ test("£0 problems go to the pool even while days are free, and funded ones fill
   expect(board.days.filter((d) => d.status === "open").length).toBeGreaterThan(0);
   expect(board.pool.map((p) => p.idea.id)).toEqual(["free"]);
 });
+
+test("a problem sent in by someone sponsoring it holds the next free day while the payment catches up", () => {
+  const board = buildBoard([idea("free", 0), { ...idea("mine", 0), pledged: true }, idea("big", 50)], {}, beforeDayOne);
+  expect(board.days.filter((d) => d.idea).map((d) => d.idea!.id)).toEqual(["big", "mine"]);
+  expect(board.pool.map((p) => p.idea.id)).toEqual(["free"]);
+});

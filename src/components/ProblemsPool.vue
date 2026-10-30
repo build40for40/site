@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type Compon
 import { createVisualIdentity } from "../pool/artwork";
 import { poolConfig } from "../pool/config";
 import { afterLoad } from "../pool/data";
+import { boxOf, fall, lob } from "../pool/flight";
 import type { Match } from "../pool/search";
 import type { PhysicsController } from "../pool/physics";
 import type { createLift } from "../pool/effects";
@@ -14,6 +15,7 @@ export interface PoolTile {
   problem: string;
   seed?: string;
   label: string;
+  sub: string;
 }
 
 const props = defineProps<{ tiles: PoolTile[]; matches?: Match[] | null }>();
@@ -50,7 +52,7 @@ const size = ref({ width: 0, height: 0 });
 
 const canMove = computed(() => poolConfig.physics.enabled && !reduced.value && tall.value);
 const physical = computed(() => canMove.value && motionOn.value && !failed.value);
-const tile = computed(() => (wide.value ? 32 : 28));
+const tile = computed(() => (wide.value ? 40 : 32));
 
 // Spread out without randomness, so the server and the browser draw the same bubbles.
 const bubbles = Array.from({ length: 9 }, (_, i) => ({
@@ -150,8 +152,48 @@ function stop() {
 function register(ids: string[]) {
   ids.forEach((id, i) => {
     const element = elements.get(id);
-    if (element) controller?.registerBody(id, element, { shape: "circle", delayMs: i * poolConfig.physics.rainStaggerMs });
+    if (element) controller?.registerBody(id, element, { delayMs: held.value.has(id) ? Infinity : i * poolConfig.physics.rainStaggerMs });
   });
+}
+
+// A problem sent from the join form is held back from raining in, so it can fall in from wherever its box is.
+const held = ref(new Set<string>());
+const hold = (id: string) => held.value.add(id);
+
+function settled() {
+  const ready = () => shown.value && (active.value || !physical.value);
+  return new Promise<void>((resolve) => {
+    const timer = setTimeout(resolve, poolConfig.physics.loadTimeoutMs);
+    const done = () => {
+      clearTimeout(timer);
+      resolve();
+    };
+    if (ready()) return done();
+    const stop = watch(ready, (ok) => {
+      if (!ok) return;
+      stop();
+      done();
+    });
+  });
+}
+
+async function receive(id: string, ghost: HTMLElement) {
+  await settled();
+  await nextTick();
+  const element = elements.get(id);
+  const box = list.value && boxOf(list.value);
+  if (controller && element && box) {
+    const { offsetWidth: width, offsetHeight: height } = element;
+    const from = boxOf(ghost);
+    const x = Math.min(Math.max(from.left + from.width / 2 - box.left, width / 2), box.width - width / 2);
+    const spin = (Math.random() - 0.5) * 1.2;
+    await fall(ghost, from, { left: box.left + x - width / 2, top: box.top + 1, width, height }, spin);
+    controller.drop(id, { x, y: height / 2 + 1 }, { x: 0, y: poolConfig.physics.drop.speed }, spin);
+  } else if (element) {
+    element.scrollIntoView({ block: "nearest" });
+    await lob(ghost, boxOf(ghost), boxOf(element));
+  }
+  held.value.delete(id);
 }
 
 watch(
@@ -196,9 +238,9 @@ let placing = 0;
 
 function follow() {
   placing = 0;
-  const circle = open.value ? elements.get(open.value)?.querySelector("button") : undefined;
-  if (!circle || !tip.value) return;
-  const rect = circle.getBoundingClientRect();
+  const button = open.value ? elements.get(open.value)?.querySelector("button") : undefined;
+  if (!button || !tip.value) return;
+  const rect = button.getBoundingClientRect();
   const margin = 8;
   const { offsetWidth: w, offsetHeight: h } = tip.value;
   const left = Math.min(Math.max(margin, rect.left + rect.width / 2 - w / 2), Math.max(margin, innerWidth - w - margin));
@@ -231,14 +273,14 @@ function focused(id: string, event: FocusEvent) {
 
 function blurred(id: string, event: FocusEvent) {
   const next = event.relatedTarget as Element | null;
-  if (open.value === id && !next?.closest?.("[data-pool-circle]")) close();
+  if (open.value === id && !next?.closest?.("[data-pool-box]")) close();
 }
 
 function onPointerDown(event: PointerEvent) {
   if (!open.value) return;
   const target = event.target as Element | null;
-  const circle = target?.closest?.("[data-pool-circle]");
-  if (circle?.getAttribute("data-pool-circle") === open.value || target?.closest?.("#pool-tip")) return;
+  const box = target?.closest?.("[data-pool-box]");
+  if (box?.getAttribute("data-pool-box") === open.value || target?.closest?.("#pool-tip")) return;
   close();
 }
 
@@ -248,7 +290,7 @@ function onKeyDown(event: KeyboardEvent) {
   close();
 }
 
-defineExpose({ nudge: () => controller?.nudge() });
+defineExpose({ nudge: () => controller?.nudge(), hold, receive });
 
 let sizer: ResizeObserver | undefined;
 const media: [MediaQueryList, () => void][] = [];
@@ -331,24 +373,27 @@ onBeforeUnmount(() => {
           v-for="t in tiles"
           :key="t.key"
           :ref="(element) => setTile(t.id, element)"
-          class="group size-7 rounded-full sm:size-8"
+          class="group h-8 w-10 sm:h-10 sm:w-12"
           :class="[
             physical ? 'absolute top-0 left-0 will-change-transform focus-within:z-10' : 'relative',
             physical && !active ? 'opacity-0 focus-within:opacity-100' : !physical && matches && !percents.has(t.id) && 'opacity-40',
+            !physical && held.has(t.id) && 'invisible',
           ]"
         >
           <button
             type="button"
-            :data-pool-circle="t.id"
+            :data-pool-box="t.id"
             :aria-label="t.label"
             :aria-expanded="open === t.id"
             :aria-describedby="open === t.id ? 'pool-tip' : undefined"
-            class="absolute inset-0 cursor-pointer overflow-hidden rounded-full border-0 bg-night-panel p-0 after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:bg-linear-135 after:from-night-text/60 after:via-night-text/5 after:via-45% after:to-transparent after:ring-1 after:ring-night-text/30 after:ring-inset hover:brightness-115 motion-safe:hover:animate-wiggle motion-safe:aria-expanded:animate-pop focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-expanded:outline-2 aria-expanded:outline-offset-2 aria-expanded:outline-night-text [&>svg]:size-full"
+            class="absolute inset-0 flex cursor-pointer flex-col items-start justify-between overflow-hidden rounded-md border-0 bg-night-panel bg-linear-155 from-night-text/10 to-transparent px-1.5 py-1 text-night-text ring-1 ring-night-edge ring-inset hover:brightness-125 motion-safe:hover:animate-wiggle motion-safe:aria-expanded:animate-pop focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-night-text aria-expanded:outline-2 aria-expanded:outline-offset-2 aria-expanded:outline-night-text"
             @click="clicked(t.id, $event)"
             @focus="focused(t.id, $event)"
             @blur="blurred(t.id, $event)"
-            v-html="artwork.get(t.id)"
-          ></button>
+          >
+            <span aria-hidden="true" class="block size-3 overflow-hidden rounded-[3px] sm:size-3.5 [&>svg]:size-full" v-html="artwork.get(t.id)"></span>
+            <span aria-hidden="true" class="font-mono text-[9px] leading-none font-medium text-night-sub sm:text-[10px]">{{ t.sub }}</span>
+          </button>
           <span
             v-if="physical && percents.has(t.id)"
             aria-hidden="true"

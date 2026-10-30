@@ -105,6 +105,14 @@ describe("the problems pool", () => {
     expect(bodies.registered.at(-1)).toBe("idea-33");
   });
 
+  test("a problem sent from the join form lands in the pool straight away", async () => {
+    const w = await board();
+    const detail = { problem: "My nails chip the day after I paint them. Every time.", name: "Sam Carter", sponsoring: false, from: null };
+    dispatchEvent(new CustomEvent("problem-sent", { detail }));
+    await flushPromises();
+    expect(poolTitles(w).at(-1)).toBe("My nails chip the day after I paint them");
+  });
+
   test("is laid out for physics from the start, with ideas hidden until they drop in", async () => {
     vi.doMock("../pool/physics", () => new Promise(() => {}));
     const w = await board();

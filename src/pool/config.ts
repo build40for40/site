@@ -21,6 +21,9 @@ export const poolConfig = {
     // per second, spin in radians per second.
     boil: { everyMs: [600, 1800], speed: [4.5, 8.5], spin: 10 },
     nudge: { speed: 3, gapMs: 80 },
+    // A problem sent from the join form keeps falling into the pool at this many pixels per second, and splashes the
+    // ideas it lands near. Losing more than impact metres per second of downward speed in one step counts as landing.
+    drop: { speed: 520, impact: 2, splash: { radius: 160, speed: 6 } },
   },
   search: {
     debounceMs: 400,

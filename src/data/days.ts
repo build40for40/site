@@ -12,6 +12,8 @@ export interface Idea {
   owner?: string;
   sponsors: Sponsor[];
   seed?: string;
+  // Ticked sponsor when they sent it in, so it holds a day while the payment catches up.
+  pledged?: boolean;
 }
 
 export interface Short {
@@ -77,9 +79,11 @@ export function clock(now: number): { today: number; phase: Phase; isToday: bool
 
 export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, now: number, guestSponsors: Record<number, Sponsor[]> = {}) {
   const { today, phase, isToday } = clock(now);
-  // Only ideas with money behind them get a day. Everything at £0 waits in the pool, after any funded overflow.
-  const ranked = ideas.filter((idea) => raised(idea) > 0).toSorted((a, b) => raised(b) - raised(a));
-  const unfunded = ideas.filter((idea) => raised(idea) === 0);
+  // Only ideas with money behind them, or on its way, get a day. Everything else at £0 waits in the pool, after any
+  // funded overflow.
+  const backed = (idea: Idea) => raised(idea) > 0 || !!idea.pledged;
+  const ranked = ideas.filter(backed).toSorted((a, b) => raised(b) - raised(a));
+  const unfunded = ideas.filter((idea) => !backed(idea));
   const days: Day[] = [];
   let next = 0;
   let rank = 0;

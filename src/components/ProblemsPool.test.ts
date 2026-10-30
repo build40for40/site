@@ -5,7 +5,7 @@ import ProblemsPool from "./ProblemsPool.vue";
 
 vi.mock("../pool/physics", () => ({ initializePhysics: () => ({ registerBody() {}, unregisterBody() {}, setBodyHover() {}, nudge() {}, destroy() {} }) }));
 
-const tiles = ["a", "b"].map((id) => ({ key: id, id, title: `Idea ${id}`, problem: `The problem behind ${id}`, label: `Unfunded: Idea ${id}` }));
+const tiles = ["a", "b"].map((id) => ({ key: id, id, title: `Idea ${id}`, problem: `The problem behind ${id}`, label: `Unfunded: Idea ${id}`, sub: "£0" }));
 
 let wrapper: VueWrapper | undefined;
 beforeEach(() => {
@@ -20,10 +20,10 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
-const circle = (id: string) => wrapper!.find(`[data-pool-circle='${id}']`);
+const box = (id: string) => wrapper!.find(`[data-pool-box='${id}']`);
 const tip = () => document.querySelector("#pool-tip");
 const tap = async (id: string) => {
-  circle(id).element.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+  box(id).element.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
   await wrapper!.vm.$nextTick();
 };
 const press = async (key: string) => {
@@ -35,7 +35,7 @@ test("a tap shows the idea's title and blurb, and a second tap, Escape or a tap 
   await tap("a");
   expect(tip()?.textContent).toContain("Idea a");
   expect(tip()?.textContent).toContain("The problem behind a");
-  expect(circle("a").attributes("aria-describedby")).toBe("pool-tip");
+  expect(box("a").attributes("aria-describedby")).toBe("pool-tip");
 
   await tap("a");
   expect(tip()).toBeNull();
@@ -53,7 +53,7 @@ test("a tap shows the idea's title and blurb, and a second tap, Escape or a tap 
 
 test("Enter on a focused idea opens its tooltip rather than closing it", async () => {
   await tap("a");
-  circle("a").element.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 0 }));
+  box("a").element.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 0 }));
   await wrapper!.vm.$nextTick();
   expect(tip()?.textContent).toContain("Idea a");
 });

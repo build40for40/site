@@ -142,6 +142,25 @@ describe("lively", () => {
     controller.nudge();
     expect(rising()).toBe(1);
   });
+
+  test("a held idea waits until it's dropped in, then splashes the ones it lands near", () => {
+    const { container, add, controller } = setup();
+    const rising = pile(controller, add);
+    const element = document.createElement("li");
+    container.append(element);
+    controller.registerBody("sent", element, { ...TILE, delayMs: Infinity });
+    controller.advance(1);
+    expect(controller.bodyState("sent")!.shown).toBe(false);
+
+    controller.drop("sent", { x: 150, y: 40 }, { x: 0, y: 520 });
+    expect(element.style.opacity).toBe("");
+    let splashed = 0;
+    for (let i = 0; i < 60 && !splashed; i++) {
+      controller.advance(1 / 60);
+      splashed = rising();
+    }
+    expect(splashed).toBeGreaterThan(1);
+  });
 });
 
 test("destroy cleans up every idea and listener", () => {

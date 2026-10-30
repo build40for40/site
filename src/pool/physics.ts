@@ -48,6 +48,7 @@ interface Tracked {
   shown: boolean;
   drawn?: string;
   hover?: number;
+  falling?: number;
 }
 
 export type PhysicsController = ReturnType<typeof initializePhysics>;
@@ -205,6 +206,31 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     }
   }
 
+  // Landing knocks the ideas around it up and away, harder the closer they are.
+  function splash(at: Tracked) {
+    const { radius, speed } = config.drop.splash;
+    const x = toPx(at.body.translation().x);
+    for (const t of bodies.values()) {
+      if (t === at || !t.shown || t.hover !== undefined) continue;
+      const dx = toPx(t.body.translation().x) - x;
+      const near = 1 - Math.abs(dx) / radius;
+      if (near <= 0) continue;
+      const m = t.body.mass();
+      t.body.applyImpulse({ x: Math.sign(dx || 1) * 0.5 * speed * near * m, y: -speed * near * m }, true);
+    }
+  }
+
+  function landed() {
+    for (const t of bodies.values()) {
+      if (t.falling === undefined) continue;
+      const vy = t.body.linvel().y;
+      if (vy < t.falling - config.drop.impact) {
+        t.falling = undefined;
+        splash(t);
+      } else t.falling = vy;
+    }
+  }
+
   function clampVelocities() {
     for (const t of bodies.values()) {
       const v = t.body.linvel();
@@ -220,6 +246,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     boil();
     hover();
     world.step();
+    landed();
     clampVelocities();
     for (const t of bodies.values()) t.curr = snapshot(t);
   }
@@ -335,6 +362,21 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
       element.style.opacity = "0";
       bodies.set(id, tracked);
       if (!options.delayMs) spawnDue();
+      render(1);
+    },
+
+    // Drops a held idea in at a point, in pixels from the pool's top left, moving at a velocity in pixels per second.
+    drop(id: string, at: Vector, velocity: Vector, angle = 0) {
+      const t = bodies.get(id);
+      if (!t || t.shown) return;
+      t.body.setTranslation({ x: toM(at.x), y: toM(at.y) }, false);
+      t.body.setRotation(angle, false);
+      t.body.setLinvel({ x: toM(velocity.x), y: toM(velocity.y) }, false);
+      t.curr = t.prev = snapshot(t);
+      t.falling = toM(velocity.y);
+      t.spawnAt = clock;
+      t.pickSpawn = false;
+      spawnDue();
       render(1);
     },
 
