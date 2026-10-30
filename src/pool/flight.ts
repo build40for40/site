@@ -37,13 +37,21 @@ function travel(element: HTMLElement, from: Box, to: Box, { duration, easing, li
 
 const distance = (from: Box, to: Box) => Math.hypot(to.left - from.left, to.top - from.top);
 
-// A short hop, then a fall that speeds up like it's under gravity, rounding off into a ball. The words fade before the
-// box gets too small for them.
-export function fall(element: HTMLElement, from: Box, to: Box, spin = 0) {
-  const duration = 420 + Math.sqrt(distance(from, to)) * 14;
-  for (const child of element.children) child.animate([{ opacity: 1 }, { opacity: 1, offset: 0.4 }, { opacity: 0 }], { duration, fill: "forwards" });
-  element.animate([{ borderRadius: "6px" }, { borderRadius: "50%" }], { duration, easing: "ease-in", fill: "forwards" });
-  return travel(element, from, to, { duration, easing: "cubic-bezier(.55,0,.9,.55)", lift: 28, peak: 0.2, spin });
+export const CURL_TURN = -3.5;
+
+// The box curls up where it is into a ball of the given size, ready to be dropped. Its words fade out and the ball's
+// artwork fades in.
+export function curl(element: HTMLElement, from: Box, size: number, artwork: Element) {
+  const options = { duration: 420, fill: "forwards" } as const;
+  const ball = { left: from.left + (from.width - size) / 2, top: from.top + (from.height - size) / 2, width: size, height: size };
+  for (const child of element.children) child.animate([{ opacity: 1 }, { opacity: 0, offset: 0.35 }, { opacity: 0 }], options);
+  element.append(artwork);
+  const moves = [
+    artwork.animate([{ opacity: 0 }, { opacity: 0, offset: 0.25 }, { opacity: 1 }], options),
+    element.animate([{ ...place(from), borderRadius: "6px" }, { ...place(ball), borderRadius: "50%" }], { ...options, easing: "cubic-bezier(.34,1.56,.64,1)" }),
+    element.animate([{ rotate: "0rad" }, { rotate: `${CURL_TURN}rad` }], { ...options, easing: "ease-in-out" }),
+  ];
+  return Promise.all(moves.map((m) => m.finished)).then(() => ball);
 }
 
 // A lob across the page that lands square in its slot.

@@ -4,7 +4,7 @@ import { createVisualIdentity } from "../pool/artwork";
 import { poolConfig } from "../pool/config";
 import { afterLoad } from "../pool/data";
 import { boxGrowth } from "../pool/effects";
-import { boxOf, fall, lob } from "../pool/flight";
+import { CURL_TURN, boxOf, curl, lob } from "../pool/flight";
 import type { Match } from "../pool/search";
 import type { PhysicsController, Vector } from "../pool/physics";
 import type { createLift } from "../pool/effects";
@@ -172,18 +172,16 @@ async function receive(id: string, ghost: HTMLElement) {
   await settled();
   await nextTick();
   const element = elements.get(id);
-  floor.value?.scrollIntoView({ block: "nearest" });
-  const box = list.value && boxOf(list.value);
-  if (controller && element && box) {
-    const { offsetWidth: width, offsetHeight: height } = element;
-    const from = boxOf(ghost);
-    const x = Math.min(Math.max(from.left + from.width / 2 - box.left, width / 2), box.width - width / 2);
-    const spin = (Math.random() - 0.5) * 1.2;
-    const y = entry() + height / 2 + 1;
-    await fall(ghost, from, { left: box.left + x - width / 2, top: box.top + y - height / 2, width, height }, spin);
-    controller.drop(id, { x, y }, { x: 0, y: poolConfig.physics.drop.speed }, spin);
+  if (controller && element && list.value) {
+    const art = document.createElement("span");
+    art.className = "absolute inset-0 [&>svg]:size-full";
+    art.innerHTML = artwork.value.get(id) ?? "";
+    const ball = await curl(ghost, boxOf(ghost), element.offsetWidth, art);
+    const box = boxOf(list.value);
+    const r = ball.width / 2;
+    const x = Math.min(Math.max(ball.left + r - box.left, r), box.width - r);
+    controller.drop(id, { x, y: ball.top + r - box.top }, { x: 0, y: 0 }, CURL_TURN);
   } else if (element) {
-    element.scrollIntoView({ block: "nearest" });
     await lob(ghost, boxOf(ghost), boxOf(element));
   }
   held.value.delete(id);

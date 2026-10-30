@@ -24,9 +24,9 @@ export const poolConfig = {
     // Pressing an idea for holdMs, or moving more than movePx while pressed, picks it up. A held idea moves towards the
     // pointer at follow times the gap per second, and keeps spinKeep of its spin each step.
     drag: { holdMs: 180, movePx: 6, follow: 18, spinKeep: 0.9 },
-    // A problem sent from the join form keeps falling into the pool at this many pixels per second, and splashes the
-    // ideas it lands near. Losing more than impact metres per second of downward speed in one step counts as landing.
-    drop: { speed: 520, impact: 2, splash: { radius: 160, speed: 6 } },
+    // A problem sent from the join form splashes the ideas it lands near. Losing more than impact metres per second of
+    // downward speed in one step counts as landing.
+    drop: { impact: 2, splash: { radius: 160, speed: 6 } },
   },
   boxes: {
     pxPerPound: 1,
