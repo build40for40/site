@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { StripeError, openCheckout, recordPayment, statusOf, type CheckoutSession } from "./checkout";
 import { addProblem, testDb } from "./test-db";
@@ -47,6 +48,20 @@ describe("openCheckout", () => {
       return_url: "https://build40for40.com/?checkout={CHECKOUT_SESSION_ID}",
     });
     expect(Object.keys(body).some((key) => key.startsWith("custom_fields"))).toBe(false);
+  });
+
+  test("brands the session in the dialog's night panel and lime from the theme", async () => {
+    const sent = stubStripe();
+    await openCheckout(env, { cents: 400, day: 10, origin: "http://localhost:4321" });
+
+    const theme = readFileSync(new URL("../src/styles/global.css", import.meta.url), "utf8");
+    const token = (name: string) => theme.match(new RegExp(`--color-${name}:\\s*(#[0-9a-f]{6})`))?.[1];
+    expect(Object.fromEntries([...sent[0]].filter(([key]) => key.startsWith("branding_settings")))).toEqual({
+      "branding_settings[background_color]": token("night-panel"),
+      "branding_settings[button_color]": token("brand-lime"),
+      "branding_settings[border_style]": "rounded",
+      "branding_settings[font_family]": "inconsolata",
+    });
   });
 
   test("asks for a name on the site unless they'd rather stay anonymous", async () => {
