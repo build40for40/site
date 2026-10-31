@@ -372,8 +372,8 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
             </div>
             <p v-if="sponsorNote" class="m-0 text-sm text-night-sub text-pretty">{{ sponsorNote }}</p>
 
-            <div class="flex flex-wrap gap-1.5">
-              <div class="grid min-w-56 flex-[2] grid-cols-[repeat(4,minmax(max-content,1fr))] gap-1.5" role="group" aria-label="Amount">
+            <div class="@container flex flex-wrap gap-1.5">
+              <div class="grid min-w-max flex-[2] grid-cols-[repeat(2,auto)] gap-1.5 @min-[18rem]:grid-cols-[repeat(4,auto)]" role="group" aria-label="Amount">
                 <button
                   v-for="a in SPONSOR_AMOUNTS"
                   :key="a"
