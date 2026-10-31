@@ -15,13 +15,14 @@ export const links = {
   ],
 };
 
-export type PayKind = "unlock" | "sponsor" | "presale";
+export const involvement = [
+  { value: "kind", label: "Help (e.g. office space, credits)", note: "help_note", prompt: "What help?" },
+  { value: "guest", label: "Be a guest", note: "guest_note", prompt: "Why do you want to be a guest?" },
+] as const;
 
-export const payOptions: Record<PayKind, { label: string; blurb: string; amount: number; link: string }> = {
-  unlock: { label: "Unlock", blurb: "First payment starts the day", amount: 10, link: "#" },
-  sponsor: { label: "Sponsor", blurb: "Your company on the day page", amount: 250, link: "#" },
-  presale: { label: "Presale", blurb: "Pay now, get the app it ships", amount: 15, link: "#" },
-};
+export const backings = ["share", "sponsor"] as const;
+
+export const SPONSOR_AMOUNTS = [4, 40, 104, 400, 4_000, 40_000, 400_000, 4_000_000];
 
 export const helpTypes = [
   { value: "office", label: "Office space" },
@@ -32,28 +33,6 @@ export const helpTypes = [
   { value: "other", label: "Something else" },
 ] as const;
 
-export const involvement = [
-  { value: "kind", label: "Help in Kind - Office space, AI credits, I can cater an IRL event!" },
-  { value: "marketing", label: "Marketing - I’ll spread the word" },
-  { value: "guest", label: "Be a guest" },
-  { value: "sponsor", label: "Sponsor a Project" },
-] as const;
-
-
-export const guests = [
-  { name: "Judith Buttigieg", role: "Special guest", photo: "" },
-  { name: "Nic Roope", role: "Special guest", photo: "" },
-  { name: "Dr. Zeenith Ebrahim", role: "Special guest", photo: "" },
-];
-
-export const team = [
-  { name: "Lawrence Kao", role: "Host and builder", photo: "" },
-  { name: "Samira Sohail", role: "Host and builder", photo: "" },
-  { name: "Ben Bourdin", role: "Host and builder", photo: "" },
-];
-
 export const money = (amount: number) =>
-  new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(amount);
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
 
-export const initials = (name: string) =>
-  name.replace(/^Dr\.?\s+/, "").split(/\s+/).map((part) => part[0]).join("").slice(0, 2);

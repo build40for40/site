@@ -6,17 +6,19 @@ import "../styles/global.css";
 interface Props {
   title?: string;
   description?: string;
+  dark?: boolean;
 }
 
 const {
   title = "40 for 40: 40 apps in 40 days, built in public",
   description = "40 apps in 40 days, built live with guests who have never vibe coded. Every day stays locked until someone pays to start it. From 2 November 2026.",
+  dark = false,
 } = Astro.props;
 const url = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang="en-US" class="scroll-smooth [&:has(dialog[open])]:overflow-hidden">
+<html lang="en-US" class:list={["scroll-smooth", dark && "scheme-dark"]}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -30,12 +32,11 @@ const url = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:description" content={description} />
     <meta property="og:url" content={url} />
     <meta name="twitter:card" content="summary" />
-    <meta name="theme-color" content="#ffffff" />
-    <Font cssVariable="--font-bricolage" preload />
-    <Font cssVariable="--font-plex-mono" />
+    <meta name="theme-color" content={dark ? "#161513" : "#ffffff"} />
+    <Font cssVariable="--font-jetbrains-mono" preload />
     <PostHog />
   </head>
-  <body class="bg-white font-sans text-ink antialiased">
+  <body class:list={["font-sans antialiased", dark ? "bg-night text-night-text" : "bg-white text-ink"]}>
     <main id="main" class="*:first:border-t-0">
       <slot />
     </main>

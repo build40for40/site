@@ -1,0 +1,292 @@
+---
+import { SPONSOR_AMOUNTS, involvement, money } from "../data/site";
+import ShareButton from "./ShareButton.vue";
+import SubmitButton from "./forms/SubmitButton.astro";
+
+const field = "flex flex-col gap-2";
+const heading = "flex flex-wrap items-baseline gap-x-2 gap-y-0.5";
+const hint = "text-sm leading-snug text-night-muted";
+const examples = ["The stories of the women who helped shape our world", "A faster way to write 100 Christmas cards that’s still me, not AI or print", "My nails chipped the day after I got them painted"];
+const backings = [
+  { value: "share", title: "I promise, honor code", body: "I solemnly swear I will share this with three of my friends, either in real life or with these links." },
+  { value: "sponsor", title: "I’ll sponsor it", body: "Pick an amount and it skips the pool, straight onto a day." },
+];
+const input =
+  "w-full border border-night-edge bg-night px-4 py-2.5 text-[15px] text-night-text placeholder:text-night-muted focus-visible:border-night-text focus-visible:outline-none";
+---
+
+<section
+  id="join"
+  aria-labelledby="join-title"
+  tabindex="-1"
+  class="scroll-mt-4 rounded-lg border border-night-line bg-night-panel text-night-text outline-none data-folding:overflow-hidden data-folding:bg-night-tile data-folding:shadow-2xl data-folding:ring-2 data-folding:ring-night-edge"
+>
+  <div class="flex flex-col gap-6 px-4.5 pt-5 pb-7 sm:px-6 sm:pt-6">
+    <header class="flex items-start justify-between gap-4">
+      <h2 id="join-title" class="m-0 text-[clamp(28px,4vw,40px)] leading-[0.95] font-bold tracking-[-0.04em] text-balance">We’d like to get to know you</h2>
+      <button
+        type="button"
+        data-join-close
+        aria-label="Close"
+        class="grid size-11 shrink-0 cursor-pointer place-items-center rounded-full border border-night-edge bg-transparent text-night-text hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime"
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24" class="size-5 fill-none stroke-current stroke-2 [stroke-linecap:round]">
+          <path d="M6 6l12 12M18 6 6 18" />
+        </svg>
+      </button>
+    </header>
+
+    <form
+      method="post"
+      action="/api/forms/join"
+      data-send-in-place
+      class="group/join grid items-start gap-x-10 gap-y-5 lg:grid-cols-2 [&_label]:text-[15px] [&_label]:leading-snug [&_label]:font-semibold"
+    >
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hidden" />
+
+      <div class="flex flex-col gap-5">
+        <div class={field}>
+          <div class={heading}>
+            <label for="join-email">Email <span aria-hidden="true">*</span></label>
+            <span id="join-email-hint" class={hint}>So we can keep you posted. GDPR friendly.</span>
+          </div>
+          <input id="join-email" name="email" type="email" required maxlength="254" autocomplete="email" placeholder="you@example.com" aria-describedby="join-email-hint" class:list={[input, "rounded-full"]} />
+        </div>
+
+        <div class={field}>
+          <div class={heading}>
+            <label for="join-name">Name</label>
+            <span id="join-name-hint" class={hint}>Optional, handy for shoutouts</span>
+          </div>
+          <input id="join-name" name="name" type="text" maxlength="200" autocomplete="name" aria-describedby="join-name-hint" class:list={[input, "rounded-full"]} />
+        </div>
+
+        <div class={field}>
+          <div class={heading}>
+            <label for="join-problem">A problem you want solved</label>
+            <span id="join-problem-hint" class={hint}>Optional</span>
+          </div>
+          <textarea id="join-problem" name="problem" rows="4" maxlength="1000" placeholder={examples.map((e) => `e.g. ${e}`).join("\n")} aria-describedby="join-problem-hint" class:list={[input, "resize-y rounded-lg max-sm:min-h-40"]}></textarea>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-5">
+        <fieldset class="m-0 grid gap-x-6 gap-y-2.5 border-0 p-0 sm:grid-cols-2">
+          <legend class="mb-2.5 p-0 text-[15px] leading-snug font-semibold">Want to get involved?</legend>
+          {involvement.map(({ value, label, note, prompt }) => (
+            <div class="group/option flex flex-col gap-2">
+              <label class="flex cursor-pointer items-start gap-3 font-normal! text-night-sub hover:text-night-text has-checked:text-night-text">
+                <input type="checkbox" name="involved" value={value} class="mt-0.5 size-4.5 shrink-0 accent-night-text" />
+                <span>{label}</span>
+              </label>
+              <input
+                name={note}
+                type="text"
+                maxlength="200"
+                placeholder={prompt}
+                aria-label={prompt}
+                class:list={[input, "hidden rounded-full group-has-checked/option:block"]}
+              />
+            </div>
+          ))}
+        </fieldset>
+
+        <fieldset class="m-0 hidden flex-col gap-3 border-0 p-0 group-has-[#join-problem:not(:placeholder-shown)]/join:flex">
+          <legend class:list={[heading, "mb-3 p-0"]}>
+            <span class="text-[15px] leading-snug font-semibold">Now back it <span aria-hidden="true">*</span></span>
+            <span class={hint}>Pick one to send it</span>
+          </legend>
+          <div class="grid gap-2 sm:grid-cols-2">
+            {backings.map(({ value, title, body }) => (
+              <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-night-edge px-4 py-3 font-normal! hover:border-night-text has-checked:border-night-text has-checked:bg-night">
+                <input type="radio" name="backing" value={value} class="mt-0.5 size-4.5 shrink-0 accent-night-text" />
+                <span class="flex flex-col gap-1">
+                  <span class="font-semibold text-night-text">{title}</span>
+                  <span class="text-sm leading-snug text-night-sub">{body}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <div class="hidden group-has-[[name=backing][value=share]:checked]/join:block">
+            <ShareButton client:visible expanded label="Share" text="40 apps in 40 days, built live from London. Got a problem? Send it in" url="https://build40for40.com" />
+          </div>
+          <div role="radiogroup" aria-label="How much?" class="hidden grid-cols-2 gap-2 sm:grid-cols-4 group-has-[[name=backing][value=sponsor]:checked]/join:grid">
+            {SPONSOR_AMOUNTS.map((amount) => (
+              <label class="cursor-pointer font-normal!">
+                <input type="radio" name="sponsor" value={amount * 100} class="peer sr-only" />
+                <span class="block rounded-full border border-night-edge px-3 py-2 text-center text-[15px] font-semibold whitespace-nowrap text-night-text hover:border-night-text peer-checked:border-night-text peer-checked:bg-night-text peer-checked:text-night peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-lime">
+                  {money(amount)}
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <div class="hidden flex-col gap-2 group-has-[#join-problem:not(:placeholder-shown)]/join:flex">
+          <p class="m-0 text-sm leading-snug text-night-sub">Heads up: your problem goes on the site with your first name, for anyone to see.</p>
+          <label class="flex cursor-pointer items-start gap-3 font-normal! text-night-sub hover:text-night-text has-checked:text-night-text">
+            <input type="checkbox" name="contact" value="yes" class="mt-0.5 size-4.5 shrink-0 accent-night-text" />
+            <span>You can contact me if it gets picked <span class={hint}>Optional</span></span>
+          </label>
+        </div>
+
+        <SubmitButton class="self-start rounded-full border-0 bg-brand-lime px-6 py-3 text-[15px] font-semibold text-brand-lime-ink enabled:hover:bg-brand-lime-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime disabled:not-aria-busy:cursor-not-allowed disabled:not-aria-busy:opacity-40">Submit</SubmitButton>
+      </div>
+      <p role="status" class="col-span-full m-0 text-[19px] leading-[1.4] text-night-text empty:hidden"></p>
+    </form>
+  </div>
+</section>
+
+<script>
+  import { money } from "../data/site";
+  import { DEV_SEND, JOIN_CLOSE, SENT, type Box, type SentProblem } from "../pool/flight";
+
+  // Vue sets the board's slot HTML again as it hydrates, so the form is wired up once that's done.
+  const island = document.querySelector("section#join")?.closest("astro-island");
+  if (island?.hasAttribute("ssr")) island.addEventListener("astro:hydrate", setup, { once: true });
+  else setup();
+
+  function setup() {
+    const panel = document.querySelector<HTMLElement>("section#join")!;
+    const email = panel.querySelector<HTMLInputElement>("#join-email")!;
+    const name = panel.querySelector<HTMLInputElement>("#join-name")!;
+    const form = panel.querySelector<HTMLFormElement>("form[method=post]")!;
+    const submit = form.querySelector<HTMLButtonElement>("[data-submit]")!;
+
+    // A problem only sends once they've promised to share it or picked an amount to sponsor it.
+    function gate() {
+      const data = new FormData(form);
+      const backing = data.get("backing");
+      const backed = backing === "share" || (backing === "sponsor" && data.has("sponsor"));
+      submit.disabled = Boolean(String(data.get("problem") ?? "").trim()) && !backed;
+    }
+    form.addEventListener("input", gate);
+    form.addEventListener("change", gate);
+    gate();
+
+    // The form takes the day box's place while data-joining is on the body.
+    const isOpen = () => document.body.hasAttribute("data-joining");
+    let opener: HTMLElement | null = null;
+
+    function open(typed?: string | null) {
+      if (typed && !email.value) email.value = typed;
+      if (!isOpen()) {
+        opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        document.body.dataset.joining = "";
+        window.posthog?.capture("join_opened");
+      }
+      panel.scrollIntoView({ block: "nearest" });
+      panel.querySelector<HTMLElement>(email.value ? "#join-name" : "#join-email")?.focus({ preventScroll: true });
+    }
+
+    function close() {
+      if (!isOpen()) return;
+      delete document.body.dataset.joining;
+      if (opener?.isConnected && opener.getClientRects().length) opener.focus({ preventScroll: true });
+      opener = null;
+    }
+
+    // The Join box saves the email in the background, then carries it into the form.
+    document.addEventListener("submit", (event) => {
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement) || !form.hasAttribute("data-opens-join")) return;
+      event.preventDefault();
+      const data = new FormData(form);
+      fetch(form.action, { method: "POST", body: data, redirect: "manual" }).catch(() => {});
+      open(String(data.get("email") ?? "").trim());
+    });
+
+    document.addEventListener("click", (event) => {
+      const link = event.target instanceof Element && event.target.closest('a[href="#join"]');
+      if (!link) return;
+      event.preventDefault();
+      open();
+    });
+
+    panel.querySelector("[data-join-close]")!.addEventListener("click", close);
+    panel.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") close();
+    });
+    addEventListener(JOIN_CLOSE, close);
+
+    // The form folds itself up into a box the size of a day, which the board then drops into the pool or onto a day.
+    const folded = { width: 88, height: 72 };
+
+    async function fold(): Promise<Box> {
+      const { left, top, width, height } = panel.getBoundingClientRect();
+      const x = folded.width / width;
+      const y = folded.height / height;
+      panel.dataset.folding = "";
+      const options = { fill: "forwards", easing: "cubic-bezier(.65,0,.35,1)" } as const;
+      const steps = [
+        panel.firstElementChild!.animate([{ opacity: 1 }, { opacity: 0 }], { ...options, duration: 220 }),
+        panel.animate(
+          [
+            { transform: "none" },
+            { transform: `perspective(1200px) rotateX(24deg) scale(0.94, ${Math.max(y, 0.22)})`, offset: 0.45 },
+            { transform: `perspective(1200px) rotateY(-24deg) scale(${x * 1.15}, ${y * 1.15})`, offset: 0.82 },
+            { transform: `scale(${x}, ${y})` },
+          ],
+          { ...options, duration: 760 },
+        ),
+      ];
+      await Promise.all(steps.map((step) => step.finished));
+      return { left: left + (width - folded.width) / 2, top: top + (height - folded.height) / 2, ...folded };
+    }
+
+    // Once it's sent the form starts over for the next problem, keeping who they are.
+    function reset() {
+      const kept = [email.value, name.value];
+      form.reset();
+      [email.value, name.value] = kept;
+      submit.ariaBusy = null;
+      gate();
+    }
+
+    async function send(amount: number, test?: boolean) {
+      const data = new FormData(form);
+      const problem = String(data.get("problem") ?? "").trim();
+      if (problem) {
+        const detail: SentProblem = { problem, name: String(data.get("name") ?? "").trim(), amount, from: null, test };
+        if (!matchMedia("(prefers-reduced-motion: reduce)").matches) detail.from = await fold();
+        dispatchEvent(new CustomEvent(SENT, { detail }));
+      }
+      close();
+      for (const animation of panel.getAnimations({ subtree: true })) animation.cancel();
+      delete panel.dataset.folding;
+      reset();
+    }
+
+    form.addEventListener("sent", () => {
+      const data = new FormData(form);
+      send(data.get("backing") === "sponsor" ? Number(data.get("sponsor")) / 100 : 0);
+    });
+
+    // Dev only: the + buttons in the tweak bar fill the form in and send it without saving anything.
+    if (import.meta.env.DEV) {
+      let tests = 0;
+      addEventListener(DEV_SEND, async (event) => {
+        if (panel.hasAttribute("data-folding")) return;
+        const { amount } = (event as CustomEvent<{ amount: number }>).detail;
+        open();
+        email.value ||= "test@example.com";
+        name.value ||= "Test";
+        form.querySelector<HTMLTextAreaElement>("#join-problem")!.value = `Test problem ${++tests}, ${amount ? `sponsored at ${money(amount)}` : "for the pool"}`;
+        form.querySelector<HTMLInputElement>(`[name=backing][value=${amount ? "sponsor" : "share"}]`)!.checked = true;
+        gate();
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        send(amount, true);
+      });
+    }
+
+    // Old /join links, and a Join box that posted before this script ran, arrive as /#join&email=…
+    function openFromHash() {
+      const params = new URLSearchParams(location.hash.slice(1));
+      if (!params.has("join")) return;
+      history.replaceState(null, "", location.pathname + location.search);
+      open(params.get("email"));
+    }
+    addEventListener("hashchange", openFromHash);
+    openFromHash();
+  }
+</script>

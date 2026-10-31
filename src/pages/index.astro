@@ -1,59 +1,36 @@
 ---
 import Base from "../layouts/Base.astro";
-import Subscribe from "../components/forms/Subscribe.astro";
+import DayBoard from "../components/DayBoard.vue";
+import JoinForm from "../components/JoinForm.astro";
+import SendInPlace from "../components/forms/SendInPlace.astro";
+import DevVariants from "../components/DevVariants.astro";
+import { history } from "../data/days";
+import { links } from "../data/site";
+
+const navLink = "text-night-muted underline-offset-3 hover:text-night-text";
+const cta = "rounded-full border px-4 py-2 text-sm font-semibold no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime";
 ---
 
-<Base>
-  <article class="flex max-w-2xl flex-col gap-12 px-8 py-10 text-xl leading-snug text-pretty md:px-9 md:text-2xl [&_h2]:border-b [&_h2]:border-ink [&_h2]:pb-2 [&_h2]:font-semibold [&_h3]:mt-2 [&_h3]:font-semibold [&>section]:flex [&>section]:flex-col [&>section]:gap-6">
-    <header class="flex flex-col gap-3">
-      <h1 class="text-4xl leading-tight font-semibold tracking-tight md:text-5xl">40 for 40</h1>
-      <p>The joy of just <strong class="font-semibold">making stuff</strong> again.</p>
-    </header>
-
-    <section>
-      <h2>Anyone else feeling this?</h2>
-      <p>Twenty minutes ago, you felt unstoppable. You’d just built something you couldn’t have made a year ago. You didn’t even type. You Wispr’d it like Al Capone in a smoky jazz club.</p>
-      <p class="font-semibold italic">Hell yes!</p>
-      <p>Let’s go on LinkedIn and show everyone my… then it hits you.</p>
-      <p class="font-semibold italic">Oh shit.</p>
-      <p>A teenager’s built an algo arbitrage bot on Kalshi making $36k/mo. At this rate, they’ll be podcasting on 20VC before I’ve finished my… OMG, did he just raise a $50 million Seed round?</p>
-      <p>How does that make sense? That’s what the world feels like right now.</p>
-      <p>We’re feeling it too. So what do we do with that? Get in a room. Bring some good people. Make stuff together.</p>
-    </section>
-
-    <section>
-      <h2>What it is</h2>
-      <ul class="flex list-disc flex-col gap-2 pl-6">
-        <li><strong class="font-semibold">40 apps in 40 days:</strong> like a hackathon in public</li>
-        <li><strong class="font-semibold">Live:</strong> Streamed on Twitch, daily shorts on socials</li>
-        <li><strong class="font-semibold">How to participate:</strong> watch, interact, sponsor, or build alongside at home. Heck, come and build with us in person!</li>
-      </ul>
-      <p>This is a community and we’re going to bring the fun back to building</p>
-    </section>
-
-    <section>
-      <h2>How it works</h2>
-      <p><strong class="font-semibold">To start</strong><br />Our website <a href="https://build40for40.com" class="underline hover:opacity-60">build40for40.com</a> starts with 40 problems from the community. Anyone at any time can add more. Starting at 40p, anyone can sponsor a problem they want solved throughout the 40 days.</p>
-
-      <p><strong class="font-semibold">Choosing the day’s challenge</strong><br />Each morning at 9am, the problem that’s the most funded becomes the day’s challenge.</p>
-
-      <p><strong class="font-semibold">Choosing the format</strong><br />Next, we spin a giant wheel: web app, game, ChatGPT app, WhatsApp chat bot, voice agent, or API</p>
-
-      <p><strong class="font-semibold">Time</strong><br />We’ll also randomly select a time limit for how long we can spend on the day’s challenge: 3 to 8 hours.</p>
-
-      <p><strong class="font-semibold">Did we ship?</strong><br />10 minutes left: did you commit to GitHub?<br />5 minutes: why isn’t the connection to Vercel working?<br />2 minutes: can you add one last feature?<br />0:00: is it live?</p>
-
-      <p class="font-semibold">That’s 40 for 40.</p>
-      <p class="font-semibold underline">Begins November 2, 2026</p>
-    </section>
-
-    <div class="sticky bottom-0 border-t border-ink bg-white pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-      <div class="flex items-center gap-3">
-        <img src="/logo.svg" alt="40 for 40" width="64" height="64" class="size-14 shrink-0 md:size-16" />
-        <div class="min-w-0 flex-1">
-          <Subscribe />
-        </div>
-      </div>
+<Base dark>
+  <DayBoard client:load history={history} builtAt={Date.now()}>
+    <h1 slot="title" class="m-0 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[clamp(40px,4.4vw,56px)] leading-[0.92] font-bold tracking-[-0.045em]">
+      <span role="img" aria-label="40 for 40" class="font-mono font-medium tracking-normal whitespace-nowrap">
+        <span class="text-brand-lime">40</span><span class="text-brand-yellow">(</span><span class="text-brand-pink">40</span><span class="text-brand-yellow">)</span>
+      </span>
+      <span><span class="whitespace-nowrap">40 apps.</span> <span class="whitespace-nowrap">40 days.</span></span>
+    </h1>
+    <nav slot="links" aria-label="Links" class="flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs">
+      <a href={links.twitch} target="_blank" rel="noopener" class={navLink}>Twitch</a>
+      <a href={links.community} target="_blank" rel="noopener" class={navLink}>Discord</a>
+      <a href={`mailto:${links.email}`} class={navLink}>{links.email}</a>
+      <a href="/privacy" class={navLink}>Privacy notice</a>
+    </nav>
+    <div slot="links" class="flex gap-2">
+      <a href="#join" class:list={[cta, "border-brand-lime bg-brand-lime text-brand-lime-ink hover:border-brand-lime-hover hover:bg-brand-lime-hover"]}>I have a problem</a>
+      <a href="#browse" aria-controls="browse" aria-expanded="false" class:list={[cta, "border-night-edge text-night-text hover:border-night-text"]}>Browse</a>
     </div>
-  </article>
+    <JoinForm slot="join" />
+  </DayBoard>
+  <SendInPlace />
+  {import.meta.env.DEV && <DevVariants />}
 </Base>

@@ -12,15 +12,13 @@ function load() {
 </script>
 
 <template>
-  <div class="relative aspect-video overflow-hidden rounded-lg bg-night">
-    <iframe v-if="src" :src="src" title="40 for 40 live on Twitch" allowfullscreen class="absolute inset-0 size-full border-0"></iframe>
-    <div v-else class="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center">
-      <button
-        type="button"
-        class="cursor-pointer rounded-full border-0 bg-accent px-5 py-3 text-[15px] font-semibold text-white hover:bg-accent-deep"
-        @click="load"
-      >▶ Load the stream</button>
-      <p class="m-0 max-w-xs font-mono text-[11px] text-night-muted">Loads the Twitch player, which sets Twitch cookies.</p>
-    </div>
+  <iframe v-if="src" :src="src" title="40 for 40 live on Twitch" allowfullscreen class="absolute inset-0 size-full border-0"></iframe>
+  <div v-else class="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center">
+    <button
+      type="button"
+      class="cursor-pointer rounded-full border-0 bg-brand-lime text-brand-lime-ink hover:bg-brand-lime-hover px-5 py-3 text-[15px] font-semibold"
+      @click="load"
+    >▶ Load the stream</button>
+    <p class="m-0 max-w-xs font-mono text-[11px] text-night-muted">Loads the Twitch player, which sets Twitch cookies.</p>
   </div>
 </template>
