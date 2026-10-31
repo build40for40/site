@@ -9,9 +9,8 @@ defineProps<{
   title?: string;
   sub?: string;
   today?: boolean;
-  sponsorLabel?: string;
 }>();
-defineEmits<{ select: []; sponsor: [] }>();
+defineEmits<{ select: [] }>();
 </script>
 
 <template>
@@ -39,12 +38,5 @@ defineEmits<{ select: []; sponsor: [] }>();
         <path d="M8 11V7a4 4 0 0 1 8 0v4" />
       </svg>
     </button>
-    <button
-      v-if="sponsorLabel"
-      type="button"
-      :aria-label="sponsorLabel"
-      class="absolute top-1 right-1 z-1 grid size-5 cursor-pointer place-items-center rounded-full border border-night-text/30 bg-night/40 p-0 font-mono text-[11px] text-night-text hover:border-night-text hover:bg-night-text hover:text-night focus-visible:border-night-text focus-visible:bg-night-text focus-visible:text-night focus-visible:outline-none"
-      @click="$emit('sponsor')"
-    >↑</button>
   </li>
 </template>

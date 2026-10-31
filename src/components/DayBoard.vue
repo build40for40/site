@@ -359,12 +359,12 @@ function swap(change: () => void, focusId: string) {
   document.startViewTransition(apply).ready.catch(() => {});
 }
 
-function select(key: string, focusId = "day-box") {
+function select(key: string) {
   swap(() => {
     backed.value = null;
     amount.value = DEFAULT_AMOUNT;
     picked.value = key;
-  }, focusId);
+  }, "day-box");
 }
 
 function pick(key: string, preset: number) {
@@ -550,9 +550,7 @@ const tileSub = (e: Entry) => {
             :number="d.day"
             :title="d.status === 'guest' ? 'Guest day' : d.idea?.title"
             :sub="tileSub(d)"
-            :sponsor-label="d.status === 'queued' ? `Sponsor ${d.idea?.title}` : undefined"
             @select="select(d.key)"
-            @sponsor="select(d.key, 'sponsor-button')"
           />
         </ul>
 
