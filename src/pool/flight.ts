@@ -63,19 +63,21 @@ export function curl(element: HTMLElement, from: Box, size: number, artwork: Ele
   return Promise.all(moves.map((m) => m.finished)).then(() => ball);
 }
 
+export const SHIFT_MS = 700;
+
 // The box slides over from where it was, now that the layout has it somewhere else, waiting there until its turn.
 export function shift(element: Element, from: Box, delay = 0) {
   const to = boxOf(element);
   return element.animate([{ translate: `${from.left - to.left}px ${from.top - to.top}px` }, { translate: "0 0" }], {
-    duration: 700,
+    duration: SHIFT_MS,
     delay,
     easing: "cubic-bezier(.65,0,.35,1)",
     fill: "backwards",
   }).finished;
 }
 
-// The box crouches, then jumps up out of its slot like a platformer hero, slowing to a hang at the top. It never
-// jumps off the top of the screen.
+// The box is squeezed up out of its slot like a soft ball, pops free and slows to a hang at the top. It never goes
+// off the top of the screen.
 export function pop(element: HTMLElement, from: Box) {
   const height = Math.max(0, Math.min(from.height * 1.6, from.top - 8));
   const options = { duration: 620, fill: "forwards" } as const;
@@ -83,17 +85,17 @@ export function pop(element: HTMLElement, from: Box) {
   const moves = [
     element.animate(
       [
-        { top: `${from.top}px` },
-        { top: `${from.top}px`, offset: 0.22, easing: "cubic-bezier(.15,.75,.35,1)" },
+        { top: `${from.top}px`, easing: "ease-in" },
+        { top: `${from.top - height * 0.15}px`, offset: 0.3, easing: "cubic-bezier(.15,.75,.35,1)" },
         { top: `${from.top - height}px` },
       ],
       options,
     ),
     element.animate(
       [
-        { scale: "1 1", easing: "ease-out" },
-        { scale: "1.15 0.8", offset: 0.22, easing: "ease-out" },
-        { scale: "0.88 1.18", offset: 0.42, easing: "ease-in-out" },
+        { scale: "1 1", easing: "ease-in" },
+        { scale: "0.72 1.2", offset: 0.3, easing: "ease-out" },
+        { scale: "1.12 0.9", offset: 0.6, easing: "ease-in-out" },
         { scale: "1 1" },
       ],
       options,

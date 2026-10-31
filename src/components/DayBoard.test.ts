@@ -157,13 +157,13 @@ describe("the problems pool", () => {
     expect(day(25)).toContain("My plant keeps dying");
     expect(day(26)).toContain("Idea 21");
     expect(day(39)).toContain("Idea 32");
-    expect(animate.mock.calls.filter(([frames]) => String((frames as Keyframe[])[0].translate).endsWith("px"))).toHaveLength(13);
+    expect(animate.mock.calls.filter(([frames]) => String((frames as Keyframe[])[0].translate).endsWith("px"))).toHaveLength(12);
 
     const ghost = () => document.querySelector("[aria-hidden=true].z-40");
     expect(ghost()?.textContent).toContain("Idea 33");
     expect(bodies.dropped).toEqual([]);
     landing();
-    await vi.waitFor(() => expect(bodies.dropped).toEqual(["idea-33"]));
+    await vi.waitFor(() => expect(bodies.dropped).toEqual(["idea-33"]), { timeout: 3000 });
     expect(ghost()).toBeNull();
     expect(poolTitles(w)).toContain("Idea 33");
   });

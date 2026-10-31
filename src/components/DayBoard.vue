@@ -23,7 +23,7 @@ import {
 import { TOTAL_DAYS, money } from "../data/site";
 import { poolConfig } from "../pool/config";
 import { loadIdeas } from "../pool/data";
-import { DEV_FEWER, DEV_SEND, JOIN_CLOSE, SENT, boxOf, fold, lob, pop, settle, shift, type Box, type SentProblem } from "../pool/flight";
+import { DEV_FEWER, DEV_SEND, JOIN_CLOSE, SENT, boxOf, fold, lob, pop, settle, shift, SHIFT_MS, type Box, type SentProblem } from "../pool/flight";
 import { createSearch, type Match, type Ranking } from "../pool/search";
 import { excerpt } from "../../worker/problems";
 import { confirmReturn, pay, startCheckout } from "./forms/checkout";
@@ -309,6 +309,11 @@ async function arrive(event: Event) {
   ideas.value.push(idea);
   if (!from) return;
   const day = board.value.days.find((d) => d.idea?.id === idea.id);
+  const out = day && board.value.pool.find((p) => placed.has(p.idea.id))?.idea;
+  if (out) problems.value?.hold(out.id);
+  if (day) incoming.value = day.key;
+  // Measure once the form has closed, or everything lands where the days were before the board moved up.
+  await nextTick();
   const slot = day && slotOf(day.key);
   slot?.scrollIntoView({ block: "nearest", behavior: "instant" });
   const moves = board.value.days.flatMap((d) => {
@@ -317,19 +322,24 @@ async function arrive(event: Event) {
     const element = old && slotOf(d.key);
     return old && element ? [{ element, from: boxOf(old) }] : [];
   });
-  // The idea pushed off the last day slides into a box past the end of the grid, then gets spat out of it.
-  const out = slot && board.value.pool.find((p) => placed.has(p.idea.id))?.idea;
+  // The idea pushed off the last day waits in its cell until the last domino squeezes it out.
   const outSlot = out && slotOf(placed.get(out.id)!);
-  if (out && outSlot) {
-    problems.value?.hold(out.id);
-    evicted.value = { idea: out, from: beyond() };
-  }
-  if (day) incoming.value = day.key;
+  // It's pinned to the screen, so it's put back over its cell whenever the page scrolls. The cell is measured from
+  // the grid, since the day sliding into it moves its box.
+  const grid = outSlot?.parentElement;
+  const cell = outSlot && grid && { box: boxOf(outSlot), grid: boxOf(grid) };
+  const pin = () => {
+    if (!evicted.value || !cell || !grid) return;
+    const now = boxOf(grid);
+    evicted.value.from = { ...cell.box, left: cell.box.left + now.left - cell.grid.left, top: cell.box.top + now.top - cell.grid.top };
+  };
+  if (out && cell) evicted.value = { idea: out, from: cell.box };
+  addEventListener("scroll", pin, { passive: true });
   await nextTick();
-  if (evictedGhost.value && outSlot) moves.push({ element: evictedGhost.value, from: boxOf(outSlot) });
-  // They go one after another like dominoes, the last one knocking the idea off the end.
+  // They go one after another like dominoes, the last one squeezing the idea out of the end.
   const step = Math.min(90, 1400 / moves.length);
-  const shifted = Promise.all(moves.map(({ element, from }, i) => shift(element, from, i * step)));
+  moves.forEach(({ element, from }, i) => shift(element, from, i * step));
+  const squeezed = new Promise((resolve) => setTimeout(resolve, Math.max(0, moves.length - 1) * step + SHIFT_MS * 0.6));
   if (ghost.value) {
     ghost.value.animate([{ scale: 1 }, { scale: 1.12 }, { scale: 1 }], { duration: 260, easing: "ease-out" });
     if (slot) await lob(ghost.value, boxOf(ghost.value), boxOf(slot));
@@ -341,25 +351,23 @@ async function arrive(event: Event) {
     landed.value = day.key;
     setTimeout(() => (landed.value = null), 400);
   }
-  await shifted;
+  // Follow the dominoes down to the last day, so the squeeze is on screen.
+  const below = evicted.value ? evicted.value.from.top + evicted.value.from.height + 24 - innerHeight : 0;
+  if (below > 0) scrollBy({ top: below, behavior: "smooth" });
   if (out && evictedGhost.value) {
+    await squeezed;
+    pin();
+    await nextTick();
     await pop(evictedGhost.value, boxOf(evictedGhost.value));
     await problems.value?.receive(out.id, evictedGhost.value);
   }
+  removeEventListener("scroll", pin);
   evicted.value = null;
 }
 
 // A day's tile in the grid, or its notch in the progress bar on phones, where the grid is hidden.
 const slotOf = (key: string) => [...document.querySelectorAll(`[data-day-slot="${key}"]`)].findLast((slot) => slot.getClientRects().length);
 
-// Where the grid would put one more day.
-function beyond(): Box {
-  const slots = board.value.days.flatMap((d) => slotOf(d.key) ?? []).map(boxOf);
-  const last = slots.at(-1)!;
-  const columns = slots.findIndex((s) => s.top !== slots[0].top);
-  if (columns === -1 || slots.length % columns) return { ...last, left: last.left + slots[1].left - slots[0].left };
-  return { ...last, left: slots[0].left, top: last.top + slots[columns].top - slots[0].top };
-}
 
 function swap(change: () => void, focusId: string) {
   const apply = async () => {
