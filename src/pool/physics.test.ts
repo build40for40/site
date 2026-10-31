@@ -206,6 +206,33 @@ test("ideas dropped as ghosts pass through each other, then turn solid", () => {
   expect(gap()).toBeGreaterThan(TILE.height - 5);
 });
 
+test("a spinning idea turns smoothly between steps, even past half a turn", () => {
+  let queued: FrameRequestCallback | undefined;
+  vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => ((queued = callback), 1));
+  vi.stubGlobal("cancelAnimationFrame", () => {});
+  const container = document.createElement("ul");
+  Object.defineProperty(container, "clientWidth", { get: () => W });
+  Object.defineProperty(container, "clientHeight", { get: () => H });
+  document.body.append(container);
+  controller = initializePhysics(container, { autoPause: false, boiling: false, gravity: { x: 0, y: 0 } });
+  const element = document.createElement("li");
+  container.append(element);
+  controller.registerBody("a", element, { ...TILE, delayMs: Infinity });
+  controller.drop("a", { x: 200, y: 200 }, { x: 0, y: 0 }, { spin: 8 });
+
+  const angle = () => Number(/rotate\((-?[\d.]+)rad\)/.exec(element.style.transform)![1]);
+  let last = angle();
+  let biggest = 0;
+  for (let frame = 1; frame <= 90; frame++) {
+    queued!((frame * 1000) / 90);
+    const turn = Math.abs(angle() - last);
+    biggest = Math.max(biggest, Math.min(turn, 2 * Math.PI - turn));
+    last = angle();
+  }
+  vi.unstubAllGlobals();
+  expect(biggest).toBeLessThan(0.2);
+});
+
 test("a held idea follows the pointer and flies on when it's let go", () => {
   const { add, controller } = setup();
   add("a", { x: 100, y: 200 });

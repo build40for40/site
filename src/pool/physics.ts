@@ -283,12 +283,15 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     for (const t of bodies.values()) t.curr = snapshot(t);
   }
 
+  // Rapier's angles wrap at ±π, so a spin past half a turn is blended the short way round.
+  const shortest = (turn: number) => turn - 2 * Math.PI * Math.round(turn / (2 * Math.PI));
+
   function render(alpha: number) {
     for (const t of bodies.values()) {
       if (!t.shown) continue;
       const x = toPx(t.prev.x + (t.curr.x - t.prev.x) * alpha) - t.width / 2;
       const y = toPx(t.prev.y + (t.curr.y - t.prev.y) * alpha) - t.height / 2;
-      const a = t.prev.a + (t.curr.a - t.prev.a) * alpha;
+      const a = t.prev.a + shortest(t.curr.a - t.prev.a) * alpha;
       const transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${a.toFixed(4)}rad)`;
       if (transform === t.drawn) continue;
       t.drawn = transform;
