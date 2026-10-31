@@ -181,7 +181,7 @@ const counter = ref<HTMLElement>();
 const browsed = ref<Floated | null>(null);
 const browseLinks = () => document.querySelectorAll<HTMLAnchorElement>('a[href="#browse"]');
 const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
-const gridless = () => matchMedia("(width < 40rem)").matches;
+const gridless = () => matchMedia("(width < 64rem)").matches;
 let moving = false;
 
 // Open and guest days have no problem to search, so they stay out of the pool.
@@ -405,6 +405,15 @@ const tileLabel = (e: Entry) => {
   return `${head}, ${statusLabel(e, board.value.today).toLowerCase()}${title}${sum}`;
 };
 
+const hint = ref<{ key: string; label: string; left: number; top: number; shift: number } | null>(null);
+function showHint(target: EventTarget | null) {
+  const slot = target instanceof HTMLElement ? target.closest<HTMLElement>("[data-day-slot]") : null;
+  const day = slot && board.value.days.find((d) => d.key === slot.dataset.daySlot);
+  if (!slot || !day) return;
+  const left = slot.offsetLeft + slot.offsetWidth / 2;
+  hint.value = { key: day.key, label: tileLabel(day), left, top: slot.offsetTop, shift: (left / slot.parentElement!.clientWidth) * 100 };
+}
+
 const poolTiles = computed<PoolTile[]>(() =>
   pool.value.map((p) => ({
     key: p.key,
@@ -481,25 +490,40 @@ const tileSub = (e: Entry) => {
           <slot name="title" />
           <slot name="links" />
         </div>
-        <div v-show="!tucked" ref="counter" aria-label="Progress" class="flex w-full min-w-0 flex-col gap-2 md:w-auto md:max-w-[40rem] md:flex-1">
+        <div v-show="!tucked" ref="counter" aria-label="Progress" class="flex w-full min-w-0 flex-col gap-2 lg:w-auto lg:max-w-[40rem] lg:flex-1">
           <div class="flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-xs font-medium">
             <span>{{ String(shippedCount).padStart(2, "0") }} / 40 SHIPPED</span>
             <span class="text-night-muted">{{ upcoming }} upcoming<template v-if="pool.length"> · {{ pool.length }} {{ pool.length === 1 ? "problem" : "problems" }} simmering</template></span>
           </div>
-          <div class="flex gap-[3px]" aria-hidden="true">
+          <div
+            class="relative grid grid-cols-20 gap-[3px] md:grid-cols-40 lg:flex"
+            aria-hidden="true"
+            @pointerover="showHint($event.target)"
+            @pointerleave="$event.pointerType === 'mouse' && (hint = null)"
+            @focusin="showHint($event.target)"
+            @focusout="hint = null"
+          >
             <span
               v-for="d in board.days"
               :key="d.key"
               :data-day-slot="d.key"
-              class="h-2.5 flex-1 rounded-xs"
+              tabindex="-1"
+              class="grid h-5 place-items-center rounded-xs font-mono text-[9px] leading-none font-medium outline-none lg:h-2.5 lg:flex-1"
               :class="[
                 tones[d.status].dot,
+                d.idea || d.status === 'guest' ? 'text-night' : 'text-night-muted',
                 d.status === 'live' && 'motion-safe:animate-pulse',
                 incoming === d.key && 'invisible',
-                browsing && d.idea && 'max-sm:invisible',
+                browsing && d.idea && 'max-lg:invisible',
                 landed === d.key && 'animate-pop',
+                hint?.key === d.key && 'max-lg:ring-2 max-lg:ring-night-text',
               ]"
-            ></span>
+            ><span class="lg:hidden">{{ pad(d.day!) }}</span></span>
+            <span
+              v-if="hint"
+              class="pointer-events-none absolute z-10 w-max max-w-[min(16rem,100%)] rounded bg-night-text px-2 py-1 font-mono text-[11px] leading-snug text-night lg:hidden"
+              :style="{ left: `${hint.left}px`, top: `${hint.top - 6}px`, translate: `-${hint.shift}% -100%` }"
+            >{{ hint.label }}</span>
           </div>
           <ul class="m-0 flex list-none flex-wrap gap-x-4 gap-y-1.5 p-0 font-mono text-[11px] text-night-muted">
             <li v-for="item in legend" :key="item.label" class="flex items-center gap-1.5"><span class="size-[7px] rounded-full" :class="item.dot"></span>{{ item.label }}</li>
@@ -534,7 +558,7 @@ const tileSub = (e: Entry) => {
           v-show="!browsing"
           aria-label="The 40 days"
           :aria-busy="loading"
-          class="m-0 hidden list-none grid-cols-[repeat(auto-fill,minmax(5rem,5.5rem))] justify-between gap-2 p-0 sm:grid"
+          class="m-0 hidden list-none grid-cols-[repeat(auto-fill,minmax(5rem,5.5rem))] justify-between gap-2 p-0 lg:grid"
         >
           <DayTile
             v-for="d in board.days"
