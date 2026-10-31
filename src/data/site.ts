@@ -6,7 +6,7 @@ export const links = {
   twitch: "https://www.twitch.tv/40for40",
   twitchChannel: "40for40",
   community: "https://discord.gg/40for40",
-  email: "hello@40for40.app",
+  email: "help@build40for40.com",
   socials: [
     { label: "LinkedIn", href: "https://www.linkedin.com/company/40for40" },
     { label: "X", href: "https://x.com/40for40app" },
