@@ -295,7 +295,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
 
     <div class="lg:h-0 lg:min-h-full lg:overflow-y-auto" :class="panel">
       <template v-if="entry.status === 'open'">
-        <h2 class="m-0 text-[26px] leading-[1.04] font-semibold tracking-tight text-balance md:text-3xl">{{ dayPrefix }}Sponsor this day</h2>
+        <h2 class="m-0 text-[26px] leading-[1.04] font-semibold tracking-tight md:text-3xl">{{ dayPrefix }}Sponsor this day</h2>
         <p class="m-0 text-[15px] leading-snug text-night-sub text-pretty">Nothing’s booked for {{ entry.date }} yet. Bring a problem and sponsor it, and the queue grows into this day.</p>
         <p class="m-0 text-[15px] leading-snug text-pretty">The idea with the most sponsorship goes first.</p>
         <a href="#join" :class="mainButton">Bring your own problem</a>
@@ -321,7 +321,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
 
       <template v-else>
         <div class="flex items-start justify-between gap-3">
-          <h2 class="m-0 min-w-0 text-[26px] leading-[1.04] font-semibold tracking-tight text-balance md:text-3xl">{{ dayPrefix }}{{ idea?.title ?? "Guest day" }}</h2>
+          <h2 class="m-0 min-w-0 text-[26px] leading-[1.04] font-semibold tracking-tight md:text-3xl">{{ dayPrefix }}{{ idea?.title ?? "Guest day" }}</h2>
           <!-- Narrow screens have no room for the player, so its links move up here. -->
           <div v-if="watch || share" class="flex shrink-0 items-center gap-1.5 max-[24rem]:flex-col max-[24rem]:items-end lg:hidden">
             <a v-if="watch" :href="watch" target="_blank" rel="noopener" class="no-underline" :class="overlayPill">▶ Watch</a>
