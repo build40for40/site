@@ -18,6 +18,15 @@ describe("jevClassifier", () => {
     expect(JSON.parse(String(init.body))).toEqual({ model: "jev-latest", state: { a: 1 }, questions });
   });
 
+  test("logs the exact body it sends", async () => {
+    const fetcher = vi.fn(async () => ok());
+    const log = vi.fn();
+    await jevClassifier({ apiKey: "key", fetcher, log }).ask({ a: 1 }, {});
+    const [, init] = fetcher.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(log).toHaveBeenCalledWith(init.body);
+    expect(log.mock.calls[0][0]).not.toContain("key");
+  });
+
   test("retries a server error once", async () => {
     const fetcher = vi.fn().mockResolvedValueOnce(new Response("", { status: 503 })).mockResolvedValueOnce(ok());
     await jevClassifier({ apiKey: "key", fetcher }).ask({}, {});

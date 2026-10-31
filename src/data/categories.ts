@@ -6,7 +6,7 @@ export interface Category {
 }
 
 // Bump the version whenever a category is added, removed or reworded, so every problem gets sorted again.
-export const CATEGORIES_VERSION = 1;
+export const CATEGORIES_VERSION = 2;
 
 export const categories: Category[] = [
   { key: "work", label: "Work & productivity", covers: "jobs, meetings, notes, colleagues, freelancing, running a small business or selling your work, goals, routines and getting things done" },
@@ -30,8 +30,9 @@ export const categoryConfig = {
   // A problem is in every category scoring at least `fits`, up to `most` of them, best first.
   fits: 0.7,
   most: 3,
-  // Below `fits`, a best score of at least `unsure` is worth a look by the team. Below that, nothing fits.
-  unsure: 0.5,
+  // Below `fits`, a best score of at least `unsure` isn't settled either way and is worth a look by the team. Below that,
+  // nothing fits.
+  unsure: 0.3,
 };
 
 export const categoryLabel = (key: string) => [...categories, OTHER].find((c) => c.key === key)?.label ?? key;

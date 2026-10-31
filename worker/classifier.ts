@@ -1,8 +1,11 @@
 // Structured decisions only: scores and choices about text, never generated text.
+// Instructions can be an object, to carry the item a question is about alongside the question itself.
+type Instructions = string | Record<string, unknown>;
+
 export type Question =
-  | { type: "score"; instructions: string; criteria: string[] }
-  | { type: "choice"; instructions: string; criteria: Record<string, string | null> }
-  | { type: "noul"; instructions: string };
+  | { type: "score"; instructions: Instructions; criteria: string[] }
+  | { type: "choice"; instructions: Instructions; criteria: Record<string, string | null> }
+  | { type: "noul"; instructions: Instructions; criteria?: { true: string; false: string } };
 
 export type Answer =
   | { type: "score"; score: number; confidence: number }
@@ -23,13 +26,17 @@ interface JevOptions {
   timeoutMs?: number;
   retries?: number;
   fetcher?: typeof fetch;
+  log?: (body: string) => void;
 }
 
 // https://docs.typesafe.ai/api
-export function jevClassifier({ apiKey, baseUrl = "https://api.typesafe.ai", model = "jev-latest", timeoutMs = 2000, retries = 1, fetcher = fetch }: JevOptions): Classifier {
+// Every request body is logged, so `npm run wrangler -- tail` shows exactly what was asked.
+export function jevClassifier({ apiKey, baseUrl = "https://api.typesafe.ai", model = "jev-latest", timeoutMs = 2000, retries = 1, fetcher = fetch, log = console.debug }: JevOptions): Classifier {
   return {
     version: model,
     async ask(state, questions, signal) {
+      const body = JSON.stringify({ model, state, questions });
+      log(body);
       const deadline = Date.now() + timeoutMs;
       let lastError: unknown;
       for (let attempt = 0; attempt <= retries; attempt++) {
@@ -40,7 +47,7 @@ export function jevClassifier({ apiKey, baseUrl = "https://api.typesafe.ai", mod
           const response = await fetcher(new URL("/v1/systemone", baseUrl), {
             method: "POST",
             headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ model, state, questions }),
+            body,
             signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
           });
           if (response.ok) return (await response.json()) as { model: string; answers: Record<string, Answer> };
@@ -57,12 +64,15 @@ export function jevClassifier({ apiKey, baseUrl = "https://api.typesafe.ai", mod
 }
 
 export interface ClassifiableIdea {
-  title: string;
+  title: string | null;
   problem: string;
 }
 
-// Only the title and problem text are sent, whatever else the idea carries.
+export const ideaState = ({ title, problem }: ClassifiableIdea) => (title?.trim() ? { title: title.trim(), problem } : { problem });
+
+// Only the title and problem text are sent, whatever else the idea carries. A title that's just the start of the problem
+// is left out.
 export async function classifyIdea(idea: ClassifiableIdea, schema: Record<string, Question>, classifier: Classifier, signal?: AbortSignal) {
-  const { model, answers } = await classifier.ask({ idea: { title: idea.title, problem: idea.problem } }, schema, signal);
+  const { model, answers } = await classifier.ask({ idea: ideaState(idea) }, schema, signal);
   return { classifierVersion: model, answers };
 }

@@ -78,7 +78,7 @@ Everything lives in the `40for40` D1 database, with the schema in `worker/migrat
 
 - **`people`:** one row per email. The first form someone sends creates it, and later forms fill in or change answers without clearing ones they leave out, keeping the original `joined_at`. `involved` is a JSON array and `sponsor` is the amount in pence picked before checkout.
 - **`problems`:** one row per problem submitted, so a second problem from the same person never replaces the first.
-- **`problem_categories`:** how well each problem fits each category, from 0 to 1. `problems` records who sorted it (`categorised_by`), against which list (`categories_version`) and how buildable it looks.
+- **`problem_categories`:** how well each problem fits each category, from 0 to 1. `problems` records who sorted it (`categorised_by`), against which list (`categories_version`) and how likely it is to be meant sincerely (`sincere`).
 - **`payments`:** one row per paid Stripe Checkout Session, written by the webhook.
 - **`help_offers`** and **`guest_applications`:** one row per submission of the hidden help and guest forms.
 
@@ -92,9 +92,9 @@ To change the schema, add a numbered `.sql` file to `worker/migrations/`. `npm r
 
 ### Categories
 
-Every problem is sorted into the categories in `src/data/categories.ts`, which the Browse panel offers as topic chips. Jev answers one yes or no per category, plus whether the problem is something you could build at all, and every answer's score goes into `problem_categories`. A problem is in each category scoring at least `fits` (up to three, best first), and in Other when none do. Only the title and problem text are sent to Jev.
+Every problem is sorted into the categories in `src/data/categories.ts`, which the Browse panel offers as topic chips. Jev answers one yes or no per category, plus whether the problem is meant sincerely, and every category's score goes into `problem_categories`. A problem is in each category scoring at least `fits` (up to three, best first), and in Other when none do. A best score between `unsure` and `fits` isn't settled either way. Only the title and problem text are sent to Jev, and the Worker logs every request it sends, so `npm run wrangler -- tail` shows exactly what was asked.
 
-New problems are sorted right after they're saved, and a cron every 15 minutes sorts any that were missed. Bumping `CATEGORIES_VERSION` after changing the list sorts everything again. Each sort sends a `problem_categorised` event to PostHog with the problem's id, its categories, `fit` (`fits`, `unsure` or `none`), its best score and `buildable`, so an insight or alert on `fit != fits` finds the ones that need a look. The thresholds only change how scores are read, so moving them needs no new sort.
+New problems are sorted right after they're saved, and a cron every 15 minutes sorts any that were missed. Bumping `CATEGORIES_VERSION` after changing the list sorts everything again. Each sort sends a `problem_categorised` event to PostHog with the problem's id, its categories, `fit` (`fits`, `unsure` or `none`), its best score and `sincere`, so an insight or alert on `fit != fits` finds the ones that need a look. The thresholds only change how scores are read, so moving them needs no new sort.
 
 To sort a problem by hand, mark it as the team's so the classifier leaves it alone, and give each category it's in a score of 1. With no categories it's in Other:
 
@@ -105,7 +105,7 @@ npm run wrangler -- d1 execute 40for40 --remote --command "UPDATE problems SET c
 To list the problems that fit nothing or might be junk:
 
 ```sh
-npm run wrangler -- d1 execute 40for40 --remote --command "SELECT p.id, p.title, p.buildable, max(c.score) AS best FROM problems p JOIN problem_categories c ON c.problem_id = p.id GROUP BY p.id HAVING best < 0.7 OR p.buildable < 0.5 ORDER BY best"
+npm run wrangler -- d1 execute 40for40 --remote --command "SELECT p.id, p.title, p.sincere, max(c.score) AS best FROM problems p JOIN problem_categories c ON c.problem_id = p.id GROUP BY p.id HAVING best < 0.7 OR p.sincere < 0.7 ORDER BY best"
 ```
 
 Locally, the seed sorts its fake problems by hand. To try the cron with a key in `.dev.vars`, run `npm run wrangler -- dev --test-scheduled` and open `/__scheduled`.
