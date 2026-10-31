@@ -8,7 +8,11 @@ const ideas = [
 ];
 
 test("tokenize keeps words only", () => {
-  expect(tokenize('  Café  "parking" OR park! ')).toEqual(["cafe", "parking", "or", "park"]);
+  expect(tokenize('  Café  "parking" NEAR park! ')).toEqual(["cafe", "parking", "near", "park"]);
+});
+
+test("tokenize drops filler words that would match almost any problem", () => {
+  expect(tokenize("I always forget where I park my car, and it's a pain")).toEqual(["forget", "park", "car", "pain"]);
 });
 
 describe("retrieveCandidates", () => {

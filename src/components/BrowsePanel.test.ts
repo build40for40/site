@@ -62,6 +62,12 @@ test("searching shows word matches straight away, then the classifier's ranking 
   expect(titles()[0]).toContain("90%");
 });
 
+test("a search of only filler words shows everything", async () => {
+  wrapper = mount(BrowsePanel, { props: { entries, selected: "day-1" } });
+  await wrapper.find("input").setValue("how do I");
+  expect(titles()).toHaveLength(4);
+});
+
 test("the lexical fallback keeps every match and shows no percentages", async () => {
   ranking = "lexical";
   wrapper = mount(BrowsePanel, { props: { entries, selected: "day-1" } });

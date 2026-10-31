@@ -25,7 +25,7 @@ const fakeClassifier = (scores: Record<string, number>, onAsk = vi.fn()): Classi
 
 describe("ftsQuery", () => {
   test("quotes every word so typed text can't use FTS5 syntax", () => {
-    expect(ftsQuery('park" OR NEAR(x) *')).toBe('"park"* OR "or"* OR "near"* OR "x"*');
+    expect(ftsQuery('park" OR NEAR(xy) *')).toBe('"park"* OR "near"* OR "xy"*');
     expect(ftsQuery("  !!! ")).toBeNull();
   });
 });

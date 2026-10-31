@@ -5,7 +5,7 @@ import { poolConfig } from "../pool/config";
 import { afterLoad } from "../pool/data";
 import { boxGrowth } from "../pool/effects";
 import { CURL_TURN, boxOf, curl, lob } from "../pool/flight";
-import type { Match } from "../pool/search";
+import type { Match, Ranking } from "../pool/search";
 import type { PhysicsController, Vector } from "../pool/physics";
 import type { createLift } from "../pool/effects";
 
@@ -19,7 +19,7 @@ export interface PoolTile {
   raised: number;
 }
 
-const props = defineProps<{ tiles: PoolTile[]; matches?: Match[] | null }>();
+const props = defineProps<{ tiles: PoolTile[]; matches?: Match[] | null; ranking?: Ranking }>();
 
 const list = ref<HTMLElement>();
 const elements = new Map<string, HTMLElement>();
@@ -56,7 +56,9 @@ const percents = computed(() => new Map(scored.value.map((m) => [m.id, Math.roun
 const announcement = computed(() => {
   if (!props.matches) return "";
   const count = scored.value.length;
-  return count ? `${count} unfunded ${count === 1 ? "problem looks" : "problems look"} like yours` : "Nothing in the pool looks like yours yet";
+  if (!count) return "Nothing in the pool looks like yours yet";
+  if (props.ranking === "lexical") return `${count} unfunded ${count === 1 ? "problem shares" : "problems share"} words with yours`;
+  return `${count} unfunded ${count === 1 ? "problem looks" : "problems look"} like yours`;
 });
 
 // The band stays shut until there's something to show, then the lava slides up from the floor and the ideas rain in
@@ -435,7 +437,7 @@ onBeforeUnmount(() => {
           v-html="artwork.get(t.id)"
         ></button>
         <span
-          v-if="physical && percents.has(t.id)"
+          v-if="physical && ranking !== 'lexical' && percents.has(t.id)"
           aria-hidden="true"
           class="pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded-full bg-night-text px-1.5 font-mono text-[10px] leading-4 font-medium text-night opacity-0 transition-opacity duration-300 group-data-arrived:animate-pop group-data-arrived:opacity-100"
           >{{ percents.get(t.id) }}%</span

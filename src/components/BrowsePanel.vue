@@ -4,7 +4,7 @@ import { OTHER, categories } from "../data/categories";
 import { pad, raised, tones, type Entry } from "../data/days";
 import { money } from "../data/site";
 import { poolConfig } from "../pool/config";
-import { createSearch, retrieveCandidates, type Match, type Ranking } from "../pool/search";
+import { createSearch, retrieveCandidates, tokenize, type Match, type Ranking } from "../pool/search";
 
 const props = defineProps<{ entries: Entry[]; selected: string }>();
 const emit = defineEmits<{ select: [key: string]; close: [] }>();
@@ -65,7 +65,7 @@ let debounce: ReturnType<typeof setTimeout> | undefined;
 function typed() {
   clearTimeout(debounce);
   const text = query.value.trim();
-  if (text.length < poolConfig.search.browseMinLength) {
+  if (text.length < poolConfig.search.browseMinLength || !tokenize(text).length) {
     search.cancel();
     found.value = null;
     return;

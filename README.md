@@ -88,7 +88,7 @@ To change the schema, add a numbered `.sql` file to `worker/migrations/`. `npm r
 
 `GET /api/problems?offset=&limit=` returns problems ranked by money raised, with the team's `title` (or the start of the problem when there isn't one), the submitter's first name and each payment as an anonymous sponsor. Emails never leave the Worker. The home page loads the first 40 for the days, then the rest a page at a time once the page has loaded, and each one drops into the pool.
 
-`GET /api/pool/search?q=` finds candidates with D1 full-text search (`problems_fts`, kept in sync by triggers) and reranks them with TypeSafe's Jev when `TYPESAFE_API_KEY` is set. If Jev is slow, down or unset, it returns the full-text ranking, and the browser falls back to its own word match if the Worker fails. Only the search and each candidate's title and problem text are sent to Jev. To try Jev locally, put a key in `.dev.vars`. In production, `npm run wrangler -- secret put TYPESAFE_API_KEY`.
+`GET /api/pool/search?q=` finds candidates with D1 full-text search (`problems_fts`, kept in sync by triggers) and reranks them with TypeSafe's Jev when `TYPESAFE_API_KEY` is set. If Jev is slow, down or unset, it returns the full-text ranking, and the browser falls back to its own word match if the Worker fails. Both leave out filler words such as "my" and "the", which would match almost every problem. Browse lists every word match. The join form floats up only the best few, without a match percentage, since word matches rank problems but don't say how alike they are. Only the search and each candidate's title and problem text are sent to Jev. To try Jev locally, put a key in `.dev.vars`. In production, `npm run wrangler -- secret put TYPESAFE_API_KEY`.
 
 ### Categories
 

@@ -45,6 +45,8 @@ export const poolConfig = {
       "The idea is exactly the problem the search describes",
     ],
     minRelevance: 0.34,
+    // Without the classifier, the join form floats up only this many of the best word matches.
+    lexicalMost: 5,
     cacheSeconds: 600,
     // Room above a risen idea for its match percentage.
     label: 18,

@@ -23,7 +23,15 @@ export const MAX_QUERY = 80;
 
 const words = (text: string) => text.toLowerCase().normalize("NFKD").replace(/\p{M}/gu, "").match(/[\p{L}\p{N}]+/gu) ?? [];
 
-export const tokenize = (query: string) => [...new Set(words(query.slice(0, MAX_QUERY)))].slice(0, 8);
+// Words that turn up in almost any problem, so matching on them would find everything.
+const FILLER = new Set(
+  `a about after all also always am an and any app are as at be because but by can cant could did do does dont for from get
+  gets getting go going has have how i id if im in into is it its ive just keep like make me more most much my need never
+  no not of on one or our out over really so some something than that the their them then there they thing things this
+  to too up us very want was way we what when where which who why will with without would you your`.split(/\s+/),
+);
+
+export const tokenize = (query: string) => [...new Set(words(query.slice(0, MAX_QUERY)))].filter((w) => w.length > 1 && !FILLER.has(w)).slice(0, 8);
 
 export function retrieveCandidates(query: string, { ideas, limit = 30 }: { ideas: SearchableIdea[]; limit?: number }): Match[] {
   const tokens = tokenize(query);

@@ -20,8 +20,10 @@ import {
   type Sponsor,
 } from "../data/days";
 import { TOTAL_DAYS, money } from "../data/site";
+import { poolConfig } from "../pool/config";
 import { loadIdeas } from "../pool/data";
 import { DEV_FEWER, JOIN_CLOSE, SENT, boxOf, lob, pop, shift, type Box, type SentProblem } from "../pool/flight";
+import { createSearch, type Match, type Ranking } from "../pool/search";
 import { excerpt } from "../../worker/problems";
 
 const props = defineProps<{ history: Record<number, ShippedIdea>; builtAt: number }>();
@@ -109,6 +111,7 @@ onMounted(() => {
   timer = setInterval(() => (now.value = Date.now() + offset), 1000);
   addEventListener(SENT, arrive);
   addEventListener("click", browseClicked);
+  document.addEventListener("input", typed);
   if (location.hash === "#browse") openBrowse();
   openShared();
   loadIdeas({
@@ -148,6 +151,9 @@ onBeforeUnmount(() => {
   removeEventListener(SENT, arrive);
   removeEventListener(DEV_FEWER, fewer);
   removeEventListener("click", browseClicked);
+  document.removeEventListener("input", typed);
+  clearTimeout(typing);
+  search.cancel();
 });
 
 // The Browse link sits in the page's static markup, so the board picks up its clicks and keeps its state in sync.
@@ -189,6 +195,8 @@ const evictedGhost = ref<HTMLElement>();
 
 async function arrive(event: Event) {
   const { problem, name, amount, from, test } = (event as CustomEvent<SentProblem>).detail;
+  search.cancel();
+  similar.value = null;
   const owner = name.split(/\s+/)[0] || undefined;
   const sponsors = amount ? [{ name: owner ?? "Anonymous", amount }] : [];
   // Test sends from the tweak bar count as the oldest, so they win ties.
@@ -321,6 +329,31 @@ const poolTiles = computed<PoolTile[]>(() =>
   })),
 );
 
+// Writing a problem in the join form floats similar unfunded ones up out of the pool. Only the classifier's scores say
+// how alike two problems are. When it's down, word matches only rank, so just the best few float up, without a
+// percentage.
+const similar = ref<{ ranking: Ranking; matches: Match[] } | null>(null);
+const search = createSearch({ ideas: () => poolTiles.value });
+let typing: ReturnType<typeof setTimeout> | undefined;
+
+function typed(event: Event) {
+  if (!(event.target instanceof HTMLTextAreaElement) || event.target.id !== "join-problem") return;
+  problems.value?.nudge();
+  clearTimeout(typing);
+  const text = event.target.value.trim();
+  if (text.length < poolConfig.search.minLength) {
+    search.cancel();
+    similar.value = null;
+    return;
+  }
+  typing = setTimeout(async () => {
+    const found = await search.run(text);
+    if (!found) return;
+    const matches = found.ranking === "classifier" ? found.matches : found.matches.slice(0, poolConfig.search.lexicalMost);
+    similar.value = { ranking: found.ranking, matches };
+  }, poolConfig.search.debounceMs);
+}
+
 const tileSub = (e: Entry) => {
   if (e.status === "live") return "Live now";
   if (e.status !== "queued" && e.status !== "pool") return "";
@@ -406,7 +439,7 @@ const tileSub = (e: Entry) => {
       </div>
     </div>
 
-    <ProblemsPool ref="problems" :tiles="poolTiles" />
+    <ProblemsPool ref="problems" :tiles="poolTiles" :matches="similar?.matches ?? null" :ranking="similar?.ranking" />
 
     <div
       v-if="evicted"

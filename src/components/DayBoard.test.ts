@@ -2,14 +2,14 @@
 import { flushPromises, mount, type VueWrapper } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-const bodies = { registered: [] as string[], unregistered: [] as string[], dropped: [] as string[] };
+const bodies = { registered: [] as string[], unregistered: [] as string[], dropped: [] as string[], hovers: new Map<string, number | null>() };
 
 const physics = () => ({
   initializePhysics: () => ({
     registerBody: (id: string) => bodies.registered.push(id),
     unregisterBody: (id: string) => bodies.unregistered.push(id),
     drop: (id: string) => bodies.dropped.push(id),
-    setBodyHover() {},
+    setBodyHover: (id: string, y: number | null) => bodies.hovers.set(id, y),
     nudge() {},
     refit() {},
     destroy() {},
@@ -24,6 +24,7 @@ const pages: Record<string, unknown> = {
 };
 
 let reducedMotion = false;
+let ranking = "classifier";
 let wrapper: VueWrapper | undefined;
 
 beforeEach(() => {
@@ -32,6 +33,8 @@ beforeEach(() => {
   bodies.registered.length = 0;
   bodies.unregistered.length = 0;
   bodies.dropped.length = 0;
+  bodies.hovers.clear();
+  ranking = "classifier";
   vi.resetModules();
   vi.doMock("../pool/physics", physics);
   reducedMotion = false;
@@ -39,6 +42,7 @@ beforeEach(() => {
   vi.stubGlobal("fetch", async (url: string) => {
     const { pathname, searchParams } = new URL(url, "http://localhost");
     if (pathname === "/api/problems") return Response.json(pages[searchParams.get("offset")!]);
+    if (pathname === "/api/pool/search") return Response.json({ ranking, matches: [{ id: "idea-40", score: 1 }, { id: "idea-41", score: 0.5 }, { id: "idea-42", score: 0.2 }] });
     return new Response("", { status: 404 });
   });
   vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce") && reducedMotion, addEventListener() {}, removeEventListener() {} }));
@@ -57,7 +61,7 @@ beforeEach(() => {
     class {
       constructor(private callback: ResizeObserverCallback) {}
       observe() {
-        this.callback([{ contentRect: { width: 400 } } as ResizeObserverEntry], this as unknown as ResizeObserver);
+        this.callback([{ contentRect: { width: 400, height: 300 } } as ResizeObserverEntry], this as unknown as ResizeObserver);
       }
       disconnect() {}
     },
@@ -161,5 +165,36 @@ describe("the problems pool", () => {
     const w = await board();
     expect(pool(w).classes()).toContain("flex-wrap");
     expect(bodies.registered).toHaveLength(0);
+  });
+});
+
+describe("writing a problem in the join form", () => {
+  async function write(text: string) {
+    document.body.insertAdjacentHTML("beforeend", `<textarea id="join-problem"></textarea>`);
+    const w = await board();
+    await vi.waitFor(() => expect(bodies.registered).toHaveLength(10));
+    const field = document.querySelector<HTMLTextAreaElement>("#join-problem")!;
+    field.value = text;
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+    return { w, field };
+  }
+
+  test("floats similar unfunded ideas up by how alike they are, and clearing it drops them", async () => {
+    const { w, field } = await write("My nails chip the day after I paint them");
+    await vi.waitFor(() => expect(bodies.hovers.size).toBe(2), { timeout: 2000 });
+    expect(bodies.hovers.get("idea-40")!).toBeLessThan(bodies.hovers.get("idea-41")!);
+    expect(w.text()).toContain("2 unfunded problems look like yours");
+
+    field.value = "";
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+    await vi.waitFor(() => expect([...bodies.hovers.values()]).toEqual([null, null]));
+  });
+
+  test("when the classifier is out, floats the best word matches up without a percentage", async () => {
+    ranking = "lexical";
+    const { w } = await write("My nails chip the day after I paint them");
+    await vi.waitFor(() => expect(bodies.hovers.size).toBe(2), { timeout: 2000 });
+    expect(w.text()).toContain("2 unfunded problems share words with yours");
+    expect(w.find("ul[aria-labelledby=pool-title]").text()).not.toContain("%");
   });
 });
