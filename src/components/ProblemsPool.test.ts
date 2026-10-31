@@ -37,26 +37,47 @@ afterEach(() => {
 
 const ball = (id: string) => wrapper!.find(`[data-pool-ball='${id}']`);
 const tip = () => document.querySelector("#pool-tip");
-const tap = async (id: string) => {
-  ball(id).element.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+const click = async (id: string, detail = 1) => {
+  ball(id).element.dispatchEvent(new MouseEvent("click", { bubbles: true, detail }));
   await wrapper!.vm.$nextTick();
+};
+const point = async (id: string, type: string, pointerType: string) => {
+  ball(id).element.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerType, pointerId: 1 }));
+  await wrapper!.vm.$nextTick();
+};
+const tap = async (id: string) => {
+  await point(id, "pointerdown", "touch");
+  await click(id);
 };
 const press = async (key: string) => {
   dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
   await wrapper!.vm.$nextTick();
 };
 
-test("a tap shows the idea's title and blurb, and a second tap, Escape or a tap elsewhere hides it", async () => {
-  await tap("a");
+test("hovering with a mouse shows an idea's title and blurb, leaving hides them, and a click opens it", async () => {
+  await point("a", "pointerenter", "mouse");
   expect(tip()?.textContent).toContain("Idea a");
   expect(tip()?.textContent).toContain("The problem behind a");
+  expect(tip()?.textContent).toContain("Click to open it");
   expect(ball("a").attributes("aria-describedby")).toBe("pool-tip");
-
-  await tap("a");
+  await point("a", "pointerleave", "mouse");
   expect(tip()).toBeNull();
 
+  await point("b", "pointerenter", "mouse");
+  await point("b", "pointerdown", "mouse");
+  await click("b");
+  expect(wrapper!.emitted("pick")).toEqual([["b"]]);
+  expect(tip()).toBeNull();
+});
+
+test("on touch, the first tap shows the details and a second opens it, and Escape or a tap elsewhere hides them", async () => {
+  await tap("a");
+  expect(tip()?.textContent).toContain("Tap again to open it");
+  expect(wrapper!.emitted("pick")).toBeUndefined();
+  await tap("a");
+  expect(wrapper!.emitted("pick")).toEqual([["a"]]);
+
   await tap("b");
-  expect(tip()?.textContent).toContain("Idea b");
   await press("Escape");
   expect(tip()).toBeNull();
 
@@ -66,11 +87,9 @@ test("a tap shows the idea's title and blurb, and a second tap, Escape or a tap 
   expect(tip()).toBeNull();
 });
 
-test("Enter on a focused idea opens its tooltip rather than closing it", async () => {
-  await tap("a");
-  ball("a").element.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 0 }));
-  await wrapper!.vm.$nextTick();
-  expect(tip()?.textContent).toContain("Idea a");
+test("Enter on an idea opens it", async () => {
+  await click("a", 0);
+  expect(wrapper!.emitted("pick")).toEqual([["a"]]);
 });
 
 test("stays shut while there's nothing in the pool, and opens once ideas arrive", async () => {
@@ -91,8 +110,8 @@ test("click and hold picks an idea up to throw, and the click that lets go of it
   pointer("pointerup", 40);
   expect(held.released).toBe(1);
 
-  await tap("a");
-  expect(tip()).toBeNull();
+  await click("a");
+  expect(wrapper!.emitted("pick")).toBeUndefined();
   await tap("a");
   expect(tip()?.textContent).toContain("Idea a");
 });

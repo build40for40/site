@@ -198,3 +198,22 @@ describe("writing a problem in the join form", () => {
     expect(w.find("ul[aria-labelledby=pool-title]").text()).not.toContain("%");
   });
 });
+
+test("Browse floats its matches up out of the pool, and clicking one opens it in the day box", async () => {
+  document.body.insertAdjacentHTML("beforeend", `<a href="#browse">Browse</a>`);
+  const w = await board();
+  await vi.waitFor(() => expect(bodies.registered).toHaveLength(10));
+  document.querySelector<HTMLAnchorElement>("a[href='#browse']")!.click();
+  await flushPromises();
+  await w.find("#browse-search").setValue("nails chipping");
+  await vi.waitFor(() => expect(bodies.hovers.size).toBe(2), { timeout: 2000 });
+  expect(w.find("#browse").text()).toContain("2 problems float up");
+
+  w.find("[data-pool-ball='idea-41']").element.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+  await flushPromises();
+  expect(w.find("#day-box").text()).toContain("Idea 41");
+
+  w.find("#browse button:not([aria-label])").element.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  await flushPromises();
+  await vi.waitFor(() => expect([...bodies.hovers.values()]).toEqual([null, null]));
+});

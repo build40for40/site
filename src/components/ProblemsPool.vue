@@ -19,7 +19,8 @@ export interface PoolTile {
   raised: number;
 }
 
-const props = defineProps<{ tiles: PoolTile[]; matches?: Match[] | null; ranking?: Ranking }>();
+const props = defineProps<{ tiles: PoolTile[]; matches?: Match[] | null; ranking?: Ranking; quiet?: boolean }>();
+const emit = defineEmits<{ pick: [key: string] }>();
 
 const list = ref<HTMLElement>();
 const elements = new Map<string, HTMLElement>();
@@ -54,7 +55,7 @@ const artwork = computed(() => new Map(props.tiles.map((t) => [t.id, createVisua
 const scored = computed(() => (props.matches ?? []).filter((m) => m.score >= poolConfig.search.minRelevance));
 const percents = computed(() => new Map(scored.value.map((m) => [m.id, Math.round(m.score * 100)])));
 const announcement = computed(() => {
-  if (!props.matches) return "";
+  if (!props.matches || props.quiet) return "";
   const count = scored.value.length;
   if (!count) return "Nothing in the pool looks like yours yet";
   if (props.ranking === "lexical") return `${count} unfunded ${count === 1 ? "problem shares" : "problems share"} words with yours`;
@@ -225,6 +226,9 @@ const blurb = computed(() => {
   return text.length > 180 ? `${text.slice(0, 180).replace(/\s+\S*$/, "")}…` : text;
 });
 let placing = 0;
+// Read when the tooltip opens, since `touch` itself isn't reactive.
+const touchHint = ref(false);
+watch(open, () => (touchHint.value = touch));
 
 function follow() {
   placing = 0;
@@ -250,14 +254,33 @@ watch(open, async (id) => {
 
 const close = () => (open.value = null);
 
-// Keyboard clicks have no detail and only ever open, since focus has already opened the tooltip. The click that ends a
-// drag isn't a tap.
+// A mouse shows an idea's details on hover and opens it in the day box on click. Touch has no hover, so the first tap
+// shows the details and a second opens it. Keyboard focus shows them and Enter opens it. The click that ends a drag
+// isn't a tap.
+let touch = false;
+
+function hovered(id: string, event: PointerEvent) {
+  if (event.pointerType !== "mouse" || press?.holding) return;
+  touch = false;
+  open.value = id;
+}
+
+function unhovered(id: string, event: PointerEvent) {
+  if (event.pointerType === "mouse" && open.value === id && !press?.holding) close();
+}
+
 function clicked(id: string, event: MouseEvent) {
   if (thrown) {
     thrown = false;
     return;
   }
-  open.value = event.detail === 0 || open.value !== id ? id : null;
+  if (touch && event.detail !== 0 && open.value !== id) {
+    open.value = id;
+    return;
+  }
+  close();
+  const key = props.tiles.find((t) => t.id === id)?.key;
+  if (key) emit("pick", key);
 }
 
 // Click and hold picks an idea up, and moving while it's held drags it. Letting go throws it.
@@ -278,6 +301,7 @@ function pickUp() {
 
 function pressed(id: string, event: PointerEvent) {
   thrown = false;
+  touch = event.pointerType !== "mouse";
   if (!controller || event.button !== 0) return;
   (event.currentTarget as Element).setPointerCapture?.(event.pointerId);
   const at = local(event);
@@ -303,7 +327,9 @@ function lifted(event: PointerEvent) {
 
 function focused(id: string, event: FocusEvent) {
   try {
-    if ((event.target as Element).matches(":focus-visible")) open.value = id;
+    if (!(event.target as Element).matches(":focus-visible")) return;
+    touch = false;
+    open.value = id;
   } catch {}
 }
 
@@ -397,6 +423,7 @@ onBeforeUnmount(() => {
       >
         <p class="m-0 text-[15px] leading-snug font-semibold">{{ openTile.title }}</p>
         <p v-if="blurb" class="m-0 mt-1 text-sm leading-snug text-night-panel">{{ blurb }}</p>
+        <p class="m-0 mt-2 font-mono text-[11px] text-night-panel/80">{{ touchHint ? "Tap again to open it" : "Click to open it" }}</p>
       </div>
     </section>
 
@@ -428,6 +455,8 @@ onBeforeUnmount(() => {
           class="absolute inset-0 cursor-pointer overflow-hidden rounded-full border-0 bg-night-panel p-0 select-none after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:bg-linear-135 after:from-night-text/60 after:via-night-text/5 after:via-45% after:to-transparent after:ring-1 after:ring-night-text/30 after:ring-inset hover:brightness-115 active:cursor-grabbing [&>svg]:size-full motion-safe:hover:animate-wiggle motion-safe:aria-expanded:animate-pop focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime aria-expanded:outline-2 aria-expanded:outline-offset-2 aria-expanded:outline-night-text"
           :class="physical && 'touch-none'"
           @click="clicked(t.id, $event)"
+          @pointerenter="hovered(t.id, $event)"
+          @pointerleave="unhovered(t.id, $event)"
           @pointerdown="pressed(t.id, $event)"
           @pointermove="moved"
           @pointerup="lifted"
@@ -437,7 +466,7 @@ onBeforeUnmount(() => {
           v-html="artwork.get(t.id)"
         ></button>
         <span
-          v-if="physical && ranking !== 'lexical' && percents.has(t.id)"
+          v-if="physical && ranking === 'classifier' && percents.has(t.id)"
           aria-hidden="true"
           class="pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 rounded-full bg-night-text px-1.5 font-mono text-[10px] leading-4 font-medium text-night opacity-0 transition-opacity duration-300 group-data-arrived:animate-pop group-data-arrived:opacity-100"
           >{{ percents.get(t.id) }}%</span

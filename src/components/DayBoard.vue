@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
-import BrowsePanel from "./BrowsePanel.vue";
+import BrowsePanel, { type Floated } from "./BrowsePanel.vue";
 import DayBox from "./DayBox.vue";
 import DayTile from "./DayTile.vue";
 import ProblemsPool, { type PoolTile } from "./ProblemsPool.vue";
@@ -158,7 +158,8 @@ onBeforeUnmount(() => {
 
 // The Browse link sits in the page's static markup, so the board picks up its clicks and keeps its state in sync.
 const browsing = ref(false);
-const browsable = computed(() => [...board.value.days.filter((d) => d.idea), ...pool.value]);
+const browsed = ref<Floated | null>(null);
+const poolIdeas = computed(() => pool.value.map((p) => p.idea!));
 const browseLinks = () => document.querySelectorAll<HTMLAnchorElement>('a[href="#browse"]');
 
 function openBrowse() {
@@ -166,11 +167,16 @@ function openBrowse() {
   browsing.value = true;
   browseLinks().forEach((link) => link.setAttribute("aria-expanded", "true"));
   window.posthog?.capture("browse_opened");
-  nextTick(() => document.getElementById("browse")?.scrollIntoView({ block: "nearest" }));
+  // Results float up out of the pool just below the panel, so bring both into view.
+  nextTick(() => {
+    const floor = document.getElementById("problems");
+    (floor?.getClientRects().length ? floor : document.getElementById("browse"))?.scrollIntoView({ block: "end" });
+  });
 }
 
 function closeBrowse() {
   browsing.value = false;
+  browsed.value = null;
   browseLinks().forEach((link) => link.setAttribute("aria-expanded", "false"));
   browseLinks()[0]?.focus({ preventScroll: true });
 }
@@ -333,6 +339,8 @@ const poolTiles = computed<PoolTile[]>(() =>
 // how alike two problems are. When it's down, word matches only rank, so just the best few float up, without a
 // percentage.
 const similar = ref<{ ranking: Ranking; matches: Match[] } | null>(null);
+// While someone's writing a problem, its matches float up rather than Browse's.
+const lifted = computed(() => similar.value ?? browsed.value);
 const search = createSearch({ ideas: () => poolTiles.value });
 let typing: ReturnType<typeof setTimeout> | undefined;
 
@@ -390,7 +398,6 @@ const tileSub = (e: Entry) => {
         </div>
       </div>
       <div class="flex flex-col gap-4">
-        <BrowsePanel v-if="browsing" class="in-data-joining:hidden" :entries="browsable" :selected="selected.key" @select="select" @close="closeBrowse" />
         <div class="hidden in-data-joining:block"><slot name="join" /></div>
         <DayBox
           :key="selected.key"
@@ -436,10 +443,19 @@ const tileSub = (e: Entry) => {
           />
         </ul>
 
+        <BrowsePanel v-if="browsing" class="in-data-joining:hidden" :ideas="poolIdeas" @float="browsed = $event" @close="closeBrowse" />
+
       </div>
     </div>
 
-    <ProblemsPool ref="problems" :tiles="poolTiles" :matches="similar?.matches ?? null" :ranking="similar?.ranking" />
+    <ProblemsPool
+      ref="problems"
+      :tiles="poolTiles"
+      :matches="lifted?.matches ?? null"
+      :ranking="lifted?.ranking"
+      :quiet="!similar && !!browsed"
+      @pick="select"
+    />
 
     <div
       v-if="evicted"

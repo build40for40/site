@@ -1,16 +1,12 @@
 // @vitest-environment happy-dom
 import { flushPromises, mount, type VueWrapper } from "@vue/test-utils";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import BrowsePanel from "./BrowsePanel.vue";
-import type { Entry } from "../data/days";
+import BrowsePanel, { type Floated } from "./BrowsePanel.vue";
+import type { Idea } from "../data/days";
 
-const idea = (id: string, title: string, amount = 0) => ({ id, title, problem: title, sponsors: amount ? [{ name: "Anonymous", amount }] : [] });
-const entries: Entry[] = [
-  { key: "day-1", day: 1, status: "shipped", idea: idea("a", "Splitting rent fairly", 110) },
-  { key: "day-2", day: 2, status: "queued", idea: idea("b", "Dog walking swaps", 40) },
-  { key: "pool-c", status: "pool", idea: idea("c", "Pet medication reminders") },
-  { key: "pool-d", status: "pool", idea: idea("d", "Noisy group chats") },
-];
+const idea = (id: string, title: string, categories?: string[]): Idea => ({ id, title, problem: title, sponsors: [], categories });
+const unsorted = [idea("a", "Splitting rent fairly"), idea("b", "Dog walking swaps"), idea("c", "Pet medication reminders"), idea("d", "Noisy group chats")];
+const sorted = unsorted.map((i, n) => ({ ...i, categories: [["finance"], ["community", "home"], ["home"], ["other"]][n] }));
 
 let wrapper: VueWrapper | undefined;
 let ranking = "classifier";
@@ -25,62 +21,56 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const titles = () => wrapper!.findAll("ul button").map((b) => b.text());
-const chip = (label: string) => wrapper!.findAll("[role=group] button").find((b) => b.text().startsWith(label))!;
+const floated = () => wrapper!.emitted<[Floated | null]>("float")?.at(-1)?.[0];
+const ids = () => floated()?.matches.map((m) => m.id);
+const topics = () => wrapper!.findAll("[aria-label=Topic] button");
 
-test("the chips show each kind of idea with its count, and hide kinds with none", async () => {
-  wrapper = mount(BrowsePanel, { props: { entries: entries.filter((e) => e.status !== "shipped"), selected: "day-2" } });
-  expect(wrapper.findAll("[role=group] button").map((b) => b.text())).toEqual(["Everything 3", "Coming up 1", "Simmering 2", "Needs a sponsor 2"]);
-  await chip("Simmering").trigger("click");
-  expect(titles().map((t) => t.match(/Pet|Noisy/)![0])).toEqual(["Pet", "Noisy"]);
-});
-
-test("topic chips appear once problems are sorted, and narrow the list and the other chips' counts", async () => {
-  wrapper = mount(BrowsePanel, { props: { entries, selected: "day-1" } });
+test("topic chips appear once problems are sorted, and picking one floats all of its problems up", async () => {
+  wrapper = mount(BrowsePanel, { props: { ideas: unsorted } });
   expect(wrapper.find("[aria-label=Topic]").exists()).toBe(false);
 
-  const sorted = entries.map((e, i) => ({ ...e, idea: { ...e.idea!, categories: [["finance"], ["community", "home"], ["home"], ["other"]][i] } }));
-  await wrapper.setProps({ entries: sorted });
-  const topics = () => wrapper!.findAll("[aria-label=Topic] button");
+  await wrapper.setProps({ ideas: sorted });
   expect(topics().map((b) => b.text())).toEqual(["Finance 1", "Home 2", "Friends & community 1", "Other 1"]);
+  await topics()[1].trigger("click");
+  expect(floated()).toEqual({ matches: [{ id: "b", score: 1 }, { id: "c", score: 1 }] });
+  expect(wrapper.text()).toContain("2 problems float up");
 
   await topics()[1].trigger("click");
-  expect(titles().map((t) => t.match(/Dog|Pet/)![0])).toEqual(["Dog", "Pet"]);
-  expect(chip("Simmering").text()).toBe("Simmering 1");
-  await topics()[1].trigger("click");
-  expect(titles()).toHaveLength(4);
+  expect(floated()).toBeNull();
 });
 
-test("searching shows word matches straight away, then the classifier's ranking with how well each one fits", async () => {
-  wrapper = mount(BrowsePanel, { props: { entries, selected: "day-1" } });
+test("searching floats word matches straight away, then the classifier's matches by how well they fit", async () => {
+  wrapper = mount(BrowsePanel, { props: { ideas: sorted } });
   await wrapper.find("input").setValue("dog walks");
-  expect(titles()).toHaveLength(1);
-  expect(titles()[0]).toContain("Dog walking swaps");
+  expect(floated()).toEqual({ ranking: "lexical", matches: [{ id: "b", score: 1 }] });
 
-  await vi.waitFor(() => expect(titles()).toHaveLength(2), { timeout: 2000 });
-  expect(titles()[0]).toContain("Pet medication reminders");
-  expect(titles()[0]).toContain("90%");
+  await vi.waitFor(() => expect(floated()?.ranking).toBe("classifier"), { timeout: 2000 });
+  expect(ids()).toEqual(["c", "b"]);
 });
 
-test("a search of only filler words shows everything", async () => {
-  wrapper = mount(BrowsePanel, { props: { entries, selected: "day-1" } });
-  await wrapper.find("input").setValue("how do I");
-  expect(titles()).toHaveLength(4);
-});
-
-test("the lexical fallback keeps every match and shows no percentages", async () => {
+test("the lexical fallback floats the stronger word matches without the classifier's ranking", async () => {
   ranking = "lexical";
-  wrapper = mount(BrowsePanel, { props: { entries, selected: "day-1" } });
+  wrapper = mount(BrowsePanel, { props: { ideas: sorted } });
   await wrapper.find("input").setValue("dog walks");
-  await vi.waitFor(() => expect(titles()).toHaveLength(3), { timeout: 2000 });
-  expect(titles().join()).not.toContain("%");
+  await vi.waitFor(() => expect(ids()).toEqual(["c", "b"]), { timeout: 2000 });
+  expect(floated()?.ranking).toBe("lexical");
 });
 
-test("picking a problem selects it, and Escape clears the search before closing", async () => {
-  wrapper = mount(BrowsePanel, { props: { entries, selected: "day-1" } });
-  await wrapper.findAll("ul button")[2].trigger("click");
-  expect(wrapper.emitted("select")).toEqual([["pool-c"]]);
+test("a topic narrows a search, and a search of only filler words floats nothing", async () => {
+  wrapper = mount(BrowsePanel, { props: { ideas: sorted } });
+  await wrapper.find("input").setValue("dog walks");
+  await vi.waitFor(() => expect(floated()?.ranking).toBe("classifier"), { timeout: 2000 });
+  await topics()[0].trigger("click");
+  expect(floated()?.matches).toEqual([]);
+  expect(wrapper.text()).toContain("Nothing in the pool like that yet");
 
+  await topics()[0].trigger("click");
+  await wrapper.find("input").setValue("how do I");
+  expect(floated()).toBeNull();
+});
+
+test("Escape clears the search before closing", async () => {
+  wrapper = mount(BrowsePanel, { props: { ideas: sorted } });
   await wrapper.find("input").setValue("rent");
   await wrapper.find("input").trigger("keydown", { key: "Escape" });
   expect((wrapper.find("input").element as HTMLInputElement).value).toBe("");
