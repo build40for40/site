@@ -171,7 +171,7 @@ onBeforeUnmount(() => {
 });
 
 // The Browse link sits in the page's static markup, so the board picks up its clicks and keeps its state in sync.
-// Browsing folds the day box away, throws the 40 days out of the grid into the pool, and leaves the pool filling the
+// Browsing folds the day box away, throws the days with a problem out of the grid into the pool, and leaves the pool filling the
 // screen under the title. Phones have no grid, so the days fly out of the progress bar and it folds away too. Closing
 // puts the days back in their slots, then unfolds the day box.
 const browsing = ref(false);
@@ -185,8 +185,8 @@ const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const gridless = () => matchMedia("(width < 40rem)").matches;
 let moving = false;
 
-// Days still up for grabs have nothing to show, so they stay out of the pool.
-const thrown = computed(() => board.value.days.filter((d) => d.status !== "open"));
+// Open and guest days have no problem to search, so they stay out of the pool.
+const thrown = computed(() => board.value.days.filter((d) => d.idea));
 const dayIdeas = computed(() => board.value.days.flatMap((d) => (d.idea ? [d.idea] : [])));
 const browsable = computed(() => [...pool.value.map((p) => p.idea!), ...dayIdeas.value]);
 const dayOf = computed(() => new Map(board.value.days.flatMap((d) => (d.idea ? [[d.idea.id, d.key] as const] : []))));
@@ -456,9 +456,9 @@ const dayTiles = computed<PoolTile[]>(() =>
       id: d.key,
       day: d.day,
       status: d.status,
-      title: d.status === "guest" || !d.idea ? label : d.idea.title,
-      problem: d.status === "guest" ? "" : (d.idea?.problem ?? ""),
-      kicker: [`Day ${pad(d.day!)}`, d.date, d.idea && d.status !== "guest" && label].filter(Boolean).join(" · "),
+      title: d.idea!.title,
+      problem: d.idea!.problem,
+      kicker: [`Day ${pad(d.day!)}`, d.date, label].join(" · "),
       label: tileLabel(d),
       raised: 0,
     };
@@ -497,7 +497,7 @@ const tileSub = (e: Entry) => {
                 tones[d.status].dot,
                 d.status === 'live' && 'motion-safe:animate-pulse',
                 incoming === d.key && 'invisible',
-                browsing && d.status !== 'open' && 'max-sm:invisible',
+                browsing && d.idea && 'max-sm:invisible',
                 landed === d.key && 'animate-pop',
               ]"
             ></span>

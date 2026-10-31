@@ -221,12 +221,13 @@ describe("writing a problem in the join form", () => {
   });
 });
 
-test("Browse throws the days into the pool, floats matching problems and days, and picking one puts them back", async () => {
+test("Browse throws the days with problems into the pool, floats matching problems and days, and picking one puts them back", async () => {
   document.body.insertAdjacentHTML("beforeend", `<a href="#browse">Browse</a>`);
   const w = await board();
   await vi.waitFor(() => expect(bodies.registered).toHaveLength(10));
   document.querySelector<HTMLAnchorElement>("a[href='#browse']")!.click();
-  await vi.waitFor(() => expect(bodies.dropped.filter((id) => id.startsWith("day-"))).toHaveLength(40), { timeout: 2000 });
+  await vi.waitFor(() => expect(bodies.dropped.filter((id) => id.startsWith("day-"))).toHaveLength(34), { timeout: 2000 });
+  expect(bodies.dropped).not.toContain("day-10");
   expect(w.find("ul[aria-label='The 40 days']").isVisible()).toBe(false);
 
   await w.find("#browse-search").setValue("nails chipping");
@@ -237,6 +238,6 @@ test("Browse throws the days into the pool, floats matching problems and days, a
   w.find("[data-pool-ball='idea-41']").element.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
   await vi.waitFor(() => expect(w.find("#browse").exists()).toBe(false));
   await vi.waitFor(() => expect(w.find("#day-box").text()).toContain("Idea 41"));
-  expect(bodies.unregistered.filter((id) => id.startsWith("day-"))).toHaveLength(40);
+  expect(bodies.unregistered.filter((id) => id.startsWith("day-"))).toHaveLength(34);
   expect([...bodies.hovers.values()].every((y) => y === null)).toBe(true);
 });
