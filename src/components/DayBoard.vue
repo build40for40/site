@@ -419,6 +419,66 @@ function showHint(target: EventTarget | null) {
   hint.value = { key: day.key, label: tileLabel(day), left, top: slot.offsetTop, shift: (left / slot.parentElement!.clientWidth) * 100 };
 }
 
+// A dock-style magnifier for the bar when it's one row: days near the mouse widen and the rest give up the room.
+const LENS_RADIUS = 4;
+const lens = ref<{ weights: number[]; grow: number; unit: number; gap: number; width: number } | null>(null);
+let lensFrame = 0;
+
+function lensWeights(at: number, count: number, grow: number) {
+  return Array.from({ length: count }, (_, i) => {
+    const distance = Math.abs(i + 0.5 - at);
+    return 1 + (distance < LENS_RADIUS ? (grow * (1 + Math.cos((Math.PI * distance) / LENS_RADIUS))) / 2 : 0);
+  });
+}
+
+// Finds where to centre the bump so the day under the mouse stays under it once its neighbours have moved.
+function magnify(event: PointerEvent) {
+  if (event.pointerType !== "mouse" || still() || !matchMedia("(width >= 48rem)").matches) return;
+  const bar = event.currentTarget as HTMLElement;
+  const cursor = event.clientX - bar.getBoundingClientRect().left;
+  cancelAnimationFrame(lensFrame);
+  lensFrame = requestAnimationFrame(() => {
+    const count = board.value.days.length;
+    const grow = gridless.value ? 2 : 4;
+    const gap = parseFloat(getComputedStyle(bar).columnGap) || 0;
+    const width = bar.clientWidth;
+    const layout = (at: number) => {
+      const weights = lensWeights(at, count, grow);
+      return { weights, unit: (width - gap * (count - 1)) / weights.reduce((a, b) => a + b) };
+    };
+    const xOf = (at: number) => {
+      const { weights, unit } = layout(at);
+      const k = Math.min(Math.floor(at), count - 1);
+      return (weights.slice(0, k).reduce((a, b) => a + b, 0) + (at - k) * weights[k]) * unit + k * gap;
+    };
+    let [lo, hi] = [0, count];
+    for (let i = 0; i < 20; i++) {
+      const mid = (lo + hi) / 2;
+      if (xOf(mid) < cursor) lo = mid;
+      else hi = mid;
+    }
+    lens.value = { ...layout(lo), grow, gap, width };
+  });
+}
+
+function leaveBar(event: PointerEvent) {
+  if (event.pointerType !== "mouse") return;
+  cancelAnimationFrame(lensFrame);
+  lens.value = null;
+  hint.value = null;
+}
+
+const lensed = (i: number) => (lens.value ? (lens.value.weights[i] - 1) / lens.value.grow : 0);
+
+const hintSpot = computed(() => {
+  if (!hint.value) return null;
+  const i = board.value.days.findIndex((d) => d.key === hint.value!.key);
+  if (!lens.value || i < 0) return hint.value;
+  const { weights, unit, gap, width } = lens.value;
+  const left = (weights.slice(0, i).reduce((a, b) => a + b, 0) + weights[i] / 2) * unit + i * gap;
+  return { ...hint.value, left, shift: (left / width) * 100 };
+});
+
 const poolTiles = computed<PoolTile[]>(() =>
   pool.value.map((p) => ({
     key: p.key,
@@ -504,21 +564,22 @@ const tileSub = (e: Entry) => {
             role="group"
             aria-label="The 40 days"
             :aria-hidden="!gridless"
-            class="relative grid grid-cols-20 gap-[3px] md:grid-cols-40 lg:flex"
+            class="relative grid grid-cols-20 gap-[3px] md:flex md:h-5 md:items-center lg:h-2.5"
             @pointerover="showHint($event.target)"
-            @pointerleave="$event.pointerType === 'mouse' && (hint = null)"
+            @pointermove="magnify"
+            @pointerleave="leaveBar"
             @focusin="showHint($event.target)"
             @focusout="hint = null"
           >
             <button
-              v-for="d in board.days"
+              v-for="(d, i) in board.days"
               :key="d.key"
               type="button"
               :data-day-slot="d.key"
               :aria-label="tileLabel(d)"
               :aria-pressed="d.key === selected.key"
               :tabindex="gridless ? undefined : -1"
-              class="grid h-5 cursor-pointer place-items-center rounded-xs p-0 font-mono text-[9px] leading-none font-medium focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-lime lg:h-2.5 lg:flex-1"
+              class="grid h-5 cursor-pointer place-items-center rounded-xs p-0 font-mono text-[9px] leading-none font-medium ease-out focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-lime md:h-full md:min-w-0 md:flex-1 motion-safe:md:transition-[flex-grow,height] motion-safe:md:duration-100"
               :class="[
                 tones[d.status].dot,
                 d.idea || d.status === 'guest' ? 'text-night' : 'text-night-muted',
@@ -529,13 +590,14 @@ const tileSub = (e: Entry) => {
                 hint?.key === d.key && 'max-lg:ring-2 max-lg:ring-night-text',
                 d.key === selected.key && 'max-lg:outline-2 max-lg:outline-offset-1 max-lg:outline-brand-lime',
               ]"
+              :style="lens && { flexGrow: lens.weights[i], height: `calc(100% + ${lensed(i) * 10}px)` }"
               @click="select(d.key)"
-            ><span aria-hidden="true" class="lg:hidden">{{ pad(d.day!) }}</span></button>
+            ><span aria-hidden="true" :class="lensed(i) < 0.5 && 'lg:hidden'">{{ pad(d.day!) }}</span></button>
             <span
-              v-if="hint"
+              v-if="hintSpot"
               class="pointer-events-none absolute z-10 w-max max-w-[min(16rem,100%)] rounded bg-night-text px-2 py-1 font-mono text-[11px] leading-snug text-night lg:hidden"
-              :style="{ left: `${hint.left}px`, top: `${hint.top - 6}px`, translate: `-${hint.shift}% -100%` }"
-            >{{ hint.label }}</span>
+              :style="{ left: `${hintSpot.left}px`, top: `${hintSpot.top - (lens ? 11 : 6)}px`, translate: `-${hintSpot.shift}% -100%` }"
+            >{{ hintSpot.label }}</span>
           </div>
           <ul class="m-0 flex list-none flex-wrap gap-x-4 gap-y-1.5 p-0 font-mono text-[11px] text-night-muted">
             <li v-for="item in legend" :key="item.label" class="flex items-center gap-1.5"><span class="size-[7px] rounded-full" :class="item.dot"></span>{{ item.label }}</li>
