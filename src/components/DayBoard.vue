@@ -159,13 +159,17 @@ onBeforeUnmount(() => {
 
 // The Browse link sits in the page's static markup, so the board picks up its clicks and keeps its state in sync.
 // Browsing folds the day box away, throws the 40 days out of the grid into the pool, and leaves the pool filling the
-// screen under the title. Closing puts the days back in their slots, then unfolds the day box.
+// screen under the title. Phones have no grid, so the days fly out of the progress bar and it folds away too. Closing
+// puts the days back in their slots, then unfolds the day box.
 const browsing = ref(false);
 const folded = ref(false);
+const tucked = ref(false);
 const hero = ref<HTMLElement>();
+const counter = ref<HTMLElement>();
 const browsed = ref<Floated | null>(null);
 const browseLinks = () => document.querySelectorAll<HTMLAnchorElement>('a[href="#browse"]');
 const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+const gridless = () => matchMedia("(width < 40rem)").matches;
 let moving = false;
 
 // Days still up for grabs have nothing to show, so they stay out of the pool.
@@ -190,14 +194,26 @@ async function openBrowse() {
   });
   pieces.forEach((p) => problems.value?.hold(p.id));
   browsing.value = true;
+  const burst = problems.value?.burst(pieces);
+  if (gridless()) await tuck(false);
   moving = false;
-  await problems.value?.burst(pieces);
+  await burst;
+}
+
+async function tuck(open: boolean) {
+  if (open) {
+    tucked.value = false;
+    await nextTick();
+  }
+  if (counter.value && !still()) await fold(counter.value, open);
+  if (!open) tucked.value = true;
 }
 
 // Picking something while browsing closes it and opens that in the day box.
 async function closeBrowse(key?: string) {
   if (!browsing.value || moving) return;
   moving = true;
+  if (tucked.value) await tuck(true);
   const from = problems.value?.boxes(thrown.value.map((d) => d.key)) ?? new Map();
   browsing.value = false;
   browsed.value = null;
@@ -448,7 +464,7 @@ const tileSub = (e: Entry) => {
           <slot name="title" />
           <slot name="links" />
         </div>
-        <div aria-label="Progress" class="flex w-full min-w-0 flex-col gap-2 md:w-auto md:max-w-[40rem] md:flex-1">
+        <div v-show="!tucked" ref="counter" aria-label="Progress" class="flex w-full min-w-0 flex-col gap-2 md:w-auto md:max-w-[40rem] md:flex-1">
           <div class="flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-xs font-medium">
             <span>{{ String(shippedCount).padStart(2, "0") }} / 40 SHIPPED</span>
             <span class="text-night-muted">{{ upcoming }} upcoming<template v-if="pool.length"> · {{ pool.length }} {{ pool.length === 1 ? "problem" : "problems" }} simmering</template></span>
