@@ -100,6 +100,8 @@ const legend = [
 let timer: ReturnType<typeof setInterval> | undefined;
 const loader = new AbortController();
 onMounted(() => {
+  gridless.value = gridQuery().matches;
+  gridQuery().addEventListener("change", onGridChange);
   const params = new URLSearchParams(location.search);
   const override = Date.parse(params.get("now") ?? "");
   if (import.meta.env.DEV) {
@@ -159,6 +161,7 @@ function openShared() {
   else addEventListener("load", () => setTimeout(scroll), { once: true });
 }
 onBeforeUnmount(() => {
+  gridQuery().removeEventListener("change", onGridChange);
   clearInterval(timer);
   loader.abort();
   removeEventListener(SENT, arrive);
@@ -178,10 +181,12 @@ const folded = ref(false);
 const tucked = ref(false);
 const hero = ref<HTMLElement>();
 const counter = ref<HTMLElement>();
+const gridless = ref(false);
+const gridQuery = () => matchMedia("(width < 64rem)");
+const onGridChange = (e: MediaQueryListEvent) => (gridless.value = e.matches);
 const browsed = ref<Floated | null>(null);
 const browseLinks = () => document.querySelectorAll<HTMLAnchorElement>('a[href="#browse"]');
 const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
-const gridless = () => matchMedia("(width < 64rem)").matches;
 let moving = false;
 
 // Open and guest days have no problem to search, so they stay out of the pool.
@@ -207,7 +212,7 @@ async function openBrowse() {
   pieces.forEach((p) => problems.value?.hold(p.id));
   browsing.value = true;
   const burst = problems.value?.burst(pieces);
-  if (gridless()) await tuck(false);
+  if (gridless.value) await tuck(false);
   moving = false;
   await burst;
 }
@@ -496,19 +501,24 @@ const tileSub = (e: Entry) => {
             <span class="text-night-muted">{{ upcoming }} upcoming<template v-if="pool.length"> · {{ pool.length }} {{ pool.length === 1 ? "problem" : "problems" }} simmering</template></span>
           </div>
           <div
+            role="group"
+            aria-label="The 40 days"
+            :aria-hidden="!gridless"
             class="relative grid grid-cols-20 gap-[3px] md:grid-cols-40 lg:flex"
-            aria-hidden="true"
             @pointerover="showHint($event.target)"
             @pointerleave="$event.pointerType === 'mouse' && (hint = null)"
             @focusin="showHint($event.target)"
             @focusout="hint = null"
           >
-            <span
+            <button
               v-for="d in board.days"
               :key="d.key"
+              type="button"
               :data-day-slot="d.key"
-              tabindex="-1"
-              class="grid h-5 place-items-center rounded-xs font-mono text-[9px] leading-none font-medium outline-none lg:h-2.5 lg:flex-1"
+              :aria-label="tileLabel(d)"
+              :aria-pressed="d.key === selected.key"
+              :tabindex="gridless ? undefined : -1"
+              class="grid h-5 cursor-pointer place-items-center rounded-xs p-0 font-mono text-[9px] leading-none font-medium focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-lime lg:h-2.5 lg:flex-1"
               :class="[
                 tones[d.status].dot,
                 d.idea || d.status === 'guest' ? 'text-night' : 'text-night-muted',
@@ -517,8 +527,10 @@ const tileSub = (e: Entry) => {
                 browsing && d.idea && 'max-lg:invisible',
                 landed === d.key && 'animate-pop',
                 hint?.key === d.key && 'max-lg:ring-2 max-lg:ring-night-text',
+                d.key === selected.key && 'max-lg:outline-2 max-lg:outline-offset-1 max-lg:outline-brand-lime',
               ]"
-            ><span class="lg:hidden">{{ pad(d.day!) }}</span></span>
+              @click="select(d.key)"
+            ><span aria-hidden="true" class="lg:hidden">{{ pad(d.day!) }}</span></button>
             <span
               v-if="hint"
               class="pointer-events-none absolute z-10 w-max max-w-[min(16rem,100%)] rounded bg-night-text px-2 py-1 font-mono text-[11px] leading-snug text-night lg:hidden"
