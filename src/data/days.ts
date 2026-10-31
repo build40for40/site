@@ -176,7 +176,7 @@ export const sponsorCount = (sponsors: Sponsor[]) =>
 
 export const listOf = (names: string[]) => (names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : names[0]);
 
-export type EntryStatus = DayStatus | "pool";
+export type EntryStatus = DayStatus | "pool" | "us";
 
 export interface Entry {
   key: string;
@@ -190,7 +190,7 @@ export interface Entry {
 
 export function statusLabel(entry: Entry, today: number) {
   if (entry.status === "queued") return entry.day === today ? "Up first" : raised(entry.idea!) ? "In the queue" : "Needs a sponsor";
-  return { shipped: "Shipped", live: "Live now", guest: "Guest day", open: "Up for grabs", pool: "In the pool" }[entry.status];
+  return { shipped: "Shipped", live: "Live now", guest: "Guest day", open: "Up for grabs", pool: "In the pool", us: "Sponsor us" }[entry.status];
 }
 
 export const tones: Record<EntryStatus, { dot: string; text: string; border: string; ring: string }> = {
@@ -200,4 +200,5 @@ export const tones: Record<EntryStatus, { dot: string; text: string; border: str
   guest: { dot: "bg-guest", text: "text-guest", border: "border-guest", ring: "ring-guest" },
   open: { dot: "ring-1 ring-night-edge ring-inset", text: "text-night-sub", border: "border-night-edge", ring: "ring-night-edge" },
   pool: { dot: "ring-1 ring-queued ring-inset", text: "text-night-sub", border: "border-night-edge", ring: "ring-night-edge" },
+  us: { dot: "bg-pop-blue", text: "text-pop-cyan", border: "border-pop-blue", ring: "ring-pop-blue" },
 };

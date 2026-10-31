@@ -17,7 +17,7 @@ import {
   type Entry,
   type ShippedIdea,
 } from "../data/days";
-import { links, money } from "../data/site";
+import { links, money, sponsorUs } from "../data/site";
 
 const props = defineProps<{
   entry: Entry;
@@ -60,6 +60,7 @@ function toggleSponsoring() {
 }
 const where = computed(() => {
   const { date, status } = props.entry;
+  if (status === "us") return sponsorUs.team;
   if (status === "pool") return "No day yet";
   const waiting = (status === "queued" || status === "guest") && start.value > props.now;
   return `${date}${waiting ? ` · starts in ${countdown(start.value - props.now)}` : ""}`;
@@ -125,6 +126,8 @@ const share = computed(() => {
       return { label: "Share the app", text: `“${title}” got built live in ${shippedIdea.value.buildTime} on 40 for 40. Try it.`, url };
     case "guest":
       return { label: "Share the guest day", text: `Secret guest day on 40 for 40, ${props.entry.date}. Who could it be?`, url };
+    case "us":
+      return { label: sponsorUs.share, text: "40 apps in 40 days, built live from London. Sponsor them so they can get real jobs.", url };
     default:
       return null;
   }
@@ -132,9 +135,10 @@ const share = computed(() => {
 
 const thanks = computed(() => {
   const { status } = props.entry;
-  const what = status === "guest" ? "a secret guest day" : `“${idea.value?.title}”`;
+  const what = { guest: "a secret guest day", us: "40 for 40" }[status as "guest" | "us"] ?? `“${idea.value?.title}”`;
   const line =
-    { guest: "Share it and get people guessing.", shipped: "Share it so more people try it." }[status as "guest" | "shipped"] ?? "Share it to get it over the line.";
+    { guest: "Share it and get people guessing.", shipped: "Share it so more people try it.", us: `${sponsorUs.share}.` }[status as "guest" | "shipped" | "us"] ??
+    "Share it to get it over the line.";
   const ask = status === "queued" || status === "pool" ? " Help get it built." : "";
   return { line, text: `I just backed ${what} on 40 for 40.${ask}` };
 });
@@ -242,6 +246,14 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
             <p class="m-0 font-mono text-xs text-night-muted">Revealed live at 9:00 UK on {{ entry.date }}</p>
           </template>
 
+          <template v-else-if="entry.status === 'us'">
+            <video v-if="sponsorUs.video" :src="sponsorUs.video" controls playsinline class="absolute inset-0 size-full bg-player object-cover"></video>
+            <template v-else>
+              <span :class="kicker">Video coming soon</span>
+              <p class="m-0 font-mono text-xs text-night-muted">We’re recording it. Probably in one take.</p>
+            </template>
+          </template>
+
           <template v-else-if="entry.status === 'pool'">
             <span :class="kicker">No day, no stream yet</span>
             <p class="m-0 font-mono text-xs text-night-muted">Sponsor it onto the board and we build it live.</p>
@@ -340,6 +352,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
           <p class="m-0 text-[15px] leading-snug text-night-sub text-pretty">A special guest brings their own problem and builds it with us. It stays a secret until 9:00 on {{ entry.date }}.</p>
           <p class="m-0 text-[15px] leading-snug text-pretty">Same rules as every day: 4 hours 40 minutes on the clock, live on Twitch.</p>
         </template>
+        <p v-if="entry.status === 'us'" class="m-0 text-[15px] leading-snug text-pretty">{{ sponsorUs.pitch }}</p>
         <ShareButton v-if="share && !liveStyle" class="max-lg:hidden" v-bind="share" />
         <p v-if="line" class="m-0 text-[15px] leading-snug text-pretty">{{ line }}</p>
         <p v-if="upNext" class="m-0 text-[15px] leading-snug text-pretty">Up next on Day {{ upNext.day }}: {{ upNext.title }}.</p>
@@ -364,7 +377,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
 
           <template v-else>
             <div class="relative flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-              <div :class="kicker">{{ entry.status === "guest" ? "Sponsor this day" : "Sponsor this idea" }}</div>
+              <div :class="kicker">{{ { guest: "Sponsor this day", us: "Sponsor us" }[entry.status as "guest" | "us"] ?? "Sponsor this idea" }}</div>
               <button
                 v-if="rows.length"
                 type="button"

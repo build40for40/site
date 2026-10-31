@@ -192,7 +192,8 @@ async function startCheckout(request: Request, env: Env) {
   if (!input || typeof input.amount !== "number" || !SPONSOR_CENTS.includes(input.amount)) return text("That amount isn’t one of the options.", 400);
   const day = isGuestDay(input.day) ? input.day : undefined;
   const problemId = typeof input.problem === "string" ? input.problem : undefined;
-  if (Boolean(day) === Boolean(problemId)) return text("Sponsor a problem or a guest day.", 400);
+  const whole = input.day === undefined && input.problem === undefined;
+  if (!whole && Boolean(day) === Boolean(problemId)) return text("Sponsor a problem, a guest day or the whole thing.", 400);
   if (problemId && !(await env.DB.prepare("SELECT 1 FROM problems WHERE id = ?1 AND awaiting_payment = 0").bind(problemId).first())) {
     return text("That problem isn’t up for sponsoring.", 404);
   }

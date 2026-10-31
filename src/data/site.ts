@@ -20,6 +20,16 @@ export const involvement = [
   { value: "guest", label: "Be a guest", note: "guest_note", prompt: "Why do you want to be a guest?" },
 ] as const;
 
+// The disco ball in the pool opens this in the day box. The video goes in once it's recorded.
+export const sponsorUs = {
+  title: "40 for 40",
+  tagline: "We’re making building fun again",
+  pitch: "Sponsor us so Lawrence can feed his dog, Ben can keep spending tokens and Samira can get massages.",
+  team: "Lawrence, Samira and Ben",
+  share: "Share it, help us get real jobs",
+  video: "",
+};
+
 export const companySponsors = [{ name: "Superthread", url: "https://superthread.com", logo: "/sponsors/superthread.svg", width: 320, height: 64 }];
 
 export const backings = ["share", "sponsor"] as const;

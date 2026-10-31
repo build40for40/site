@@ -22,6 +22,7 @@ export interface PoolTile {
   day?: number;
   status?: EntryStatus;
   kicker?: string;
+  disco?: boolean;
 }
 
 const props = defineProps<{ tiles: PoolTile[]; matches?: Match[] | null; ranking?: Ranking; quiet?: boolean; tall?: boolean }>();
@@ -55,7 +56,22 @@ const bubbles = Array.from({ length: 9 }, (_, i) => ({
   "--bubble-sway": `${i % 2 ? -8 : 8}px`,
 }));
 
-const artwork = computed(() => new Map(props.tiles.flatMap((t) => (t.day ? [] : [[t.id, createVisualIdentity(t).svg] as const]))));
+const artwork = computed(() => new Map(props.tiles.flatMap((t) => (t.day || t.disco ? [] : [[t.id, createVisualIdentity(t).svg] as const]))));
+
+// Mirror tiles, then shading so it reads as a sphere. The tiles spin by sliding their backgrounds along.
+const mirrors = [
+  "bg-[repeating-linear-gradient(90deg,var(--color-night-sub)_0_10px,var(--color-night-muted)_0_20px,var(--color-night-text)_0_30px,var(--color-night-edge)_0_40px,var(--color-queued)_0_50px)]",
+  "bg-[repeating-conic-gradient(color-mix(in_oklab,var(--color-night-text)_45%,transparent)_0_25%,transparent_0_50%)] bg-size-[20px_20px]",
+  "bg-[repeating-linear-gradient(color-mix(in_oklab,var(--color-night)_35%,transparent)_0_10px,transparent_0_30px)]",
+  "bg-[conic-gradient(at_10px_10px,transparent_75%,var(--color-pop-blue)_0)] bg-size-[50px_40px]",
+  "bg-[conic-gradient(at_10px_10px,transparent_75%,var(--color-pop-cyan)_0)] bg-size-[100px_30px]",
+  "bg-[linear-gradient(90deg,var(--color-night)_1px,transparent_0),linear-gradient(var(--color-night)_1px,transparent_0)] bg-size-[10px_10px]",
+];
+const glints = [
+  { at: "top-[8%] left-[12%]", delay: "0s" },
+  { at: "top-[40%] -right-1", delay: "-0.9s" },
+  { at: "bottom-[6%] left-[30%]", delay: "-1.7s" },
+];
 
 const scored = computed(() => (props.matches ?? []).filter((m) => m.score >= poolConfig.search.minRelevance));
 const percents = computed(() => new Map(scored.value.map((m) => [m.id, Math.round(m.score * 100)])));
@@ -524,7 +540,8 @@ onBeforeUnmount(() => {
         class="group"
         :style="{ '--grow': `${boxGrowth(t.raised)}px` }"
         :class="[
-          t.day ? 'size-7 rounded sm:size-8' : 'aspect-square w-[calc(1.25rem+var(--grow))] rounded-full sm:w-[calc(1.5rem+var(--grow))]',
+          t.day ? 'size-7 rounded sm:size-8' : t.disco ? 'aspect-square w-25 rounded-full sm:w-30' : 'aspect-square w-[calc(1.25rem+var(--grow))] rounded-full sm:w-[calc(1.5rem+var(--grow))]',
+          t.disco && 'shadow-[0_0_32px_color-mix(in_oklab,var(--color-pop-blue)_45%,transparent)]',
           physical ? 'pointer-events-auto absolute top-0 left-0 will-change-transform focus-within:z-10' : 'relative',
           physical && !active ? 'opacity-0 focus-within:opacity-100' : !physical && matches && !percents.has(t.id) && 'opacity-40',
           !physical && held.has(t.id) && 'invisible',
@@ -557,8 +574,25 @@ onBeforeUnmount(() => {
             <span aria-hidden="true" class="absolute inset-x-0 top-0 h-0.5" :class="tones[t.status!].dot"></span>
             <span aria-hidden="true" class="font-mono text-[11px] leading-none font-semibold sm:text-xs">{{ pad(t.day) }}</span>
           </template>
+          <template v-else-if="t.disco">
+            <span v-for="m in mirrors" :key="m" aria-hidden="true" class="absolute inset-0 motion-safe:animate-disco" :class="m"></span>
+            <span
+              aria-hidden="true"
+              class="absolute inset-0 bg-[radial-gradient(circle_at_32%_28%,var(--color-night-text),transparent_30%),radial-gradient(circle_at_45%_40%,transparent_30%,color-mix(in_oklab,var(--color-night)_90%,transparent)_72%)]"
+            ></span>
+          </template>
           <span v-else aria-hidden="true" class="absolute inset-0 [&>svg]:size-full" v-html="artwork.get(t.id)"></span>
         </button>
+        <template v-if="t.disco">
+          <span
+            v-for="g in glints"
+            :key="g.at"
+            aria-hidden="true"
+            class="pointer-events-none absolute size-4 scale-0 bg-night-text [clip-path:polygon(50%_0,60%_40%,100%_50%,60%_60%,50%_100%,40%_60%,0_50%,40%_40%)] motion-safe:animate-twinkle motion-reduce:hidden"
+            :class="g.at"
+            :style="{ animationDelay: g.delay }"
+          ></span>
+        </template>
         <span
           v-if="physical && ranking === 'classifier' && percents.has(t.id)"
           aria-hidden="true"

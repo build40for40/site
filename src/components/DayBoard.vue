@@ -20,7 +20,7 @@ import {
   type ShippedIdea,
   type Sponsor,
 } from "../data/days";
-import { TOTAL_DAYS, money } from "../data/site";
+import { TOTAL_DAYS, money, sponsorUs } from "../data/site";
 import { poolConfig } from "../pool/config";
 import { loadIdeas } from "../pool/data";
 import { DEV_FEWER, DEV_SEND, JOIN_CLOSE, SENT, boxOf, fold, lob, pop, settle, shift, SHIFT_MS, type Box, type SentProblem } from "../pool/flight";
@@ -77,8 +77,11 @@ const nextDay = computed(() => {
   if (phase === "before") return today;
   return phase === "after" && today < TOTAL_DAYS ? today + 1 : undefined;
 });
+// The disco ball in the pool, for sponsoring the whole thing rather than one idea.
+const us = ref<Idea>({ id: "us", title: sponsorUs.title, problem: sponsorUs.tagline, sponsors: [] });
+const usEntry = computed<Entry>(() => ({ key: "us", status: "us", idea: us.value }));
 const selected = computed<Entry>(
-  () => [...board.value.days, ...pool.value].find((e) => e.key === picked.value) ?? board.value.days[(nextDay.value ?? board.value.today) - 1],
+  () => [...board.value.days, ...pool.value, usEntry.value].find((e) => e.key === picked.value) ?? board.value.days[(nextDay.value ?? board.value.today) - 1],
 );
 
 const shippedCount = computed(() => board.value.days.filter((d) => d.status === "shipped").length);
@@ -160,7 +163,7 @@ function openShared() {
   const idea = params.get("idea");
   const day = Number(params.get("day"));
   const key = idea
-    ? [...board.value.days, ...pool.value].find((e) => e.idea?.id === idea)?.key
+    ? [...board.value.days, ...pool.value, usEntry.value].find((e) => e.idea?.id === idea)?.key
     : day >= 1 && day <= TOTAL_DAYS ? `day-${day}` : undefined;
   if (!key) return;
   shared = true;
@@ -402,12 +405,18 @@ function pick(key: string, preset: number) {
 
 async function sponsor(amount: number, anonymous: boolean) {
   const entry = selected.value;
-  const target = entry.status === "guest" ? { day: entry.day } : { problem: entry.idea?.id };
+  const target = entry.status === "guest" ? { day: entry.day } : entry.status === "us" ? {} : { problem: entry.idea?.id };
   const outcome = await pay(() => startCheckout({ amount: amount * 100, anonymous, ...target }), `Sponsor ${money(amount)}`);
   if (outcome.status === "paid") credit(entry, { name: outcome.name ?? "Anonymous", amount: outcome.amount });
 }
 
 function credit({ key, day, status, idea: entryIdea }: Entry, sponsor: Sponsor) {
+  if (status === "us") {
+    return swap(() => {
+      us.value.sponsors.push(sponsor);
+      backed.value = key;
+    }, "day-box");
+  }
   if (status === "guest" && day) {
     return swap(() => {
       (guestSponsors.value[day] ??= []).push(sponsor);
@@ -558,7 +567,17 @@ const dayTiles = computed<PoolTile[]>(() =>
     };
   }),
 );
-const tiles = computed(() => (browsing.value ? [...poolTiles.value, ...dayTiles.value] : poolTiles.value));
+const disco: PoolTile = {
+  key: "us",
+  id: "us",
+  disco: true,
+  title: sponsorUs.title,
+  problem: sponsorUs.tagline,
+  kicker: "Sponsor us",
+  label: `${sponsorUs.title}, sponsor us`,
+  raised: 0,
+};
+const tiles = computed(() => [disco, ...(browsing.value ? [...poolTiles.value, ...dayTiles.value] : poolTiles.value)]);
 
 const tileSub = (e: Entry) => {
   if (e.status === "live") return "Live now";

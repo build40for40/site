@@ -59,7 +59,7 @@
   --animate-bubble: bubble var(--bubble-time, 6s) ease-in var(--bubble-delay, 0s) infinite;
   --animate-simmer: simmer 3.2s ease-in-out infinite alternate;
   --animate-credits: credits 30s linear infinite;
-  --animate-disco: disco 4s linear infinite;
+  --animate-disco: disco 6s linear infinite;
   --animate-twinkle: twinkle 2.6s ease-in-out infinite;
   --animate-orbit: orbit 12s linear infinite;
 
@@ -69,10 +69,10 @@
     }
   }
 
-  /* 70px is a whole number of every tile layer's width, so the spin loops without a seam. */
+  /* 100px is a whole number of every mirror layer's width, so the spin loops without a seam. */
   @keyframes disco {
     to {
-      background-position: 70px 0;
+      background-position: 100px 0;
     }
   }
 
