@@ -176,6 +176,7 @@ describe("lively", () => {
   });
 
   test("an idea dropped without a splash only bumps what it lands on", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
     const { container, add, controller } = setup();
     const rising = pile(controller, add);
     const element = document.createElement("li");
@@ -187,6 +188,7 @@ describe("lively", () => {
       controller.advance(1 / 60);
       most = Math.max(most, rising());
     }
+    vi.restoreAllMocks();
     expect(most).toBeLessThanOrEqual(1);
   });
 });
