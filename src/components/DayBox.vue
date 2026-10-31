@@ -253,19 +253,26 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
           </template>
         </div>
 
-        <div v-if="isLive || isNext" class="@container shrink-0 overflow-hidden border-t border-night-line py-2 font-mono text-xs text-night-sub motion-reduce:overflow-x-auto">
-          <div v-if="rows.length" class="flex w-max motion-safe:animate-credits hover:[animation-play-state:paused]">
-            <ul
-              v-for="copy in 2"
-              :key="copy"
-              :aria-hidden="copy === 2"
-              :aria-label="copy === 1 ? 'Backers' : undefined"
-              class="m-0 flex min-w-[100cqw] shrink-0 list-none justify-around gap-8 p-0 px-4"
-            >
-              <li v-for="r in rows" :key="r.name" class="whitespace-nowrap">{{ r.name }} <span class="text-night-text">{{ money(r.amount) }}</span></li>
-            </ul>
-          </div>
-          <p v-else class="m-0 px-4">No backers yet. Be the first.</p>
+        <div v-if="isLive || isNext" class="flex shrink-0 border-t border-night-line font-mono text-xs text-night-sub">
+          <template v-if="rows.length">
+            <span
+              class="relative z-1 shrink-0 bg-player py-2 pr-2 pl-4 text-[10px] tracking-wider text-night-muted uppercase after:pointer-events-none after:absolute after:inset-y-0 after:left-full after:w-6 after:bg-linear-to-r after:from-player after:to-transparent"
+            >Sponsored by</span>
+            <div class="@container min-w-0 flex-1 overflow-hidden py-2 motion-reduce:overflow-x-auto">
+              <div class="flex w-max motion-safe:animate-credits hover:[animation-play-state:paused]">
+                <ul
+                  v-for="copy in 2"
+                  :key="copy"
+                  :aria-hidden="copy === 2"
+                  :aria-label="copy === 1 ? 'Sponsors' : undefined"
+                  class="m-0 flex min-w-[100cqw] shrink-0 list-none justify-around gap-8 p-0 px-4"
+                >
+                  <li v-for="r in rows" :key="r.name" class="whitespace-nowrap">{{ r.name }} <span class="text-night-text">{{ money(r.amount) }}</span></li>
+                </ul>
+              </div>
+            </div>
+          </template>
+          <p v-else class="m-0 px-4 py-2">No sponsors yet. Be the first.</p>
         </div>
       </div>
 
