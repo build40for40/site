@@ -63,16 +63,43 @@ export function curl(element: HTMLElement, from: Box, size: number, artwork: Ele
   return Promise.all(moves.map((m) => m.finished)).then(() => ball);
 }
 
-// The box slides over from where it was, now that the layout has it somewhere else.
-export function shift(element: Element, from: Box) {
+// The box slides over from where it was, now that the layout has it somewhere else, waiting there until its turn.
+export function shift(element: Element, from: Box, delay = 0) {
   const to = boxOf(element);
-  return element.animate([{ translate: `${from.left - to.left}px ${from.top - to.top}px` }, { translate: "0 0" }], { duration: 480, easing: "cubic-bezier(.65,0,.35,1)" }).finished;
+  return element.animate([{ translate: `${from.left - to.left}px ${from.top - to.top}px` }, { translate: "0 0" }], {
+    duration: 700,
+    delay,
+    easing: "cubic-bezier(.65,0,.35,1)",
+    fill: "backwards",
+  }).finished;
 }
 
-// The box jumps up out of its slot, a little bigger.
+// The box crouches, then jumps up out of its slot like a platformer hero, slowing to a hang at the top. It never
+// jumps off the top of the screen.
 export function pop(element: HTMLElement, from: Box) {
-  const to = { left: from.left - from.width * 0.05, top: from.top - from.height * 0.9, width: from.width * 1.1, height: from.height * 1.1 };
-  return element.animate([place(from), place(to)], { duration: 260, easing: "cubic-bezier(.34,1.56,.64,1)", fill: "forwards" }).finished;
+  const height = Math.max(0, Math.min(from.height * 1.6, from.top - 8));
+  const options = { duration: 620, fill: "forwards" } as const;
+  element.style.transformOrigin = "50% 100%";
+  const moves = [
+    element.animate(
+      [
+        { top: `${from.top}px` },
+        { top: `${from.top}px`, offset: 0.22, easing: "cubic-bezier(.15,.75,.35,1)" },
+        { top: `${from.top - height}px` },
+      ],
+      options,
+    ),
+    element.animate(
+      [
+        { scale: "1 1", easing: "ease-out" },
+        { scale: "1.15 0.8", offset: 0.22, easing: "ease-out" },
+        { scale: "0.88 1.18", offset: 0.42, easing: "ease-in-out" },
+        { scale: "1 1" },
+      ],
+      options,
+    ),
+  ];
+  return Promise.all(moves.map((m) => m.finished)).then(() => undefined);
 }
 
 // A lob across the page that lands square in its slot, arcing no higher than the top of the screen.

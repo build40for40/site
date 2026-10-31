@@ -327,7 +327,9 @@ async function arrive(event: Event) {
   if (day) incoming.value = day.key;
   await nextTick();
   if (evictedGhost.value && outSlot) moves.push({ element: evictedGhost.value, from: boxOf(outSlot) });
-  const shifted = Promise.all(moves.map(({ element, from }) => shift(element, from)));
+  // They go one after another like dominoes, the last one knocking the idea off the end.
+  const step = Math.min(90, 1400 / moves.length);
+  const shifted = Promise.all(moves.map(({ element, from }, i) => shift(element, from, i * step)));
   if (ghost.value) {
     ghost.value.animate([{ scale: 1 }, { scale: 1.12 }, { scale: 1 }], { duration: 260, easing: "ease-out" });
     if (slot) await lob(ghost.value, boxOf(ghost.value), boxOf(slot));
