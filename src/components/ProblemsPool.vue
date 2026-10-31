@@ -221,7 +221,7 @@ async function burst(pieces: { id: string; from: Box }[]) {
               const r = (elements.get(id)?.offsetWidth ?? 0) / 2;
               const at = { x: Math.min(Math.max(x - box.left, r), box.width - r), y: Math.max(y - box.top, r) };
               const velocity = { x: (x - middle) * spread + between([-60, 60]), y: -between(speed) };
-              controller.drop(id, at, velocity, { angle: between([-0.3, 0.3]), spin: between([-spin, spin]), ghostMs });
+              controller.drop(id, at, velocity, { angle: between([-0.3, 0.3]), spin: between([-spin, spin]), ghostMs, splash: false });
             }
             held.value.delete(id);
             resolve();

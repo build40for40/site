@@ -174,6 +174,21 @@ describe("lively", () => {
     }
     expect(splashed).toBeGreaterThan(1);
   });
+
+  test("an idea dropped without a splash only bumps what it lands on", () => {
+    const { container, add, controller } = setup();
+    const rising = pile(controller, add);
+    const element = document.createElement("li");
+    container.append(element);
+    controller.registerBody("day", element, { ...TILE, delayMs: Infinity });
+    controller.drop("day", { x: 150, y: 40 }, { x: 0, y: 520 }, { splash: false });
+    let most = 0;
+    for (let i = 0; i < 60; i++) {
+      controller.advance(1 / 60);
+      most = Math.max(most, rising());
+    }
+    expect(most).toBeLessThanOrEqual(1);
+  });
 });
 
 test("ideas dropped as ghosts pass through each other, then turn solid", () => {

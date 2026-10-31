@@ -399,8 +399,9 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     },
 
     // Drops a held idea in at a point, in pixels from the pool's top left, moving at a velocity in pixels per second
-    // and spinning at radians per second. A ghost passes through other ghosts for that many milliseconds.
-    drop(id: string, at: Vector, velocity: Vector, { angle = 0, spin = 0, ghostMs = 0 } = {}) {
+    // and spinning at radians per second. A ghost passes through other ghosts for that many milliseconds. Ideas dropped
+    // in a crowd land without a splash, so they don't all knock the pool up at once.
+    drop(id: string, at: Vector, velocity: Vector, { angle = 0, spin = 0, ghostMs = 0, splash = true } = {}) {
       const t = bodies.get(id);
       if (!t || t.shown) return;
       t.body.setTranslation({ x: toM(at.x), y: toM(at.y) }, false);
@@ -412,7 +413,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
         t.solidAt = clock + ghostMs;
       }
       t.curr = t.prev = snapshot(t);
-      t.falling = toM(velocity.y);
+      t.falling = splash ? toM(velocity.y) : undefined;
       t.spawnAt = clock;
       t.pickSpawn = false;
       spawnDue();
