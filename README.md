@@ -88,7 +88,7 @@ To change the schema, add a numbered `.sql` file to `worker/migrations/`. `npm r
 
 `GET /api/problems?offset=&limit=` returns problems ranked by money raised, with the team's `title` (or the start of the problem when there isn't one), the submitter's first name and each payment's sponsor, by the name they gave or as Anonymous. Problems waiting for their payment are left out. Emails never leave the Worker. The home page loads the first 40 for the days, then the rest a page at a time once the page has loaded, and each one drops into the pool.
 
-`GET /api/pool/search?q=` finds candidates with D1 full-text search (`problems_fts`, kept in sync by triggers) and reranks them with TypeSafe's Jev when `TYPESAFE_API_KEY` is set. If Jev is slow, down or unset, it returns the full-text ranking, and the browser falls back to its own word match if the Worker fails. Both leave out filler words such as "my" and "the", which would match almost every problem. Browse lists every word match. The join form floats up only the best few, without a match percentage, since word matches rank problems but don't say how alike they are. Only the search and each candidate's title and problem text are sent to Jev. To try Jev locally, put a key in `.dev.vars`. In production, `npm run wrangler -- secret put TYPESAFE_API_KEY`.
+`GET /api/pool/search?q=` finds candidates with D1 full-text search (`problems_fts`, kept in sync by triggers) and reranks them with TypeSafe's Jev when `TYPESAFE_API_KEY` is set. If Jev is slow, down or unset, it returns the full-text ranking, and the browser falls back to its own word match if the Worker fails. Both leave out filler words such as "my" and "the", which would match almost every problem. Browse lists every word match. The join form floats up only the best few, without a match percentage, since word matches rank problems but don't say how alike they are. Only the search and each candidate's title and problem text are sent to Jev. To try Jev locally, put a key in `.env`. In production, `npm run wrangler -- secret put TYPESAFE_API_KEY`.
 
 ### Categories
 
@@ -108,7 +108,7 @@ To list the problems that fit nothing or might be junk:
 npm run wrangler -- d1 execute 40for40 --remote --command "SELECT p.id, p.title, p.sincere, max(c.score) AS best FROM problems p JOIN problem_categories c ON c.problem_id = p.id GROUP BY p.id HAVING best < 0.7 OR p.sincere < 0.7 ORDER BY best"
 ```
 
-Locally, the seed sorts its fake problems by hand. To try the cron with a key in `.dev.vars`, run `npm run wrangler -- dev --test-scheduled` and open `/__scheduled`.
+Locally, the seed sorts its fake problems by hand. To try the cron with a key in `.env`, run `npm run wrangler -- dev --test-scheduled` and open `/__scheduled`.
 
 Artwork is seeded from the problem id. Setting `ARTWORK_SUBMITTER_SEEDS` to `on` (with an `ARTWORK_SEED_SECRET` secret) gives one person's problems a family look, which also reveals that they came from the same person.
 
@@ -143,13 +143,13 @@ Local dev uses the Stripe sandbox and everything on a URL (production and PR pre
 - `STRIPE_SPONSOR_PRODUCT`: the Sponsor product's id. Without it, sessions name the product themselves.
 - `STRIPE_WEBHOOK_SECRET`: the signing secret of the webhook endpoint.
 
-Put the sandbox values in `.dev.vars`, and the live ones in production with `npm run wrangler -- secret put <name>`. Pay in the sandbox with test cards such as `4242 4242 4242 4242`, `4000 0000 0000 0002` (declined) and `4000 0025 0000 3155` (3D Secure).
+Put the sandbox values in `.env`, and the live ones in production with `npm run wrangler -- secret put <name>`. Pay in the sandbox with test cards such as `4242 4242 4242 4242`, `4000 0000 0000 0002` (declined) and `4000 0025 0000 3155` (3D Secure).
 
 Stripe sends `checkout.session.completed` and `checkout.session.async_payment_succeeded` to `/api/stripe/webhook`. The Worker checks the signature, then saves paid sessions to `payments` with the payer's email, the problem from `client_reference_id`, the guest day and the credited name. Stripe retries failed deliveries, and a repeat of the same session is ignored. To replace the secret, roll it in the Stripe dashboard and put it again.
 
 ### Running and reading forms
 
-`npm run dev` runs the Worker for `/api/*` with a local D1, and so does `npm run preview` (the built site on port 8787). Before the first run, create the local tables with `npm run db:migrate`, add fake problems with `npm run db:seed`, and copy `.dev.vars.example` to `.dev.vars`. Stripe can't reach a local server, so to test the webhook locally, set any `STRIPE_WEBHOOK_SECRET` in `.dev.vars` and sign test events with it. Plain `astro preview` serves only the static files, so forms 404 there. To read real submissions:
+`npm run dev` runs the Worker for `/api/*` with a local D1, and so does `npm run preview` (the built site on port 8787). Before the first run, create the local tables with `npm run db:migrate`, add fake problems with `npm run db:seed`, and copy `.env.example` to `.env`. It holds every local secret: Astro reads the `PUBLIC_` ones at build time and the Worker reads them all, unless a `.dev.vars` exists, which wrangler would read instead. To get sandbox webhooks locally, run `stripe listen --forward-to localhost:4321/api/stripe/webhook` and put the `whsec_` it prints in `STRIPE_WEBHOOK_SECRET`. Plain `astro preview` serves only the static files, so forms 404 there. To read real submissions:
 
 ```sh
 npm run wrangler -- d1 execute 40for40 --remote --command "SELECT * FROM people ORDER BY joined_at"
@@ -171,4 +171,4 @@ PostHog (EU) runs in cookieless mode: nothing is stored in the browser, and Post
 The browser sends page views, clicks, errors, `form_submitted`, `join_opened` when the join form pops up, `checkout_started` and `checkout_closed` from the checkout dialog, and `stream_loaded`. The Worker sends `form_saved` once a form is stored, with the same cookieless fields so it joins the visitor's funnel. The Stripe webhook sends `payment_completed`, keyed by Checkout Session since it can't be tied to a visitor.
 
 - **Build:** `PUBLIC_POSTHOG_PROJECT_TOKEN` and `PUBLIC_POSTHOG_HOST` in `.env` locally, and for CI as a repo secret (the token, since GitHub rejects it as a variable) and a repo variable (the host).
-- **Worker:** the same names. `PUBLIC_POSTHOG_HOST` is in `wrangler.jsonc`, and `PUBLIC_POSTHOG_PROJECT_TOKEN` is a secret (`.dev.vars` locally, `npm run wrangler -- secret put PUBLIC_POSTHOG_PROJECT_TOKEN` in production).
+- **Worker:** the same names. `PUBLIC_POSTHOG_HOST` is in `wrangler.jsonc`, and `PUBLIC_POSTHOG_PROJECT_TOKEN` is a secret (`.env` locally, `npm run wrangler -- secret put PUBLIC_POSTHOG_PROJECT_TOKEN` in production).
