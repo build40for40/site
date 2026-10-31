@@ -20,6 +20,8 @@ export const involvement = [
   { value: "guest", label: "Be a guest", note: "guest_note", prompt: "Why do you want to be a guest?" },
 ] as const;
 
+export const companySponsors = [{ name: "Superthread", url: "https://superthread.com", logo: "/sponsors/superthread.svg", width: 320, height: 64 }];
+
 export const backings = ["share", "sponsor"] as const;
 
 export const SPONSOR_AMOUNTS = [4, 40, 104, 400, 4_000, 40_000, 400_000, 4_000_000];

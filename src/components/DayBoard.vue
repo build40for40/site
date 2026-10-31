@@ -656,6 +656,8 @@ const tileSub = (e: Entry) => {
       </div>
     </div>
 
+    <div v-show="!browsing"><slot name="sponsors" /></div>
+
     <ProblemsPool
       ref="problems"
       :tiles="tiles"

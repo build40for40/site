@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import DayBoard from "../components/DayBoard.vue";
 import JoinForm from "../components/JoinForm.astro";
+import Sponsors from "../components/Sponsors.astro";
 import SendInPlace from "../components/forms/SendInPlace.astro";
 import CheckoutDialog from "../components/forms/CheckoutDialog.astro";
 import DevVariants from "../components/DevVariants.astro";
@@ -31,6 +32,7 @@ const cta = "rounded-full border px-4 py-2 text-sm font-semibold no-underline fo
       <a href="#browse" aria-controls="browse" aria-expanded="false" class:list={[cta, "border-night-edge text-night-text hover:border-night-text"]}>Browse</a>
     </div>
     <JoinForm slot="join" />
+    <Sponsors slot="sponsors" />
   </DayBoard>
   <SendInPlace />
   <CheckoutDialog />
