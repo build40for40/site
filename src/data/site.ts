@@ -1,18 +1,24 @@
+import type { Brand } from "./brands";
+
 export const UK_TZ = "Europe/London";
 export const START = "2026-11-02T09:00:00Z";
 export const TOTAL_DAYS = 40;
 
+const handle = "build40for40";
+
 export const links = {
-  twitch: "https://www.twitch.tv/40for40",
-  twitchChannel: "40for40",
-  community: "https://discord.gg/40for40",
+  twitch: `https://www.twitch.tv/${handle}`,
+  twitchChannel: handle,
+  community: `https://discord.gg/${handle}`,
   email: "help@build40for40.com",
   socials: [
-    { label: "LinkedIn", href: "https://www.linkedin.com/company/40for40" },
-    { label: "X", href: "https://x.com/40for40app" },
-    { label: "Instagram", href: "https://www.instagram.com/40for40app" },
-    { label: "TikTok", href: "https://www.tiktok.com/@40for40app" },
-  ],
+    { brand: "twitch", href: `https://www.twitch.tv/${handle}` },
+    { brand: "discord", href: `https://discord.gg/${handle}` },
+    { brand: "linkedin", href: `https://www.linkedin.com/company/${handle}` },
+    { brand: "x", href: `https://x.com/${handle}` },
+    { brand: "instagram", href: `https://www.instagram.com/${handle}` },
+    { brand: "tiktok", href: `https://www.tiktok.com/@${handle}` },
+  ] satisfies { brand: Brand; href: string }[],
 };
 
 export const involvement = [

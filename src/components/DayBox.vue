@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { brands } from "../data/brands";
+import BrandIcon from "./BrandIcon.vue";
 import ShareButton from "./ShareButton.vue";
 import StreamEmbed from "./StreamEmbed.vue";
 import {
@@ -186,7 +188,8 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
                 rel="noopener"
                 class="flex aspect-[9/16] h-full min-w-0 flex-col justify-between rounded-md bg-night-tile p-2.5 text-left text-night-text no-underline ring-night-edge hover:ring-1 focus-visible:outline-2 focus-visible:outline-brand-lime"
               >
-                <span class="font-mono text-[10px] tracking-wider text-night-muted uppercase">{{ short.platform }}</span>
+                <BrandIcon :brand="short.platform" class="size-3.5 text-night-muted" />
+                <span class="sr-only">{{ brands[short.platform].name }}</span>
                 <span class="self-center text-2xl" aria-hidden="true">▶</span>
                 <span class="text-xs leading-snug font-semibold text-pretty">{{ short.title }}</span>
               </a>
@@ -343,7 +346,9 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
           <h2 class="m-0 min-w-0 text-[26px] leading-[1.04] font-semibold tracking-tight md:text-3xl">{{ dayPrefix }}{{ idea?.title ?? "Guest day" }}</h2>
           <!-- Narrow screens have no room for the player, so its links move up here. -->
           <div v-if="watch || share" class="flex shrink-0 items-center gap-1.5 max-[24rem]:flex-col max-[24rem]:items-end lg:hidden">
-            <a v-if="watch" :href="watch" target="_blank" rel="noopener" class="no-underline" :class="overlayPill">▶ Watch</a>
+            <a v-if="watch" :href="watch" target="_blank" rel="noopener" aria-label="Watch on Twitch" class="grid size-[30px] place-items-center p-0" :class="overlayPill"
+              ><BrandIcon brand="twitch" class="size-3.5"
+            /></a>
             <ShareButton v-if="share" class="justify-end" v-bind="share" label="Share" />
           </div>
         </div>

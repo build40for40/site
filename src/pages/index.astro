@@ -7,6 +7,8 @@ import SendInPlace from "../components/forms/SendInPlace.astro";
 import CheckoutDialog from "../components/forms/CheckoutDialog.astro";
 import DevVariants from "../components/DevVariants.astro";
 import { history } from "../data/days";
+import BrandIcon from "../components/BrandIcon.vue";
+import { brands } from "../data/brands";
 import { links } from "../data/site";
 
 const navLink = "text-night-muted underline-offset-3 hover:text-night-text";
@@ -21,9 +23,16 @@ const cta = "rounded-full border px-4 py-2 text-sm font-semibold no-underline fo
       </span>
       <span><span class="whitespace-nowrap">40 apps.</span> <span class="whitespace-nowrap">40 days.</span></span>
     </h1>
-    <nav slot="links" aria-label="Links" class="flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs">
-      <a href={links.twitch} target="_blank" rel="noopener" class={navLink}>Twitch</a>
-      <a href={links.community} target="_blank" rel="noopener" class={navLink}>Discord</a>
+    <nav slot="links" aria-label="Links" class="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-xs">
+      <span class="flex items-center gap-3.5">
+        {
+          links.socials.map((s) => (
+            <a href={s.href} target="_blank" rel="noopener" aria-label={`40 for 40 on ${brands[s.brand].name}`} class={navLink}>
+              <BrandIcon brand={s.brand} class="size-4" />
+            </a>
+          ))
+        }
+      </span>
       <a href={`mailto:${links.email}`} class={navLink}>{links.email}</a>
       <a href="/privacy" class={navLink}>Privacy notice</a>
     </nav>

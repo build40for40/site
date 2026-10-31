@@ -1,3 +1,4 @@
+import type { Brand } from "./brands";
 import { START, TOTAL_DAYS, UK_TZ } from "./site";
 
 export { SPONSOR_AMOUNTS } from "./site";
@@ -20,7 +21,7 @@ export interface Idea {
 
 export interface Short {
   title: string;
-  platform: string;
+  platform: Brand;
   url: string;
 }
 
@@ -139,9 +140,9 @@ const mockShipped = (day: number, title: string, problem: string, total: number,
   recordingUrl: "#",
   screenshot: "/screenshots/mock-app.svg",
   shorts: [
-    { title: "The idea in 30 seconds", platform: "TikTok", url: "#" },
-    { title: "The bit where it broke", platform: "Instagram", url: "#" },
-    { title: "Shipped with 2 minutes left", platform: "TikTok", url: "#" },
+    { title: "The idea in 30 seconds", platform: "tiktok", url: "#" },
+    { title: "The bit where it broke", platform: "instagram", url: "#" },
+    { title: "Shipped with 2 minutes left", platform: "tiktok", url: "#" },
   ],
 });
 

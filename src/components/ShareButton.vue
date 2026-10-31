@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { brands } from "../data/brands";
+import BrandIcon from "./BrandIcon.vue";
 
 const props = defineProps<{ label: string; text: string; url: string; expanded?: boolean }>();
 
@@ -10,10 +12,10 @@ const targets = computed(() => {
   const url = encodeURIComponent(props.url);
   const text = encodeURIComponent(props.text);
   return [
-    { label: "WhatsApp", href: `https://wa.me/?text=${text}%20${url}` },
-    { label: "LinkedIn", href: `https://www.linkedin.com/sharing/share-offsite/?url=${url}` },
-    { label: "X", href: `https://x.com/intent/post?text=${text}&url=${url}` },
-  ];
+    { brand: "whatsapp", href: `https://wa.me/?text=${text}%20${url}` },
+    { brand: "linkedin", href: `https://www.linkedin.com/sharing/share-offsite/?url=${url}` },
+    { brand: "x", href: `https://x.com/intent/post?text=${text}&url=${url}` },
+  ] as const;
 });
 
 const track = (via: string) => window.posthog?.capture("idea_shared", { via });
@@ -46,13 +48,15 @@ const pill =
       <button type="button" :class="pill" @click="copy">{{ copied ? "Copied" : "Copy link" }}</button>
       <a
         v-for="t in targets"
-        :key="t.label"
+        :key="t.brand"
         :href="t.href"
         target="_blank"
         rel="noopener"
+        :aria-label="`Share on ${brands[t.brand].name}`"
+        class="grid size-[30px] place-items-center p-0"
         :class="pill"
-        @click="track(t.label)"
-      >{{ t.label }}</a>
+        @click="track(brands[t.brand].name)"
+      ><BrandIcon :brand="t.brand" class="size-3.5" /></a>
     </template>
   </div>
 </template>
