@@ -3,8 +3,8 @@ import { describe, expect, test, vi } from "vitest";
 import { addProblem, testDb } from "./test-db";
 import { anthropicTitler, cleanTitle, titleProblem, type Titler } from "./titles";
 
-const fakeClient = (text: string, stop_reason = "end_turn") => {
-  const create = vi.fn(async () => ({ stop_reason, content: [{ type: "text", text }] }));
+const fakeClient = (title: string, stop_reason = "end_turn") => {
+  const create = vi.fn(async () => ({ stop_reason, content: [{ type: "text", text: JSON.stringify({ title }) }] }));
   return { create, client: { messages: { create } } as unknown as Pick<Anthropic, "messages"> };
 };
 

@@ -323,7 +323,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
         <div class="flex items-start justify-between gap-3">
           <h2 class="m-0 min-w-0 text-[26px] leading-[1.04] font-semibold tracking-tight text-balance md:text-3xl">{{ dayPrefix }}{{ idea?.title ?? "Guest day" }}</h2>
           <!-- Narrow screens have no room for the player, so its links move up here. -->
-          <div v-if="watch || share" class="flex shrink-0 flex-col items-end gap-1.5 lg:hidden">
+          <div v-if="watch || share" class="flex shrink-0 items-center gap-1.5 lg:hidden">
             <a v-if="watch" :href="watch" target="_blank" rel="noopener" class="no-underline" :class="overlayPill">▶ Watch</a>
             <ShareButton v-if="share" class="justify-end" v-bind="share" label="Share" />
           </div>
