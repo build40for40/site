@@ -22,7 +22,7 @@ export async function retrieveCandidates(query: string, { db, limit = poolConfig
     .prepare(
       `SELECT p.id, p.title, p.problem, -bm25(problems_fts, 0, 5, 1) AS rank
        FROM problems_fts JOIN problems p ON p.id = problems_fts.id
-       WHERE problems_fts MATCH ?1
+       WHERE problems_fts MATCH ?1 AND p.awaiting_payment = 0
        ORDER BY rank DESC
        LIMIT ?2`,
     )

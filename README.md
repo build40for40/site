@@ -30,7 +30,7 @@ Before Day 1, its job is to get people to help, in this priority order: office s
 
 ## Status
 
-The R1 UI is built. Forms are saved to D1, sponsors pay through Stripe Payment Links, and the days and problems pool are ranked from the problems in D1. Shipped history in `src/data/days.ts` is still mock data. Still to come: Stripe with auto-unlock, the admin screen, day pages, the app gallery and OG images. Open questions include prices, VAT and the receiving entity.
+The R1 UI is built. Forms are saved to D1, sponsors pay through Stripe Embedded Checkout, and the days and problems pool are ranked from the problems in D1. Shipped history in `src/data/days.ts` is still mock data. Still to come: Stripe with auto-unlock, the admin screen, day pages, the app gallery and OG images. Open questions include prices, VAT and the receiving entity.
 
 ## Stack
 
@@ -77,16 +77,16 @@ Every form posts to `/api/forms/<form>` (`subscribe`, `join`, `help`, `guest`, `
 Everything lives in the `40for40` D1 database, with the schema in `worker/migrations/`:
 
 - **`people`:** one row per email. The first form someone sends creates it, and later forms fill in or change answers without clearing ones they leave out, keeping the original `joined_at`. `involved` is a JSON array and `sponsor` is the amount in pence picked before checkout.
-- **`problems`:** one row per problem submitted, so a second problem from the same person never replaces the first.
+- **`problems`:** one row per problem submitted, so a second problem from the same person never replaces the first. A sponsored one has `awaiting_payment` set until it's paid, and stays off the site until then.
 - **`problem_categories`:** how well each problem fits each category, from 0 to 1. `problems` records who sorted it (`categorised_by`), against which list (`categories_version`) and how likely it is to be meant sincerely (`sincere`).
-- **`payments`:** one row per paid Stripe Checkout Session, written by the webhook.
+- **`payments`:** one row per paid Stripe Checkout Session, written by whichever comes first of the webhook and the page asking. It backs a problem or a guest `day`, with the `name` to credit (null is Anonymous).
 - **`help_offers`** and **`guest_applications`:** one row per submission of the hidden help and guest forms.
 
 To change the schema, add a numbered `.sql` file to `worker/migrations/`. `npm run db:migrate` applies it to the local database, and deploys (`npm run deploy` and CI) apply it to production first.
 
 ### Problems and the pool
 
-`GET /api/problems?offset=&limit=` returns problems ranked by money raised, with the team's `title` (or the start of the problem when there isn't one), the submitter's first name and each payment as an anonymous sponsor. Emails never leave the Worker. The home page loads the first 40 for the days, then the rest a page at a time once the page has loaded, and each one drops into the pool.
+`GET /api/problems?offset=&limit=` returns problems ranked by money raised, with the team's `title` (or the start of the problem when there isn't one), the submitter's first name and each payment's sponsor, by the name they gave or as Anonymous. Problems waiting for their payment are left out. Emails never leave the Worker. The home page loads the first 40 for the days, then the rest a page at a time once the page has loaded, and each one drops into the pool.
 
 `GET /api/pool/search?q=` finds candidates with D1 full-text search (`problems_fts`, kept in sync by triggers) and reranks them with TypeSafe's Jev when `TYPESAFE_API_KEY` is set. If Jev is slow, down or unset, it returns the full-text ranking, and the browser falls back to its own word match if the Worker fails. Both leave out filler words such as "my" and "the", which would match almost every problem. Browse lists every word match. The join form floats up only the best few, without a match percentage, since word matches rank problems but don't say how alike they are. Only the search and each candidate's title and problem text are sent to Jev. To try Jev locally, put a key in `.dev.vars`. In production, `npm run wrangler -- secret put TYPESAFE_API_KEY`.
 
@@ -114,9 +114,38 @@ Artwork is seeded from the problem id. Setting `ARTWORK_SUBMITTER_SEEDS` to `on`
 
 ### Sponsoring
 
-Ticking Sponsor on the full form shows the amounts in `sponsorAmounts` in `src/data/site.ts`. Picking one only records it. On Submit, the Worker saves the answers and redirects to that amount's Stripe Payment Link with the email prefilled, and with `client_reference_id` set to the problem's id when they submitted one. The amount is dropped if Sponsor was unticked, and an empty link goes to `/thanks/` instead. In Stripe, every link sells the one Sponsor product at one of its GBP prices (lookup keys `sponsor_<pence>`), with `sponsor` metadata set to the same value, and sends people back to `/thanks/` after paying. Each amount has a live `link` and a sandbox `testLink`: only `build40for40.com` and its subdomains use the live one, so local dev servers and workers.dev previews check out in the sandbox (pay with a test card such as `4242 4242 4242 4242`).
+Sponsors pay with Stripe's Embedded Checkout in a dialog on the page, so nobody leaves the site, and nothing counts until the Worker has checked with Stripe that it's paid.
 
-Stripe sends `checkout.session.completed` and `checkout.session.async_payment_succeeded` to `/api/stripe/webhook` on the live account. The Worker checks the signature against the `STRIPE_WEBHOOK_SECRET` Worker secret, then saves paid sessions to `payments` with the payer's email and the problem from `client_reference_id`. Stripe retries failed deliveries, and a repeat of the same session is ignored. To replace the secret, roll it in the Stripe dashboard and run `npm run wrangler -- secret put STRIPE_WEBHOOK_SECRET`.
+```
+Join form, Sponsor + amount ──▶ POST /api/forms/join ──▶ problem saved with awaiting_payment = 1 (hidden)
+Day box Sponsor button ───────▶ POST /api/checkout ───┐            │
+                                                      ▼            ▼
+                                   Checkout Session (USD, Sponsor product, problem id or guest day)
+                                                      │
+                     dialog mounts Checkout ◀─────────┘   declines and 3D Secure are handled inside it
+                                │ paid
+                                ▼
+           GET /api/checkout/<id> ──▶ Worker asks Stripe ──▶ payments row, problem shown
+           Stripe webhook ──────────────────────────────────▶ the same, whichever lands first
+```
+
+- **Join form:** with Sponsor picked, Submit saves the problem hidden and opens checkout for that amount, with the email prefilled and the form's first name as the credit. Once it's paid, the form folds up and lands on a day or in the pool by the amount paid. Closing checkout keeps the form as it was and says nothing was sent. A problem whose payment never comes stays hidden for good, and trying again sends a new one.
+- **Day box:** the Sponsor button opens checkout for the idea, or for the guest day on guest days. Checkout asks for an optional name to show on the site, unless they ticked anonymous. `GET /api/days` returns each guest day's sponsors.
+- **Leaving the page:** payment methods that redirect come back to `/?checkout=<id>`, which saves the payment and opens what was paid for.
+- **Still processing:** bank-style payments that clear later stay hidden until Stripe sends `checkout.session.async_payment_succeeded`.
+
+Amounts come from `SPONSOR_AMOUNTS` in `src/data/site.ts`, priced in dollars on the session itself, so Stripe needs no price or link per amount. The Worker pins Stripe's API to the same release as `@stripe/stripe-js` (`STRIPE_VERSION` in `worker/checkout.ts`), so bump them together.
+
+Local dev uses the Stripe sandbox and everything on a URL (production and PR previews) uses live Stripe and the production database, since previews share the Worker's secrets:
+
+- `STRIPE_SECRET_KEY`: a restricted key that can write Checkout Sessions.
+- `STRIPE_PUBLISHABLE_KEY`: handed to the page with each session.
+- `STRIPE_SPONSOR_PRODUCT`: the Sponsor product's id. Without it, sessions name the product themselves.
+- `STRIPE_WEBHOOK_SECRET`: the signing secret of the webhook endpoint.
+
+Put the sandbox values in `.dev.vars`, and the live ones in production with `npm run wrangler -- secret put <name>`. Pay in the sandbox with test cards such as `4242 4242 4242 4242`, `4000 0000 0000 0002` (declined) and `4000 0025 0000 3155` (3D Secure).
+
+Stripe sends `checkout.session.completed` and `checkout.session.async_payment_succeeded` to `/api/stripe/webhook`. The Worker checks the signature, then saves paid sessions to `payments` with the payer's email, the problem from `client_reference_id`, the guest day and the credited name. Stripe retries failed deliveries, and a repeat of the same session is ignored. To replace the secret, roll it in the Stripe dashboard and put it again.
 
 ### Running and reading forms
 
@@ -139,7 +168,7 @@ npm run wrangler -- d1 execute 40for40 --remote --command "SELECT * FROM payment
 
 PostHog (EU) runs in cookieless mode: nothing is stored in the browser, and PostHog hashes IP, user agent and host into a visitor id that changes daily. The project needs **Cookieless server hash mode** on (Project settings > Web analytics), or every event is dropped.
 
-The browser sends page views, clicks, errors, `form_submitted`, `join_opened` when the join form pops up, `checkout_started` from a day and `stream_loaded`. The Worker sends `form_saved` once a form is stored, with the same cookieless fields so it joins the visitor's funnel. The Stripe webhook sends `payment_completed`, keyed by Checkout Session since it can't be tied to a visitor.
+The browser sends page views, clicks, errors, `form_submitted`, `join_opened` when the join form pops up, `checkout_started` and `checkout_closed` from the checkout dialog, and `stream_loaded`. The Worker sends `form_saved` once a form is stored, with the same cookieless fields so it joins the visitor's funnel. The Stripe webhook sends `payment_completed`, keyed by Checkout Session since it can't be tied to a visitor.
 
 - **Build:** `PUBLIC_POSTHOG_PROJECT_TOKEN` and `PUBLIC_POSTHOG_HOST` in `.env` locally, and for CI as a repo secret (the token, since GitHub rejects it as a variable) and a repo variable (the host).
 - **Worker:** the same names. `PUBLIC_POSTHOG_HOST` is in `wrangler.jsonc`, and `PUBLIC_POSTHOG_PROJECT_TOKEN` is a secret (`.dev.vars` locally, `npm run wrangler -- secret put PUBLIC_POSTHOG_PROJECT_TOKEN` in production).

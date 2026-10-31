@@ -16,6 +16,7 @@ export const DEV_SEND = "dev-send";
 export const DEV_FEWER = "dev-fewer";
 
 export interface SentProblem {
+  id?: string;
   problem: string;
   name: string;
   amount: number;

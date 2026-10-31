@@ -20,6 +20,7 @@
   "dependencies": {
     "@astrojs/vue": "^7.1.2",
     "@dimforge/rapier2d": "^0.21.0",
+    "@stripe/stripe-js": "^10.1.0",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.4.2",
     "tailwindcss": "^4.3.3",

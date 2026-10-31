@@ -26,6 +26,12 @@ const pages: Record<string, unknown> = {
 
 let reducedMotion = false;
 let ranking = "classifier";
+let outcome: { status: string; amount?: number; name?: string | null } = { status: "paid" };
+const checkout = {
+  startCheckout: vi.fn(async (body: unknown) => body),
+  pay: vi.fn(async (open: () => Promise<unknown>) => (await open(), outcome)),
+  confirmReturn: async () => {},
+};
 let wrapper: VueWrapper | undefined;
 
 beforeEach(() => {
@@ -38,6 +44,8 @@ beforeEach(() => {
   ranking = "classifier";
   vi.resetModules();
   vi.doMock("../pool/physics", physics);
+  vi.doMock("./forms/checkout", () => checkout);
+  checkout.startCheckout.mockClear();
   reducedMotion = false;
   localStorage.clear();
   vi.stubGlobal("fetch", async (url: string) => {
@@ -96,7 +104,8 @@ describe("the problems pool", () => {
     expect(pool(w).classes()).toContain("absolute");
   });
 
-  test("sponsoring moves an idea into the days and bumps the last one into the pool", async () => {
+  test("paying for an idea moves it into the days and bumps the last one into the pool", async () => {
+    outcome = { status: "paid", amount: 104, name: "Ada" };
     const w = await board();
     await vi.waitFor(() => expect(bodies.registered).toHaveLength(10));
     w.findComponent({ name: "DayBox" }).vm.$emit("pick", "pool-idea-34", 25);
@@ -105,10 +114,22 @@ describe("the problems pool", () => {
     await w.find("#sponsor-button").trigger("click");
     await flushPromises();
 
+    expect(checkout.startCheckout).toHaveBeenCalledWith({ amount: 10400, anonymous: false, problem: "idea-34" });
     expect(poolTitles(w)).not.toContain("Idea 34");
     expect(poolTitles(w)).toContain("Idea 33");
     await vi.waitFor(() => expect(bodies.unregistered).toEqual(["idea-34"]));
     expect(bodies.registered.at(-1)).toBe("idea-33");
+  });
+
+  test("closing checkout without paying leaves the idea where it was", async () => {
+    outcome = { status: "closed" };
+    const w = await board();
+    w.findComponent({ name: "DayBox" }).vm.$emit("pick", "pool-idea-34", 104);
+    await flushPromises();
+    await w.find("#sponsor-button").trigger("click");
+    await flushPromises();
+    expect(poolTitles(w)).toContain("Idea 34");
+    expect(w.text()).not.toContain("Thank you");
   });
 
   test("a problem sent from the join form lands in the pool straight away", async () => {

@@ -38,13 +38,16 @@ export function testDb() {
 
 let n = 0;
 
-export function addProblem(sqlite: DatabaseSync, { title = null as string | null, problem = "A problem.", name = null as string | null, email = `person${++n}@example.com`, paid = [] as number[] } = {}) {
+export function addProblem(
+  sqlite: DatabaseSync,
+  { title = null as string | null, problem = "A problem.", name = null as string | null, email = `person${++n}@example.com`, paid = [] as number[], credit = null as string | null, awaiting = false } = {},
+) {
   const id = `problem-${++n}`;
   const at = new Date(Date.UTC(2026, 9, 1, 9, n)).toISOString();
   sqlite.prepare("INSERT INTO people (email, name, joined_at, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING").run(email, name, at, at);
-  sqlite.prepare("INSERT INTO problems (id, email, problem, title, created_at) VALUES (?, ?, ?, ?, ?)").run(id, email, problem, title, at);
+  sqlite.prepare("INSERT INTO problems (id, email, problem, title, awaiting_payment, created_at) VALUES (?, ?, ?, ?, ?, ?)").run(id, email, problem, title, Number(awaiting), at);
   paid.forEach((cents, i) =>
-    sqlite.prepare("INSERT INTO payments (id, problem_id, amount, currency, livemode, paid_at) VALUES (?, ?, ?, 'usd', 0, ?)").run(`cs_test_${id}_${i}`, id, cents, at),
+    sqlite.prepare("INSERT INTO payments (id, problem_id, name, amount, currency, livemode, paid_at) VALUES (?, ?, ?, ?, 'usd', 0, ?)").run(`cs_test_${id}_${i}`, id, credit, cents, at),
   );
   return id;
 }

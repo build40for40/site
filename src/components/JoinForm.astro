@@ -140,6 +140,7 @@ const input =
 <script>
   import { money } from "../data/site";
   import { DEV_SEND, JOIN_CLOSE, SENT, type Box, type SentProblem } from "../pool/flight";
+  import { pay, type Opened } from "./forms/checkout";
 
   // Vue sets the board's slot HTML again as it hydrates, so the form is wired up once that's done.
   const island = document.querySelector("section#join")?.closest("astro-island");
@@ -243,11 +244,11 @@ const input =
       gate();
     }
 
-    async function send(amount: number, test?: boolean) {
+    async function send(amount: number, { id, test }: { id?: string | null; test?: boolean } = {}) {
       const data = new FormData(form);
       const problem = String(data.get("problem") ?? "").trim();
       if (problem) {
-        const detail: SentProblem = { problem, name: String(data.get("name") ?? "").trim(), amount, from: null, test };
+        const detail: SentProblem = { id: id ?? undefined, problem, name: String(data.get("name") ?? "").trim(), amount, from: null, test };
         if (!matchMedia("(prefers-reduced-motion: reduce)").matches) detail.from = await fold();
         dispatchEvent(new CustomEvent(SENT, { detail }));
       }
@@ -257,9 +258,21 @@ const input =
       reset();
     }
 
-    form.addEventListener("sent", () => {
-      const data = new FormData(form);
-      send(data.get("backing") === "sponsor" ? Number(data.get("sponsor")) / 100 : 0);
+    // A sponsored problem only lands once it's paid. Until then it waits, hidden, and the form stays as it was.
+    const status = form.querySelector<HTMLElement>("[role=status]")!;
+    form.addEventListener("sent", async (event) => {
+      const { problem, checkout } = (event as CustomEvent<{ problem?: string | null; checkout?: Opened }>).detail;
+      if (!checkout) return send(0, { id: problem });
+      const outcome = await pay(async () => checkout, `Sponsor ${money(Number(new FormData(form).get("sponsor")) / 100)}`);
+      if (outcome.status === "paid") return send(outcome.amount, { id: problem });
+      if (outcome.status === "processing") {
+        reset();
+        status.textContent = "Your payment’s still going through. Your problem joins the queue as soon as it clears.";
+        return;
+      }
+      status.textContent = "No payment went through, so your problem hasn’t been sent. Try again, or back it with the honor code.";
+      submit.disabled = false;
+      submit.ariaBusy = null;
     });
 
     // Dev only: the + buttons in the tweak bar fill the form in and send it without saving anything.
@@ -275,7 +288,7 @@ const input =
         form.querySelector<HTMLInputElement>(`[name=backing][value=${amount ? "sponsor" : "share"}]`)!.checked = true;
         gate();
         await new Promise((resolve) => setTimeout(resolve, 600));
-        send(amount, true);
+        send(amount, { test: true });
       });
     }
 

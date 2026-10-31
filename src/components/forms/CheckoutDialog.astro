@@ -1,0 +1,23 @@
+<dialog
+  id="checkout"
+  aria-labelledby="checkout-title"
+  class="m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-lg border border-night-line bg-night-panel p-0 text-night-text backdrop:bg-night/80"
+>
+  <div class="flex flex-col gap-3 p-3 sm:p-4">
+    <header class="flex items-center justify-between gap-4">
+      <h2 id="checkout-title" data-checkout-title class="m-0 text-xl font-semibold tracking-tight">Sponsor</h2>
+      <button
+        type="button"
+        data-checkout-close
+        aria-label="Close"
+        class="grid size-10 shrink-0 cursor-pointer place-items-center rounded-full border border-night-edge bg-transparent text-night-text hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime disabled:cursor-wait disabled:opacity-40"
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24" class="size-5 fill-none stroke-current stroke-2 [stroke-linecap:round]">
+          <path d="M6 6l12 12M18 6 6 18" />
+        </svg>
+      </button>
+    </header>
+    <p role="status" data-checkout-status class="m-0 font-mono text-xs text-night-sub empty:hidden"></p>
+    <div data-checkout-mount class="overflow-hidden rounded-md bg-white empty:hidden"></div>
+  </div>
+</dialog>

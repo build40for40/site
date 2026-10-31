@@ -1,5 +1,6 @@
 <script>
-  // Forms marked data-send-in-place post in the background and fire a sent event on the form once it's through.
+  // Forms marked data-send-in-place post in the background and fire a sent event on the form once it's through, with
+  // whatever the Worker answered.
   document.addEventListener("submit", async (event) => {
     const form = event.target;
     if (!(form instanceof HTMLFormElement) || !form.hasAttribute("data-send-in-place")) return;
@@ -8,10 +9,11 @@
     const submit = form.querySelector<HTMLButtonElement>("[data-submit]");
     let error = "That didn’t send. Mind trying again?";
     try {
-      const response = await fetch(form.action, { method: "POST", body: new FormData(form), redirect: "manual" });
+      const response = await fetch(form.action, { method: "POST", body: new FormData(form), redirect: "manual", headers: { Accept: "application/json" } });
       if (response.type === "opaqueredirect" || response.ok) {
         if (status) status.textContent = "";
-        form.dispatchEvent(new Event("sent"));
+        const reply = response.headers.get("Content-Type")?.includes("json") ? await response.json() : {};
+        form.dispatchEvent(new CustomEvent("sent", { detail: reply }));
         return;
       }
       error = (await response.text()) || error;

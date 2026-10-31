@@ -6,16 +6,24 @@ describe("listProblems", () => {
   test("ranks by money raised, in dollars, with first names only and never an email", async () => {
     const { db, sqlite } = testDb();
     const low = addProblem(sqlite, { title: "Low", name: "Ada Example", paid: [500] });
-    const high = addProblem(sqlite, { title: "High", name: "  Grace Hopper Example ", paid: [4000, 1000] });
+    const high = addProblem(sqlite, { title: "High", name: "  Grace Hopper Example ", paid: [4000, 1000], credit: "Ada" });
     const none = addProblem(sqlite, { title: "None" });
 
     const { ideas, next } = await listProblems(db, { offset: 0, limit: 10 });
 
     expect(ideas.map((i) => i.id)).toEqual([high, low, none]);
-    expect(ideas[0]).toMatchObject({ owner: "Grace", sponsors: [{ name: "Anonymous", amount: 40 }, { name: "Anonymous", amount: 10 }] });
+    expect(ideas[0]).toMatchObject({ owner: "Grace", sponsors: [{ name: "Ada", amount: 40 }, { name: "Ada", amount: 10 }] });
+    expect(ideas[1].sponsors).toEqual([{ name: "Anonymous", amount: 5 }]);
     expect(ideas[2].owner).toBeUndefined();
     expect(JSON.stringify(ideas)).not.toContain("@");
     expect(next).toBeNull();
+  });
+
+  test("leaves out problems still waiting for their payment", async () => {
+    const { db, sqlite } = testDb();
+    addProblem(sqlite, { title: "Waiting", awaiting: true });
+    const shown = addProblem(sqlite, { title: "Shown" });
+    expect((await listProblems(db, { offset: 0, limit: 10 })).ideas.map((i) => i.id)).toEqual([shown]);
   });
 
   test("falls back to the start of the problem when there's no title", async () => {

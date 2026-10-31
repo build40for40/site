@@ -3,6 +3,7 @@ import Base from "../layouts/Base.astro";
 import DayBoard from "../components/DayBoard.vue";
 import JoinForm from "../components/JoinForm.astro";
 import SendInPlace from "../components/forms/SendInPlace.astro";
+import CheckoutDialog from "../components/forms/CheckoutDialog.astro";
 import DevVariants from "../components/DevVariants.astro";
 import { history } from "../data/days";
 import { links } from "../data/site";
@@ -32,5 +33,6 @@ const cta = "rounded-full border px-4 py-2 text-sm font-semibold no-underline fo
     <JoinForm slot="join" />
   </DayBoard>
   <SendInPlace />
+  <CheckoutDialog />
   {import.meta.env.DEV && <DevVariants />}
 </Base>

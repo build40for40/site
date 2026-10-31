@@ -26,6 +26,7 @@ import { loadIdeas } from "../pool/data";
 import { DEV_FEWER, JOIN_CLOSE, SENT, boxOf, fold, lob, pop, settle, shift, type Box, type SentProblem } from "../pool/flight";
 import { createSearch, type Match, type Ranking } from "../pool/search";
 import { excerpt } from "../../worker/problems";
+import { confirmReturn, pay, startCheckout } from "./forms/checkout";
 
 const props = defineProps<{ history: Record<number, ShippedIdea>; builtAt: number }>();
 
@@ -114,6 +115,18 @@ onMounted(() => {
   addEventListener("click", browseClicked);
   document.addEventListener("input", typed);
   if (location.hash === "#browse") openBrowse();
+  confirmReturn()
+    .catch(() => {})
+    .then(load);
+  fetch("/api/days")
+    .then((response) => (response.ok ? response.json() : null))
+    .then((days: { sponsors: Record<number, Sponsor[]> } | null) => {
+      if (days) guestSponsors.value = days.sponsors;
+    })
+    .catch(() => {});
+});
+
+function load() {
   openShared();
   loadIdeas({
     signal: loader.signal,
@@ -126,7 +139,7 @@ onMounted(() => {
   })
     .catch(() => {})
     .finally(() => (loading.value = false));
-});
+}
 
 // Shared links open the board on that idea: ?idea=12 for ideas still moving in the queue, ?day=5 otherwise. Ideas
 // arrive a page at a time, so an idea link waits for the page it's on.
@@ -265,14 +278,14 @@ const evicted = ref<{ idea: Idea; from: Box } | null>(null);
 const evictedGhost = ref<HTMLElement>();
 
 async function arrive(event: Event) {
-  const { problem, name, amount, from, test } = (event as CustomEvent<SentProblem>).detail;
+  const { id, problem, name, amount, from, test } = (event as CustomEvent<SentProblem>).detail;
   search.cancel();
   similar.value = null;
   const owner = name.split(/\s+/)[0] || undefined;
   const sponsors = amount ? [{ name: owner ?? "Anonymous", amount }] : [];
   // Test sends from the tweak bar count as the oldest, so they win ties.
   const submittedAt = new Date(test ? 0 : Date.now()).toISOString();
-  const idea: Idea = { id: `sent-${crypto.randomUUID()}`, title: excerpt(problem), problem, owner, sponsors, submittedAt };
+  const idea: Idea = { id: id ?? `sent-${crypto.randomUUID()}`, title: excerpt(problem), problem, owner, sponsors, submittedAt };
   const placed = new Map(board.value.days.flatMap((d) => (d.idea ? [[d.idea.id, d.key] as const] : [])));
   if (from) {
     flight.value = { title: idea.title, from };
@@ -362,13 +375,18 @@ function pick(key: string, preset: number) {
   }, "sponsor-button");
 }
 
-function sponsorLocally(paid: number, anonymous: boolean) {
-  const sponsor = { name: anonymous ? "Anonymous" : "You", amount: paid };
-  const { day, status, idea: entryIdea } = selected.value;
+async function sponsor(amount: number, anonymous: boolean) {
+  const entry = selected.value;
+  const target = entry.status === "guest" ? { day: entry.day } : { problem: entry.idea?.id };
+  const outcome = await pay(() => startCheckout({ amount: amount * 100, anonymous, ...target }), `Sponsor ${money(amount)}`);
+  if (outcome.status === "paid") credit(entry, { name: outcome.name ?? "Anonymous", amount: outcome.amount });
+}
+
+function credit({ key, day, status, idea: entryIdea }: Entry, sponsor: Sponsor) {
   if (status === "guest" && day) {
     return swap(() => {
       (guestSponsors.value[day] ??= []).push(sponsor);
-      backed.value = selected.value.key;
+      backed.value = key;
     }, "day-box");
   }
   const id = entryIdea?.id;
@@ -507,7 +525,7 @@ const tileSub = (e: Entry) => {
             :backed="backed === selected.key"
             :headline="kicker"
             :next-day="nextDay"
-            @sponsor="sponsorLocally"
+            @sponsor="sponsor"
             @again="backed = null"
             @pick="pick"
           />
