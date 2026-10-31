@@ -17,7 +17,7 @@ import {
   type Entry,
   type ShippedIdea,
 } from "../data/days";
-import { money } from "../data/site";
+import { links, money } from "../data/site";
 
 const props = defineProps<{
   entry: Entry;
@@ -52,6 +52,7 @@ const isLive = computed(() => props.entry.status === "live");
 const isNext = computed(() => props.entry.day === props.nextDay && (props.entry.status === "queued" || props.entry.status === "guest"));
 const isShipped = computed(() => props.entry.status === "shipped");
 const liveStyle = computed(() => isLive.value || isNext.value || isShipped.value);
+const watch = computed(() => (isLive.value ? links.twitch : isShipped.value ? shippedIdea.value.recordingUrl : null));
 
 function toggleSponsoring() {
   if (props.backed) emit("again");
@@ -160,15 +161,22 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
     class="grid scroll-mt-4 gap-2 border-t-3 pt-2.5 outline-offset-4 [view-transition-name:day-box] focus-visible:outline-2 focus-visible:outline-brand-lime lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
     :class="tones[entry.status].border"
   >
-    <div class="col-span-full flex flex-wrap justify-between gap-x-3 gap-y-1" :class="kicker">
+    <div class="col-span-full flex flex-wrap items-center justify-between gap-x-3 gap-y-1" :class="kicker">
       <span v-if="isTodayEntry || isNext" class="flex items-center gap-2" :class="headline.tone">
         <span class="size-[7px] shrink-0 rounded-full" :class="headline.dot"></span>{{ headline.text }}
       </span>
       <span v-else>{{ where }}</span>
-      <span v-if="!isTodayEntry && !isNext" :class="tones[entry.status].text">{{ glyph }}{{ label }}</span>
+      <div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
+        <span v-if="!isTodayEntry && !isNext" :class="tones[entry.status].text">{{ glyph }}{{ label }}</span>
+        <!-- Narrow screens have no room for the player, so its links move up here. -->
+        <div v-if="watch || share" class="flex flex-wrap items-center justify-end gap-1.5 tracking-normal normal-case lg:hidden">
+          <a v-if="watch" :href="watch" target="_blank" rel="noopener" class="no-underline" :class="overlayPill">▶ Watch</a>
+          <ShareButton v-if="share" class="justify-end" v-bind="share" label="Share" />
+        </div>
+      </div>
     </div>
 
-    <div class="relative flex min-w-0 flex-col self-start overflow-hidden rounded-md bg-night-panel">
+    <div class="relative flex min-w-0 flex-col self-start overflow-hidden rounded-md bg-night-panel max-lg:hidden">
       <div class="flex aspect-video flex-col bg-player lg:min-h-100">
         <div class="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-2.5 p-4 text-center">
           <template v-if="isShipped">
@@ -328,7 +336,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
           <p class="m-0 text-[15px] leading-snug text-night-sub text-pretty">A special guest brings their own problem and builds it with us. It stays a secret until 9:00 on {{ entry.date }}.</p>
           <p class="m-0 text-[15px] leading-snug text-pretty">Same rules as every day: 4 hours 40 minutes on the clock, live on Twitch.</p>
         </template>
-        <ShareButton v-if="share && !liveStyle" v-bind="share" />
+        <ShareButton v-if="share && !liveStyle" class="max-lg:hidden" v-bind="share" />
         <p v-if="line" class="m-0 text-[15px] leading-snug text-pretty">{{ line }}</p>
         <p v-if="upNext" class="m-0 text-[15px] leading-snug text-pretty">Up next on Day {{ upNext.day }}: {{ upNext.title }}.</p>
         <div v-if="isShipped" class="flex flex-wrap items-center gap-x-4 gap-y-2">
