@@ -161,19 +161,12 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
     class="grid scroll-mt-4 gap-2 border-t-3 pt-2.5 outline-offset-4 [view-transition-name:day-box] focus-visible:outline-2 focus-visible:outline-brand-lime lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
     :class="tones[entry.status].border"
   >
-    <div class="col-span-full flex flex-wrap items-center justify-between gap-x-3 gap-y-1" :class="kicker">
+    <div class="col-span-full flex flex-wrap justify-between gap-x-3 gap-y-1" :class="kicker">
       <span v-if="isTodayEntry || isNext" class="flex items-center gap-2" :class="headline.tone">
         <span class="size-[7px] shrink-0 rounded-full" :class="headline.dot"></span>{{ headline.text }}
       </span>
       <span v-else>{{ where }}</span>
-      <div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
-        <span v-if="!isTodayEntry && !isNext" :class="tones[entry.status].text">{{ glyph }}{{ label }}</span>
-        <!-- Narrow screens have no room for the player, so its links move up here. -->
-        <div v-if="watch || share" class="flex flex-wrap items-center justify-end gap-1.5 tracking-normal normal-case lg:hidden">
-          <a v-if="watch" :href="watch" target="_blank" rel="noopener" class="no-underline" :class="overlayPill">▶ Watch</a>
-          <ShareButton v-if="share" class="justify-end" v-bind="share" label="Share" />
-        </div>
-      </div>
+      <span v-if="!isTodayEntry && !isNext" :class="tones[entry.status].text">{{ glyph }}{{ label }}</span>
     </div>
 
     <div class="relative flex min-w-0 flex-col self-start overflow-hidden rounded-md bg-night-panel max-lg:hidden">
@@ -327,12 +320,16 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
       </template>
 
       <template v-else>
-        <template v-if="idea">
-          <h2 class="m-0 text-[26px] leading-[1.04] font-semibold tracking-tight text-balance md:text-3xl">{{ dayPrefix }}{{ idea.title }}</h2>
-          <p class="m-0 line-clamp-3 text-[15px] leading-snug text-night-sub text-pretty" :title="idea.problem"><span class="text-brand-yellow">(</span>{{ idea.problem }}<span class="text-brand-yellow">)</span></p>
-        </template>
+        <div class="flex items-start justify-between gap-3">
+          <h2 class="m-0 min-w-0 text-[26px] leading-[1.04] font-semibold tracking-tight text-balance md:text-3xl">{{ dayPrefix }}{{ idea?.title ?? "Guest day" }}</h2>
+          <!-- Narrow screens have no room for the player, so its links move up here. -->
+          <div v-if="watch || share" class="flex shrink-0 flex-col items-end gap-1.5 lg:hidden">
+            <a v-if="watch" :href="watch" target="_blank" rel="noopener" class="no-underline" :class="overlayPill">▶ Watch</a>
+            <ShareButton v-if="share" class="justify-end" v-bind="share" label="Share" />
+          </div>
+        </div>
+        <p v-if="idea" class="m-0 line-clamp-3 text-[15px] leading-snug text-night-sub text-pretty" :title="idea.problem"><span class="text-brand-yellow">(</span>{{ idea.problem }}<span class="text-brand-yellow">)</span></p>
         <template v-else>
-          <h2 class="m-0 text-[26px] leading-[1.04] font-semibold tracking-tight text-balance md:text-3xl">{{ dayPrefix }}Guest day</h2>
           <p class="m-0 text-[15px] leading-snug text-night-sub text-pretty">A special guest brings their own problem and builds it with us. It stays a secret until 9:00 on {{ entry.date }}.</p>
           <p class="m-0 text-[15px] leading-snug text-pretty">Same rules as every day: 4 hours 40 minutes on the clock, live on Twitch.</p>
         </template>
