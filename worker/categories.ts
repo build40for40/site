@@ -79,24 +79,3 @@ export async function categoriseProblem(db: D1Database, classifier: Classifier, 
   await save(db, id, sorted);
   report?.(id, sorted);
 }
-
-// Problems that were never sorted, or were sorted against an older list.
-export async function categoriseBacklog(db: D1Database, classifier: Classifier, { limit = 25, report }: { limit?: number; report?: Report } = {}) {
-  const { results } = await db
-    .prepare(
-      `SELECT id FROM problems
-       WHERE categorised_by IS NULL OR (categorised_by != 'team' AND coalesce(categories_version, 0) < ?1)
-       ORDER BY created_at
-       LIMIT ?2`,
-    )
-    .bind(CATEGORIES_VERSION, limit)
-    .all<{ id: string }>();
-  let sorted = 0;
-  for (const { id } of results) {
-    try {
-      await categoriseProblem(db, classifier, id, report);
-      sorted++;
-    } catch {}
-  }
-  return { sorted, tried: results.length };
-}

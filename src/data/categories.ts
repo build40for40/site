@@ -5,7 +5,7 @@ export interface Category {
   covers: string;
 }
 
-// Bump the version whenever a category is added, removed or reworded, so every problem gets sorted again.
+// Bump the version whenever a category is added, removed or reworded. Each sort records the version it used.
 export const CATEGORIES_VERSION = 2;
 
 export const categories: Category[] = [

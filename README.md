@@ -94,7 +94,7 @@ To change the schema, add a numbered `.sql` file to `worker/migrations/`. `npm r
 
 Every problem is sorted into the categories in `src/data/categories.ts`, which the Browse panel offers as topic chips. Jev answers one yes or no per category, plus whether the problem is meant sincerely, and every category's score goes into `problem_categories`. A problem is in each category scoring at least `fits` (up to three, best first), and in Other when none do. A best score between `unsure` and `fits` isn't settled either way. Only the title and problem text are sent to Jev, and the Worker logs every request it sends, so `npm run wrangler -- tail` shows exactly what was asked.
 
-New problems are sorted right after they're saved, and a cron every 15 minutes sorts any that were missed. Bumping `CATEGORIES_VERSION` after changing the list sorts everything again. Each sort sends a `problem_categorised` event to PostHog with the problem's id, its categories, `fit` (`fits`, `unsure` or `none`), its best score and `sincere`, so an insight or alert on `fit != fits` finds the ones that need a look. The thresholds only change how scores are read, so moving them needs no new sort.
+New problems are sorted right after they're saved. A problem whose sort fails, or that was saved while `TYPESAFE_API_KEY` was unset, stays unsorted until someone sorts it by hand. Each sort records the `CATEGORIES_VERSION` it used, so bump it when the list changes. Each sort sends a `problem_categorised` event to PostHog with the problem's id, its categories, `fit` (`fits`, `unsure` or `none`), its best score and `sincere`, so an insight or alert on `fit != fits` finds the ones that need a look. The thresholds only change how scores are read, so moving them needs no new sort.
 
 To sort a problem by hand, mark it as the team's so the classifier leaves it alone, and give each category it's in a score of 1. With no categories it's in Other:
 
@@ -108,7 +108,11 @@ To list the problems that fit nothing or might be junk:
 npm run wrangler -- d1 execute 40for40 --remote --command "SELECT p.id, p.title, p.sincere, max(c.score) AS best FROM problems p JOIN problem_categories c ON c.problem_id = p.id GROUP BY p.id HAVING best < 0.7 OR p.sincere < 0.7 ORDER BY best"
 ```
 
-Locally, the seed sorts its fake problems by hand. To try the cron with a key in `.env`, run `npm run wrangler -- dev --test-scheduled` and open `/__scheduled`.
+Locally, the seed sorts its fake problems by hand.
+
+### Titles
+
+Each new problem gets a short title from Claude Haiku, alongside its sort with Jev, when `ANTHROPIC_API_KEY` is set. Only the problem text is sent. The title is written only while the problem has none, so one the team sets is never replaced. If titling fails, the problem shows the start of its text until someone sets a title by hand. `worker/titles.ts` hides the provider behind a `Titler`, so changing model is one default and changing provider is one new function. To try it locally, put a key in `.env`. In production, `npm run wrangler -- secret put ANTHROPIC_API_KEY`.
 
 Artwork is seeded from the problem id. Setting `ARTWORK_SUBMITTER_SEEDS` to `on` (with an `ARTWORK_SEED_SECRET` secret) gives one person's problems a family look, which also reveals that they came from the same person.
 

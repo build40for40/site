@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { CATEGORIES_VERSION, categories } from "../src/data/categories";
-import { categoriseBacklog, categoriseProblem, verdict } from "./categories";
+import { categoriseProblem, verdict } from "./categories";
 import type { Classifier } from "./classifier";
 import { listProblems } from "./problems";
 import { addProblem, testDb } from "./test-db";
@@ -49,32 +49,6 @@ describe("categoriseProblem", () => {
     await categoriseProblem(db, fakeClassifier({}, ask), id);
     expect(ask).not.toHaveBeenCalled();
     expect(await categoriesOf(db, id)).toEqual(["other"]);
-  });
-});
-
-describe("categoriseBacklog", () => {
-  test("sorts problems that were never sorted or were sorted against an older list, and carries on past failures", async () => {
-    const { db, sqlite } = testDb();
-    const fresh = addProblem(sqlite, { problem: "Fresh" });
-    const stale = addProblem(sqlite, { problem: "Stale" });
-    const broken = addProblem(sqlite, { problem: "Broken" });
-    const current = addProblem(sqlite, { problem: "Current" });
-    const team = addProblem(sqlite, { problem: "Team" });
-    sqlite.prepare("UPDATE problems SET categorised_by = 'jev-old', categories_version = ? WHERE id = ?").run(CATEGORIES_VERSION - 1, stale);
-    sqlite.prepare("UPDATE problems SET categorised_by = 'jev-test', categories_version = ? WHERE id = ?").run(CATEGORIES_VERSION, current);
-    sqlite.prepare("UPDATE problems SET categorised_by = 'team' WHERE id = ?").run(team);
-
-    const seen: string[] = [];
-    const classifier = fakeClassifier({ food: 0.9 }, (state: { idea: { problem: string } }) => {
-      seen.push(state.idea.problem);
-      if (state.idea.problem === "Broken") throw new Error("timed out");
-    });
-    const report = vi.fn();
-
-    expect(await categoriseBacklog(db, classifier, { report })).toEqual({ sorted: 2, tried: 3 });
-    expect(seen).toEqual(["Fresh", "Stale", "Broken"]);
-    expect(report.mock.calls.map(([id]) => id)).toEqual([fresh, stale]);
-    expect(await categoriesOf(db, broken)).toBeUndefined();
   });
 });
 

@@ -1,10 +1,11 @@
 import { GUEST_DAYS } from "../src/data/days";
 import { TOTAL_DAYS, backings, helpTypes, involvement } from "../src/data/site";
-import { categoriseBacklog, categoriseProblem, verdict, type Sorted } from "./categories";
+import { categoriseProblem, verdict, type Sorted } from "./categories";
 import { SPONSOR_CENTS, StripeError, openCheckout, readCheckout, recordPayment, statusOf, summary, type CheckoutSession, type Sponsoring } from "./checkout";
 import { jevClassifier } from "./classifier";
 import { listProblems } from "./problems";
 import { searchIdeas } from "./search";
+import { anthropicTitler, titleProblem } from "./titles";
 
 interface Field {
   name: string;
@@ -233,6 +234,8 @@ async function problems(request: Request, env: Env) {
 const classifierFor = (env: Env, timeoutMs?: number) =>
   env.TYPESAFE_API_KEY ? jevClassifier({ apiKey: env.TYPESAFE_API_KEY, baseUrl: env.TYPESAFE_API_URL || undefined, timeoutMs }) : undefined;
 
+const titlerFor = (env: Env) => (env.ANTHROPIC_API_KEY ? anthropicTitler({ apiKey: env.ANTHROPIC_API_KEY }) : undefined);
+
 // Lets the team find problems that fit no category, or might be junk, without the problem's text leaving the Worker.
 const reportSorted = (env: Env, ctx: ExecutionContext, via: string) => (id: string, sorted: Sorted) =>
   ctx.waitUntil(capture(env, "problem_categorised", id, { problem_id: id, via, model: sorted.model, ...verdict(sorted) }).catch(() => {}));
@@ -350,17 +353,13 @@ export default {
 
     const classifier = problemId && classifierFor(env, CATEGORISE_TIMEOUT_MS);
     if (problemId && classifier) ctx.waitUntil(categoriseProblem(env.DB, classifier, problemId, reportSorted(env, ctx, "submit")).catch(() => {}));
+    const titler = problemId && titlerFor(env);
+    if (problemId && titler) ctx.waitUntil(titleProblem(env.DB, titler, problemId).catch(() => {}));
 
     if (sponsoring) {
       const name = String(values.name ?? "").split(/\s+/)[0] || null;
       return openCheckoutResponse(env, { cents: Number(values.sponsor), problemId, email: String(values.email), name, origin: url.origin }, { problem: problemId });
     }
     return request.headers.get("Accept")?.includes("application/json") ? Response.json({ problem: problemId ?? null }) : home;
-  },
-
-  // Catches problems the submit missed, and sorts everything again when the category list changes.
-  async scheduled(_controller, env, ctx) {
-    const classifier = classifierFor(env, CATEGORISE_TIMEOUT_MS);
-    if (classifier) await categoriseBacklog(env.DB, classifier, { report: reportSorted(env, ctx, "backlog") });
   },
 } satisfies ExportedHandler<Env>;
