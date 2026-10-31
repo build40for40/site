@@ -81,7 +81,7 @@ onBeforeUnmount(() => {
 <template>
   <section id="browse" aria-labelledby="browse-title" class="flex flex-col gap-3 rounded-lg bg-night-panel p-3 text-night-text ring-1 ring-night-line ring-inset sm:p-4" @keydown="keyed">
     <h2 id="browse-title" class="sr-only">Browse the pool</h2>
-    <div class="flex items-center gap-2 sm:flex-wrap">
+    <div class="flex items-center gap-2 max-sm:items-start sm:flex-wrap">
       <label for="browse-search" class="sr-only">Search the pool</label>
       <!-- On phones the keyboard would cover the pool, so browsing there is by topic only. -->
       <div class="relative min-w-0 flex-1 max-sm:hidden">
@@ -104,7 +104,7 @@ onBeforeUnmount(() => {
           @click="clear"
         >✕</button>
       </div>
-      <div v-if="sorted" role="group" aria-label="Topic" class="-ml-3 flex min-w-0 flex-1 gap-2 overflow-x-auto pl-3 sm:order-last sm:mx-0 sm:basis-full sm:flex-wrap sm:px-0 sm:pt-1">
+      <div v-if="sorted" role="group" aria-label="Topic" class="flex min-w-0 flex-1 flex-wrap gap-2 sm:order-last sm:basis-full sm:pt-1">
         <button
           v-for="t in topics"
           :key="t.key"
