@@ -119,9 +119,14 @@ onBeforeUnmount(() => {
       </div>
       <button
         type="button"
-        class="ml-auto shrink-0 cursor-pointer rounded-full border border-night-edge bg-transparent px-3 py-2 font-mono text-xs text-night-sub hover:border-night-text hover:text-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime"
+        aria-label="Close"
+        class="ml-auto grid size-10 shrink-0 cursor-pointer place-items-center rounded-full border border-night-edge bg-transparent text-night-text hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime"
         @click="emit('close')"
-      >Close</button>
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24" class="size-5 fill-none stroke-current stroke-2 [stroke-linecap:round]">
+          <path d="M6 6l12 12M18 6 6 18" />
+        </svg>
+      </button>
     </div>
 
     <p role="status" aria-live="polite" class="m-0 font-mono text-xs text-night-sub empty:hidden" :class="count && 'sr-only'">
