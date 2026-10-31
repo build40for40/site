@@ -75,9 +75,10 @@ export function pop(element: HTMLElement, from: Box) {
   return element.animate([place(from), place(to)], { duration: 260, easing: "cubic-bezier(.34,1.56,.64,1)", fill: "forwards" }).finished;
 }
 
-// A lob across the page that lands square in its slot.
+// A lob across the page that lands square in its slot, arcing no higher than the top of the screen.
 export function lob(element: HTMLElement, from: Box, to: Box) {
-  return travel(element, from, to, { duration: 560 + Math.sqrt(distance(from, to)) * 12, easing: "cubic-bezier(.45,0,.4,1)", lift: 90, peak: 0.45, spin: 0 });
+  const lift = Math.max(0, Math.min(90, Math.min(from.top, to.top) - 8));
+  return travel(element, from, to, { duration: 560 + Math.sqrt(distance(from, to)) * 12, easing: "cubic-bezier(.45,0,.4,1)", lift, peak: 0.45, spin: 0 });
 }
 
 export const boxOf = (element: Element): Box => {

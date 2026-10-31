@@ -23,7 +23,7 @@ import {
 import { TOTAL_DAYS, money } from "../data/site";
 import { poolConfig } from "../pool/config";
 import { loadIdeas } from "../pool/data";
-import { DEV_FEWER, JOIN_CLOSE, SENT, boxOf, fold, lob, pop, settle, shift, type Box, type SentProblem } from "../pool/flight";
+import { DEV_FEWER, DEV_SEND, JOIN_CLOSE, SENT, boxOf, fold, lob, pop, settle, shift, type Box, type SentProblem } from "../pool/flight";
 import { createSearch, type Match, type Ranking } from "../pool/search";
 import { excerpt } from "../../worker/problems";
 import { confirmReturn, pay, startCheckout } from "./forms/checkout";
@@ -60,6 +60,15 @@ function fewer(event: Event) {
   const shown =
     param === "grid" ? board.value.days.filter((d) => d.status === "queued" && !sentHere(d.idea!)).length : ideas.value.filter((i) => !sentHere(i) && !raised(i)).length;
   devCounts.value = { ...devCounts.value, [param]: Math.max(0, (devCounts.value[param] ?? shown) - 1) };
+}
+
+// A test send to the days is raised to the least any queued day has, so it always lands on one.
+function sendToDays(event: Event) {
+  const detail = (event as CustomEvent<{ amount: number }>).detail;
+  if (!detail.amount) return;
+  const days = board.value.days;
+  const floor = days.some((d) => d.status === "open") ? 1 : Math.min(...days.filter((d) => d.status === "queued").map((d) => raised(d.idea!)));
+  if (Number.isFinite(floor)) detail.amount = Math.max(detail.amount, floor);
 }
 const board = computed(() => buildBoard(submitted.value, history.value, now.value, guestSponsors.value));
 const pool = computed<Entry[]>(() => board.value.pool.map(({ key, idea }) => ({ key, idea, status: "pool" })));
@@ -108,6 +117,7 @@ onMounted(() => {
     const count = (name: string) => (params.has(name) ? Number(params.get(name)) : undefined);
     devCounts.value = { grid: count("grid"), pool: count("pool") };
     addEventListener(DEV_FEWER, fewer);
+    addEventListener(DEV_SEND, sendToDays, true);
   }
   const offset = Number.isNaN(override) ? 0 : override - Date.now();
   now.value = Date.now() + offset;
@@ -166,6 +176,7 @@ onBeforeUnmount(() => {
   loader.abort();
   removeEventListener(SENT, arrive);
   removeEventListener(DEV_FEWER, fewer);
+  removeEventListener(DEV_SEND, sendToDays, true);
   removeEventListener("click", browseClicked);
   document.removeEventListener("input", typed);
   clearTimeout(typing);
@@ -579,7 +590,7 @@ const tileSub = (e: Entry) => {
               :aria-label="tileLabel(d)"
               :aria-pressed="d.key === selected.key"
               :tabindex="gridless ? undefined : -1"
-              class="grid h-5 cursor-pointer place-items-center rounded-xs p-0 font-mono text-[9px] leading-none font-medium ease-out focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-lime md:h-full md:min-w-0 md:flex-1 motion-safe:md:transition-[flex-grow,height] motion-safe:md:duration-100"
+              class="grid h-5 scroll-mt-8 cursor-pointer place-items-center rounded-xs p-0 font-mono text-[9px] leading-none font-medium ease-out focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-lime md:h-full md:min-w-0 md:flex-1 motion-safe:md:transition-[flex-grow,height] motion-safe:md:duration-100"
               :class="[
                 tones[d.status].dot,
                 d.idea || d.status === 'guest' ? 'text-night' : 'text-night-muted',
