@@ -1,41 +1,36 @@
 ---
 import { companySponsors } from "../data/site";
 
-// A lone sponsor would leave the orbit empty most of the time, so the logos repeat to fill it.
-const orbit = Array.from({ length: Math.ceil(3 / companySponsors.length) }, () => companySponsors).flat();
+// A handful of logos fits the strip, so they only scroll once there are more than that.
+const scrolls = companySponsors.length > 5;
 ---
 
 <section aria-labelledby="sponsors-title" class="mx-auto flex w-full max-w-[1600px] items-center gap-4 px-4 pb-8 lg:px-12">
   <h2 id="sponsors-title" class="m-0 shrink-0 font-mono text-[10px] font-medium tracking-wider text-night-muted uppercase">Sponsors</h2>
-  <div
-    class="group @container relative isolate flex h-20 min-w-0 flex-1 items-center justify-center overflow-hidden mask-x-from-80% [--orbit-radius:min(36cqw,18rem)] [--orbit-stretch:2.5] [--orbit-tilt:6px] [--orbit-time:12s] lg:h-24"
-  >
-    <ul class="m-0 flex list-none items-center gap-8 p-0 motion-safe:absolute motion-safe:inset-0">
+  <div class:list={["@container min-w-0 flex-1 overflow-hidden", scrolls && "mask-x-from-90%"]}>
+    <div class:list={["flex", scrolls && "w-max motion-safe:animate-credits hover:[animation-play-state:paused]"]}>
       {
-        orbit.map((sponsor, i) => {
-          const repeat = i >= companySponsors.length;
-          return (
-            <li
-              aria-hidden={repeat ? "true" : undefined}
-              style={`animation-delay: calc(var(--orbit-time) * ${-i / orbit.length})`}
-              class:list={[
-                "flex items-center justify-center motion-safe:absolute motion-safe:top-1/2 motion-safe:left-1/2 motion-safe:size-0 motion-safe:animate-orbit [animation-duration:var(--orbit-time)] group-hover:[animation-play-state:paused] focus-within:animate-none",
-                repeat && "motion-reduce:hidden",
-              ]}
-            >
-              <a
-                href={sponsor.url}
-                target="_blank"
-                rel="noopener"
-                tabindex={repeat ? -1 : undefined}
-                class="block shrink-0 rounded-sm opacity-80 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-lime"
-              >
-                <img src={sponsor.logo} alt={sponsor.name} width={sponsor.width} height={sponsor.height} class="block h-5 w-auto drop-shadow-[0_0_6px_var(--color-night)] lg:h-7" />
-              </a>
-            </li>
-          );
-        })
+        (scrolls ? [1, 2] : [1]).map((copy) => (
+          <ul
+            aria-hidden={copy === 2 ? "true" : undefined}
+            class="m-0 flex min-w-[100cqw] shrink-0 list-none flex-wrap items-center justify-around gap-x-16 gap-y-4 p-0 px-8 motion-reduce:not-first:hidden"
+          >
+            {companySponsors.map((sponsor) => (
+              <li class="shrink-0">
+                <a
+                  href={sponsor.url}
+                  target="_blank"
+                  rel="noopener"
+                  tabindex={copy === 2 ? -1 : undefined}
+                  class="block rounded-sm opacity-80 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-lime"
+                >
+                  <img src={sponsor.logo} alt={sponsor.name} width={sponsor.width} height={sponsor.height} class="block h-7 w-auto" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        ))
       }
-    </ul>
+    </div>
   </div>
 </section>
