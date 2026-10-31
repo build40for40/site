@@ -9,11 +9,9 @@ const handle = "build40for40";
 export const links = {
   twitch: `https://www.twitch.tv/${handle}`,
   twitchChannel: handle,
-  community: `https://discord.gg/${handle}`,
   email: "help@build40for40.com",
   socials: [
     { brand: "twitch", href: `https://www.twitch.tv/${handle}` },
-    { brand: "discord", href: `https://discord.gg/${handle}` },
     { brand: "linkedin", href: `https://www.linkedin.com/company/${handle}` },
     { brand: "x", href: `https://x.com/${handle}` },
     { brand: "instagram", href: `https://www.instagram.com/${handle}` },
