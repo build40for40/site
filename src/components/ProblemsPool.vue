@@ -524,7 +524,7 @@ onBeforeUnmount(() => {
         class="group"
         :style="{ '--grow': `${boxGrowth(t.raised)}px` }"
         :class="[
-          t.day ? 'size-9 rounded-md sm:size-11' : 'aspect-square w-[calc(1.25rem+var(--grow))] rounded-full sm:w-[calc(1.5rem+var(--grow))]',
+          t.day ? 'size-7 rounded sm:size-8' : 'aspect-square w-[calc(1.25rem+var(--grow))] rounded-full sm:w-[calc(1.5rem+var(--grow))]',
           physical ? 'pointer-events-auto absolute top-0 left-0 will-change-transform focus-within:z-10' : 'relative',
           physical && !active ? 'opacity-0 focus-within:opacity-100' : !physical && matches && !percents.has(t.id) && 'opacity-40',
           !physical && held.has(t.id) && 'invisible',
@@ -540,7 +540,7 @@ onBeforeUnmount(() => {
           :class="[
             physical && 'touch-none',
             t.day
-              ? ['grid place-items-center rounded-md text-night-text after:rounded-md', t.status === 'open' ? 'border-[1.5px] border-dashed border-night-edge bg-night-panel' : 'bg-night-tile']
+              ? 'grid place-items-center rounded bg-night-tile text-night-text after:rounded'
               : 'rounded-full bg-night-panel after:rounded-full',
           ]"
           @click="clicked(t.id, $event)"
@@ -554,8 +554,8 @@ onBeforeUnmount(() => {
           @blur="blurred(t.id, $event)"
         >
           <template v-if="t.day">
-            <span v-if="t.status !== 'open'" aria-hidden="true" class="absolute inset-x-0 top-0 h-[3px]" :class="tones[t.status!].dot"></span>
-            <span aria-hidden="true" class="font-mono text-sm leading-none font-semibold sm:text-base">{{ pad(t.day) }}</span>
+            <span aria-hidden="true" class="absolute inset-x-0 top-0 h-0.5" :class="tones[t.status!].dot"></span>
+            <span aria-hidden="true" class="font-mono text-[11px] leading-none font-semibold sm:text-xs">{{ pad(t.day) }}</span>
           </template>
           <span v-else aria-hidden="true" class="absolute inset-0 [&>svg]:size-full" v-html="artwork.get(t.id)"></span>
         </button>

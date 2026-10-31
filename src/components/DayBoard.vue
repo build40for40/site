@@ -168,6 +168,8 @@ const browseLinks = () => document.querySelectorAll<HTMLAnchorElement>('a[href="
 const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 let moving = false;
 
+// Days still up for grabs have nothing to show, so they stay out of the pool.
+const thrown = computed(() => board.value.days.filter((d) => d.status !== "open"));
 const dayIdeas = computed(() => board.value.days.flatMap((d) => (d.idea ? [d.idea] : [])));
 const browsable = computed(() => [...pool.value.map((p) => p.idea!), ...dayIdeas.value]);
 const dayOf = computed(() => new Map(board.value.days.flatMap((d) => (d.idea ? [[d.idea.id, d.key] as const] : []))));
@@ -182,7 +184,7 @@ async function openBrowse() {
   if (hero.value && !still()) await fold(hero.value, false);
   folded.value = true;
   await nextTick();
-  const pieces = board.value.days.flatMap((d) => {
+  const pieces = thrown.value.flatMap((d) => {
     const slot = slotOf(d.key);
     return slot ? [{ id: d.key, from: boxOf(slot) }] : [];
   });
@@ -196,7 +198,7 @@ async function openBrowse() {
 async function closeBrowse(key?: string) {
   if (!browsing.value || moving) return;
   moving = true;
-  const from = problems.value?.boxes(board.value.days.map((d) => d.key)) ?? new Map();
+  const from = problems.value?.boxes(thrown.value.map((d) => d.key)) ?? new Map();
   browsing.value = false;
   browsed.value = null;
   if (key) {
@@ -413,7 +415,7 @@ function typed(event: Event) {
 }
 
 const dayTiles = computed<PoolTile[]>(() =>
-  board.value.days.map((d) => {
+  thrown.value.map((d) => {
     const label = statusLabel(d, board.value.today);
     return {
       key: d.key,
@@ -461,7 +463,7 @@ const tileSub = (e: Entry) => {
                 tones[d.status].dot,
                 d.status === 'live' && 'motion-safe:animate-pulse',
                 incoming === d.key && 'invisible',
-                browsing && 'max-sm:invisible',
+                browsing && d.status !== 'open' && 'max-sm:invisible',
                 landed === d.key && 'animate-pop',
               ]"
             ></span>
