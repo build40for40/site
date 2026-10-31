@@ -33,6 +33,7 @@ test("topic chips appear once problems are sorted, and picking one floats all of
   expect(topics().map((b) => b.text())).toEqual(["Finance 1", "Home 2", "Friends & community 1", "Other 1"]);
   await topics()[1].trigger("click");
   expect(floated()).toEqual({ matches: [{ id: "b", score: 1 }, { id: "c", score: 1 }] });
+  expect(wrapper.find("[role=status]").classes()).toContain("sr-only");
   expect(wrapper.text()).toContain("2 problems float up");
 
   await topics()[1].trigger("click");

@@ -124,8 +124,8 @@ onBeforeUnmount(() => {
       >Close</button>
     </div>
 
-    <p role="status" aria-live="polite" class="m-0 font-mono text-xs text-night-sub empty:hidden">
-      <template v-if="count">{{ count }} {{ count === 1 ? "problem floats" : "problems float" }} up ↓</template>
+    <p role="status" aria-live="polite" class="m-0 font-mono text-xs text-night-sub empty:hidden" :class="count && 'sr-only'">
+      <template v-if="count">{{ count }} {{ count === 1 ? "problem floats" : "problems float" }} up</template>
       <template v-else-if="floated">
         Nothing in the pool like that yet. <a href="#join" class="text-night-text underline underline-offset-3 hover:text-brand-lime">Send it in</a>
       </template>
