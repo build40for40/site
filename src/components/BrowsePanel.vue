@@ -81,9 +81,10 @@ onBeforeUnmount(() => {
 <template>
   <section id="browse" aria-labelledby="browse-title" class="flex flex-col gap-3 rounded-lg bg-night-panel p-3 text-night-text ring-1 ring-night-line ring-inset sm:p-4" @keydown="keyed">
     <h2 id="browse-title" class="sr-only">Browse the pool</h2>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 sm:flex-wrap">
       <label for="browse-search" class="sr-only">Search the pool</label>
-      <div class="relative min-w-0 flex-1">
+      <!-- On phones the keyboard would cover the pool, so browsing there is by topic only. -->
+      <div class="relative min-w-0 flex-1 max-sm:hidden">
         <input
           id="browse-search"
           ref="input"
@@ -103,31 +104,29 @@ onBeforeUnmount(() => {
           @click="clear"
         >✕</button>
       </div>
+      <div v-if="sorted" role="group" aria-label="Topic" class="-ml-3 flex min-w-0 flex-1 gap-2 overflow-x-auto pl-3 sm:order-last sm:mx-0 sm:basis-full sm:flex-wrap sm:px-0 sm:pt-1">
+        <button
+          v-for="t in topics"
+          :key="t.key"
+          type="button"
+          :aria-pressed="topic === t.key"
+          class="shrink-0 cursor-pointer rounded-full border px-3 py-1 font-mono text-xs focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-lime"
+          :class="topic === t.key ? 'border-brand-lime bg-brand-lime text-brand-lime-ink' : 'border-night-edge bg-transparent text-night-sub hover:border-night-text hover:text-night-text'"
+          @click="topic = topic === t.key ? null : t.key"
+        >
+          {{ t.label }} <span :class="topic === t.key ? 'opacity-70' : 'text-night-muted'">{{ t.count }}</span>
+        </button>
+      </div>
       <button
         type="button"
-        class="shrink-0 cursor-pointer rounded-full border border-night-edge bg-transparent px-3 py-2 font-mono text-xs text-night-sub hover:border-night-text hover:text-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime"
+        class="ml-auto shrink-0 cursor-pointer rounded-full border border-night-edge bg-transparent px-3 py-2 font-mono text-xs text-night-sub hover:border-night-text hover:text-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime"
         @click="emit('close')"
       >Close</button>
     </div>
 
-    <div v-if="sorted" role="group" aria-label="Topic" class="-mx-3 flex gap-2 overflow-x-auto px-3 sm:mx-0 sm:flex-wrap sm:px-0">
-      <button
-        v-for="t in topics"
-        :key="t.key"
-        type="button"
-        :aria-pressed="topic === t.key"
-        class="shrink-0 cursor-pointer rounded-full border px-3 py-1 font-mono text-xs focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-lime"
-        :class="topic === t.key ? 'border-brand-lime bg-brand-lime text-brand-lime-ink' : 'border-night-edge bg-transparent text-night-sub hover:border-night-text hover:text-night-text'"
-        @click="topic = topic === t.key ? null : t.key"
-      >
-        {{ t.label }} <span :class="topic === t.key ? 'opacity-70' : 'text-night-muted'">{{ t.count }}</span>
-      </button>
-    </div>
-
-    <p role="status" aria-live="polite" class="m-0 font-mono text-xs text-night-sub">
-      <template v-if="!floated">Pick a topic or search, and the matches float up out of the pool ↓</template>
-      <template v-else-if="count">{{ count }} {{ count === 1 ? "problem floats" : "problems float" }} up ↓</template>
-      <template v-else>
+    <p role="status" aria-live="polite" class="m-0 font-mono text-xs text-night-sub empty:hidden">
+      <template v-if="count">{{ count }} {{ count === 1 ? "problem floats" : "problems float" }} up ↓</template>
+      <template v-else-if="floated">
         Nothing in the pool like that yet. <a href="#join" class="text-night-text underline underline-offset-3 hover:text-brand-lime">Send it in</a>
       </template>
     </p>
