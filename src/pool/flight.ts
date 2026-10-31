@@ -69,11 +69,10 @@ export function shift(element: Element, from: Box) {
   return element.animate([{ translate: `${from.left - to.left}px ${from.top - to.top}px` }, { translate: "0 0" }], { duration: 480, easing: "cubic-bezier(.65,0,.35,1)" }).finished;
 }
 
-// The box hops up out of its slot, a little bigger.
+// The box jumps up out of its slot, a little bigger.
 export function pop(element: HTMLElement, from: Box) {
-  const hop = Math.min(from.height * 0.3, 8);
-  const to = { left: from.left - from.width * 0.05, top: from.top - from.height * 0.05 - hop, width: from.width * 1.1, height: from.height * 1.1 };
-  return element.animate([place(from), place(to)], { duration: 260, easing: "cubic-bezier(.34,1.3,.64,1)", fill: "forwards" }).finished;
+  const to = { left: from.left - from.width * 0.05, top: from.top - from.height * 0.9, width: from.width * 1.1, height: from.height * 1.1 };
+  return element.animate([place(from), place(to)], { duration: 260, easing: "cubic-bezier(.34,1.56,.64,1)", fill: "forwards" }).finished;
 }
 
 // A lob across the page that lands square in its slot.
