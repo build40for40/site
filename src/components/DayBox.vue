@@ -277,7 +277,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
       </div>
 
       <div v-if="(isLive || isNext) && (backed || sponsoring)" class="border-t border-night-line px-2.5 py-2 sm:absolute sm:top-12 sm:right-2.5 sm:z-1 sm:max-w-[calc(100%-1.25rem)] sm:border-0 sm:p-0">
-        <p v-if="backed" class="m-0 py-1.5 font-mono text-xs text-night-text sm:rounded-full sm:bg-night/60 sm:px-3">You’re backer #{{ count }}. Thank you!</p>
+        <p v-if="backed" class="m-0 py-1.5 font-mono text-xs text-night-text sm:rounded-full sm:bg-night/60 sm:px-3">You’re sponsor #{{ count }}. Thank you!</p>
         <div v-else class="flex flex-wrap gap-1.5 sm:justify-end" role="group" aria-label="Amount">
           <button
             v-for="a in SPONSOR_AMOUNTS"
@@ -352,7 +352,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
         <div class="mt-auto flex flex-col gap-2.5 border-t border-night-line pt-3">
           <template v-if="backed">
             <div :class="kicker">Thank you</div>
-            <p class="m-0 text-[22px] leading-tight font-semibold tracking-tight">You’re backer #{{ count }}.</p>
+            <p class="m-0 text-[22px] leading-tight font-semibold tracking-tight">You’re sponsor #{{ count }}.</p>
             <p class="m-0 text-[15px] leading-snug text-night-sub text-pretty">{{ thanks.line }}</p>
             <ShareButton label="Share" :text="thanks.text" :url="shareUrl" expanded />
             <button
@@ -371,7 +371,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
                 :aria-expanded="showAll"
                 class="cursor-pointer border-0 bg-transparent p-0 font-mono text-xs font-medium text-night-sub underline-offset-3 hover:text-night-text hover:underline"
                 @click="showAll = !showAll"
-              >{{ count }} {{ count === 1 ? "backer" : "backers" }} · {{ money(total) }} {{ showAll ? "▴" : "▾" }}</button>
+              >{{ count }} {{ count === 1 ? "sponsor" : "sponsors" }} · {{ money(total) }} {{ showAll ? "▴" : "▾" }}</button>
               <span v-else class="font-mono text-xs text-night-muted">No sponsors yet</span>
               <ul
                 v-if="showAll"
