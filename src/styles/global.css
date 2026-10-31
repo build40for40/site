@@ -89,7 +89,7 @@
     }
   }
 
-  /* One lap seen edge on: in front of the ball from 0% to 50%, behind it from 50% to 100%. */
+  /* One lap seen edge on: the near side from 0% to 50%, the far side from 50% to 100%. */
   @keyframes orbit {
     0%,
     100% {
