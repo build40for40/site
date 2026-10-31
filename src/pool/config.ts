@@ -8,7 +8,7 @@ export const poolConfig = {
     timestep: 1 / 60,
     maxSubsteps: 5,
     maxSpeed: 30,
-    body: { density: 1, restitution: 0.2, friction: 0.6, linearDamping: 0.4, angularDamping: 0.8 },
+    body: { density: 1, restitution: 0.6, friction: 0.6, linearDamping: 0.4, angularDamping: 0.8 },
     wallThickness: 2,
     // Each new idea drops in this long after the one before it.
     rainStaggerMs: 90,

@@ -87,7 +87,7 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
       [-t / 2, h / 2, t / 2, h / 2 + t],
       [w + t / 2, h / 2, t / 2, h / 2 + t],
     ]) {
-      world.createCollider(RAPIER.ColliderDesc.cuboid(hx, hy).setTranslation(x, y).setFriction(config.body.friction), walls);
+      world.createCollider(RAPIER.ColliderDesc.cuboid(hx, hy).setTranslation(x, y).setFriction(config.body.friction).setRestitution(config.body.restitution), walls);
     }
   }
 
