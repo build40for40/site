@@ -95,7 +95,6 @@ const legend = [
   { label: "live", dot: tones.live.dot },
   { label: "upcoming", dot: tones.queued.dot },
   { label: "guest day", dot: tones.guest.dot },
-  { label: "needs a problem", dot: tones.open.dot },
 ];
 
 let timer: ReturnType<typeof setInterval> | undefined;
