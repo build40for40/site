@@ -207,6 +207,7 @@ let moving = false;
 const thrown = computed(() => board.value.days.filter((d) => d.idea));
 const dayIdeas = computed(() => board.value.days.flatMap((d) => (d.idea ? [d.idea] : [])));
 const browsable = computed(() => [...pool.value.map((p) => p.idea!), ...dayIdeas.value]);
+const browseStatuses = computed(() => Object.fromEntries([...pool.value, ...board.value.days].flatMap((e) => (e.idea ? [[e.idea.id, e.status]] : []))));
 const dayOf = computed(() => new Map(board.value.days.flatMap((d) => (d.idea ? [[d.idea.id, d.key] as const] : []))));
 
 async function openBrowse() {
@@ -691,7 +692,7 @@ const tileSub = (e: Entry) => {
           />
         </ul>
 
-        <BrowsePanel v-if="browsing" :ideas="browsable" @float="browsed = $event" @close="closeBrowse()" />
+        <BrowsePanel v-if="browsing" :ideas="browsable" :statuses="browseStatuses" @float="browsed = $event" @close="closeBrowse()" />
 
       </div>
     </div>
