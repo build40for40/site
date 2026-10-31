@@ -176,6 +176,21 @@ describe("lively", () => {
   });
 });
 
+test("ideas dropped as ghosts pass through each other, then turn solid", () => {
+  const { container, controller } = setup();
+  for (const id of ["a", "b"]) {
+    const element = document.createElement("li");
+    container.append(element);
+    controller.registerBody(id, element, { ...TILE, delayMs: Infinity });
+    controller.drop(id, { x: 200, y: 200 }, { x: 0, y: 0 }, { ghostMs: 300 });
+  }
+  const gap = () => Math.abs(controller.bodyState("a")!.y - controller.bodyState("b")!.y);
+  controller.advance(0.1);
+  expect(gap()).toBeLessThan(5);
+  controller.advance(2);
+  expect(gap()).toBeGreaterThan(TILE.height - 5);
+});
+
 test("a held idea follows the pointer and flies on when it's let go", () => {
   const { add, controller } = setup();
   add("a", { x: 100, y: 200 });

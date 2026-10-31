@@ -10,6 +10,7 @@ const physics = () => ({
     unregisterBody: (id: string) => bodies.unregistered.push(id),
     drop: (id: string) => bodies.dropped.push(id),
     setBodyHover: (id: string, y: number | null) => bodies.hovers.set(id, y),
+    bodyState: (id: string) => ({ shown: bodies.dropped.includes(id), angle: 0 }),
     nudge() {},
     refit() {},
     destroy() {},
@@ -42,7 +43,7 @@ beforeEach(() => {
   vi.stubGlobal("fetch", async (url: string) => {
     const { pathname, searchParams } = new URL(url, "http://localhost");
     if (pathname === "/api/problems") return Response.json(pages[searchParams.get("offset")!]);
-    if (pathname === "/api/pool/search") return Response.json({ ranking, matches: [{ id: "idea-40", score: 1 }, { id: "idea-41", score: 0.5 }, { id: "idea-42", score: 0.2 }] });
+    if (pathname === "/api/pool/search") return Response.json({ ranking, matches: [{ id: "idea-40", score: 1 }, { id: "idea-3", score: 0.8 }, { id: "idea-41", score: 0.5 }, { id: "idea-42", score: 0.2 }] });
     return new Response("", { status: 404 });
   });
   vi.stubGlobal("matchMedia", (query: string) => ({ matches: query.includes("reduce") && reducedMotion, addEventListener() {}, removeEventListener() {} }));
@@ -199,21 +200,22 @@ describe("writing a problem in the join form", () => {
   });
 });
 
-test("Browse floats its matches up out of the pool, and clicking one opens it in the day box", async () => {
+test("Browse throws the days into the pool, floats matching problems and days, and picking one puts them back", async () => {
   document.body.insertAdjacentHTML("beforeend", `<a href="#browse">Browse</a>`);
   const w = await board();
   await vi.waitFor(() => expect(bodies.registered).toHaveLength(10));
   document.querySelector<HTMLAnchorElement>("a[href='#browse']")!.click();
-  await flushPromises();
+  await vi.waitFor(() => expect(bodies.dropped.filter((id) => id.startsWith("day-"))).toHaveLength(40), { timeout: 2000 });
+  expect(w.find("ul[aria-label='The 40 days']").isVisible()).toBe(false);
+
   await w.find("#browse-search").setValue("nails chipping");
-  await vi.waitFor(() => expect(bodies.hovers.size).toBe(2), { timeout: 2000 });
-  expect(w.find("#browse").text()).toContain("2 problems float up");
+  await vi.waitFor(() => expect(bodies.hovers.size).toBe(3), { timeout: 2000 });
+  expect([...bodies.hovers.keys()].filter((id) => id.startsWith("day-"))).toHaveLength(1);
+  expect(w.find("#browse").text()).toContain("3 problems float up");
 
   w.find("[data-pool-ball='idea-41']").element.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
-  await flushPromises();
-  expect(w.find("#day-box").text()).toContain("Idea 41");
-
-  w.find("#browse button:not([aria-label])").element.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-  await flushPromises();
-  await vi.waitFor(() => expect([...bodies.hovers.values()]).toEqual([null, null]));
+  await vi.waitFor(() => expect(w.find("#browse").exists()).toBe(false));
+  await vi.waitFor(() => expect(w.find("#day-box").text()).toContain("Idea 41"));
+  expect(bodies.unregistered.filter((id) => id.startsWith("day-"))).toHaveLength(40);
+  expect([...bodies.hovers.values()].every((y) => y === null)).toBe(true);
 });

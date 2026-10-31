@@ -51,6 +51,7 @@ interface Tracked {
   drawn?: string;
   hover?: number;
   falling?: number;
+  solidAt?: number;
 }
 
 export type PhysicsController = ReturnType<typeof initializePhysics>;
@@ -258,10 +259,21 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     }
   }
 
+  // Ideas thrown in together pass through each other at first, so they spread out instead of blasting apart.
+  const GHOST = (0x0002 << 16) | (0xffff & ~0x0002);
+  function solidify() {
+    for (const t of bodies.values()) {
+      if (t.solidAt === undefined || clock < t.solidAt) continue;
+      t.solidAt = undefined;
+      t.collider.setCollisionGroups(0xffffffff);
+    }
+  }
+
   function stepOnce() {
     for (const t of bodies.values()) t.prev = t.curr;
     clock += config.timestep * 1000;
     spawnDue();
+    solidify();
     boil();
     hover();
     follow();
@@ -386,13 +398,19 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
       render(1);
     },
 
-    // Drops a held idea in at a point, in pixels from the pool's top left, moving at a velocity in pixels per second.
-    drop(id: string, at: Vector, velocity: Vector, angle = 0) {
+    // Drops a held idea in at a point, in pixels from the pool's top left, moving at a velocity in pixels per second
+    // and spinning at radians per second. A ghost passes through other ghosts for that many milliseconds.
+    drop(id: string, at: Vector, velocity: Vector, { angle = 0, spin = 0, ghostMs = 0 } = {}) {
       const t = bodies.get(id);
       if (!t || t.shown) return;
       t.body.setTranslation({ x: toM(at.x), y: toM(at.y) }, false);
       t.body.setRotation(angle, false);
       t.body.setLinvel({ x: toM(velocity.x), y: toM(velocity.y) }, false);
+      t.body.setAngvel(spin, false);
+      if (ghostMs) {
+        t.collider.setCollisionGroups(GHOST);
+        t.solidAt = clock + ghostMs;
+      }
       t.curr = t.prev = snapshot(t);
       t.falling = toM(velocity.y);
       t.spawnAt = clock;

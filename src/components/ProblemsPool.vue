@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type ComponentPublicInstance } from "vue";
+import { pad, tones, type EntryStatus } from "../data/days";
 import { createVisualIdentity } from "../pool/artwork";
 import { poolConfig } from "../pool/config";
 import { afterLoad } from "../pool/data";
 import { boxGrowth } from "../pool/effects";
-import { CURL_TURN, boxOf, curl, lob } from "../pool/flight";
+import { CURL_TURN, boxOf, curl, lob, type Box } from "../pool/flight";
 import type { Match, Ranking } from "../pool/search";
 import type { PhysicsController, Vector } from "../pool/physics";
 import type { createLift } from "../pool/effects";
@@ -17,9 +18,13 @@ export interface PoolTile {
   seed?: string;
   label: string;
   raised: number;
+  // Days thrown into the pool from the grid while browsing.
+  day?: number;
+  status?: EntryStatus;
+  kicker?: string;
 }
 
-const props = defineProps<{ tiles: PoolTile[]; matches?: Match[] | null; ranking?: Ranking; quiet?: boolean }>();
+const props = defineProps<{ tiles: PoolTile[]; matches?: Match[] | null; ranking?: Ranking; quiet?: boolean; tall?: boolean }>();
 const emit = defineEmits<{ pick: [key: string] }>();
 
 const list = ref<HTMLElement>();
@@ -50,7 +55,7 @@ const bubbles = Array.from({ length: 9 }, (_, i) => ({
   "--bubble-sway": `${i % 2 ? -8 : 8}px`,
 }));
 
-const artwork = computed(() => new Map(props.tiles.map((t) => [t.id, createVisualIdentity(t).svg])));
+const artwork = computed(() => new Map(props.tiles.flatMap((t) => (t.day ? [] : [[t.id, createVisualIdentity(t).svg] as const]))));
 
 const scored = computed(() => (props.matches ?? []).filter((m) => m.score >= poolConfig.search.minRelevance));
 const percents = computed(() => new Map(scored.value.map((m) => [m.id, Math.round(m.score * 100)])));
@@ -125,7 +130,10 @@ async function start() {
   const [{ initializePhysics }, { createLift }] = modules;
   if (!physical.value || !list.value) return;
   controller = initializePhysics(list.value, { entry });
-  lift = createLift({ setBodyHover: (id, y) => controller?.setBodyHover(id, y === null ? null : y + entry()) }, () => ({ height: size.value.height - entry(), tile: tile.value }));
+  lift = createLift(
+    { setBodyHover: (id, y) => controller?.setBodyHover(id, y === null ? null : y + entry() + overhang(id)) },
+    () => ({ height: size.value.height - entry(), tile: tile.value }),
+  );
   register(props.tiles.map((t) => t.id));
   active.value = true;
   lift.apply(scored.value);
@@ -139,11 +147,16 @@ function stop() {
 }
 
 function register(ids: string[]) {
+  const days = new Set(props.tiles.filter((t) => t.day).map((t) => t.id));
   ids.forEach((id, i) => {
     const element = elements.get(id);
-    if (element) controller?.registerBody(id, element, { shape: "circle", delayMs: held.value.has(id) ? Infinity : i * poolConfig.physics.rainStaggerMs });
+    const shape = days.has(id) ? "box" : "circle";
+    if (element) controller?.registerBody(id, element, { shape, delayMs: held.value.has(id) ? Infinity : i * poolConfig.physics.rainStaggerMs });
   });
 }
+
+// Anything bigger than a plain ball floats a little lower, so it doesn't poke out of the top of the pool.
+const overhang = (id: string) => Math.max(0, (elements.get(id)?.offsetHeight ?? 0) - tile.value) / 2;
 
 // A problem sent from the join form is held back from raining in, so it can fall in from wherever its box is.
 const held = ref(new Set<string>());
@@ -183,12 +196,73 @@ async function receive(id: string, ghost: HTMLElement) {
     const box = boxOf(list.value);
     const r = ball.width / 2;
     const x = Math.min(Math.max(ball.left + r - box.left, r), box.width - r);
-    controller.drop(id, { x, y: ball.top + r - box.top }, { x: 0, y: 0 }, CURL_TURN);
+    controller.drop(id, { x, y: ball.top + r - box.top }, { x: 0, y: 0 }, { angle: CURL_TURN });
   } else if (element) {
     await lob(ghost, boxOf(ghost), boxOf(element));
   }
   held.value.delete(id);
 }
+
+// Days burst out of their slots in the grid, up and away from its middle, and fall into the pool one after another.
+async function burst(pieces: { id: string; from: Box }[]) {
+  const box = list.value && boxOf(list.value);
+  const middle = pieces.reduce((sum, p) => sum + p.from.left + p.from.width / 2, 0) / pieces.length;
+  const starts = pieces.map(({ id, from }) => ({ id, x: from.left + from.width / 2, y: from.top + from.height / 2 }));
+  await settled();
+  await nextTick();
+  const { speed, spread, spin, staggerMs, ghostMs } = poolConfig.physics.burst;
+  const between = ([low, high]: readonly number[]) => low + Math.random() * (high - low);
+  await Promise.all(
+    starts.map(
+      ({ id, x, y }, i) =>
+        new Promise<void>((resolve) =>
+          setTimeout(() => {
+            if (controller && box) {
+              const r = (elements.get(id)?.offsetWidth ?? 0) / 2;
+              const at = { x: Math.min(Math.max(x - box.left, r), box.width - r), y: Math.max(y - box.top, r) };
+              const velocity = { x: (x - middle) * spread + between([-60, 60]), y: -between(speed) };
+              controller.drop(id, at, velocity, { angle: between([-0.3, 0.3]), spin: between([-spin, spin]), ghostMs });
+            }
+            held.value.delete(id);
+            resolve();
+          }, controller ? i * staggerMs : 0),
+        ),
+    ),
+  );
+}
+
+// Where each of these is on screen, tilted however it landed.
+function boxes(ids: string[]) {
+  const found = new Map<string, Box & { angle: number }>();
+  for (const id of ids) {
+    const element = elements.get(id);
+    const state = controller?.bodyState(id);
+    if (!element || (controller && !state?.shown)) continue;
+    const { left, top, width, height } = boxOf(element);
+    const [w, h] = [element.offsetWidth, element.offsetHeight];
+    found.set(id, { left: left + (width - w) / 2, top: top + (height - h) / 2, width: w, height: h, angle: state?.angle ?? 0 });
+  }
+  return found;
+}
+
+// Browsing makes the pool fill the screen. It grows or shrinks from where it was rather than jumping.
+watch(
+  () => props.tall,
+  async () => {
+    const element = floor.value;
+    if (!element || reduced.value) return;
+    const before = element.getBoundingClientRect();
+    await nextTick();
+    const after = element.getBoundingClientRect();
+    element.animate(
+      [
+        { height: `${before.height}px`, marginTop: `${before.top - after.top}px` },
+        { height: `${after.height}px`, marginTop: "0px" },
+      ],
+      { duration: 480, easing: "cubic-bezier(.65,0,.35,1)" },
+    );
+  },
+);
 
 watch(
   () => props.tiles.map((t) => t.id),
@@ -352,7 +426,7 @@ function onKeyDown(event: KeyboardEvent) {
   close();
 }
 
-defineExpose({ nudge: () => controller?.nudge(), hold, receive });
+defineExpose({ nudge: () => controller?.nudge(), hold, receive, burst, boxes });
 
 let sizer: ResizeObserver | undefined;
 const media: [MediaQueryList, () => void][] = [];
@@ -393,12 +467,20 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div id="problems" ref="floor" :class="[!tiles.length && 'hidden', !shown && 'invisible', physical ? 'h-[clamp(12rem,30dvh,17rem)] overflow-hidden' : lava]">
+  <div
+    id="problems"
+    ref="floor"
+    :class="[
+      !tiles.length && 'hidden',
+      !shown && 'invisible',
+      physical ? ['flex flex-col overflow-hidden', tall ? 'min-h-[24rem] flex-1' : 'h-[clamp(12rem,30dvh,17rem)]'] : [lava, tall && 'flex-1'],
+    ]"
+  >
     <section
       ref="band"
       aria-labelledby="pool-title"
       class="relative flex flex-col text-night-text transition-transform duration-700 ease-out"
-      :class="physical && ['h-full', lava, !shown && 'translate-y-full']"
+      :class="physical && ['flex-1', lava, !shown && 'translate-y-full']"
     >
       <h2 id="pool-title" class="sr-only">Unfunded problems</h2>
       <p class="sr-only" role="status" aria-live="polite">{{ announcement }}</p>
@@ -421,6 +503,7 @@ onBeforeUnmount(() => {
         class="fixed top-0 left-0 z-50 w-max max-w-[min(20rem,calc(100vw-16px))] rounded-lg bg-night-text px-3.5 py-3 text-night shadow-lg"
         :style="{ transform: `translate(${place.left}px, ${place.top}px)` }"
       >
+        <p v-if="openTile.kicker" class="m-0 mb-1 font-mono text-[11px] text-night-panel/80">{{ openTile.kicker }}</p>
         <p class="m-0 text-[15px] leading-snug font-semibold">{{ openTile.title }}</p>
         <p v-if="blurb" class="m-0 mt-1 text-sm leading-snug text-night-panel">{{ blurb }}</p>
         <p class="m-0 mt-2 font-mono text-[11px] text-night-panel/80">{{ touchHint ? "Tap again to open it" : "Click to open it" }}</p>
@@ -438,9 +521,10 @@ onBeforeUnmount(() => {
         v-for="t in tiles"
         :key="t.key"
         :ref="(element) => setTile(t.id, element)"
-        class="group aspect-square w-[calc(1.25rem+var(--grow))] rounded-full sm:w-[calc(1.5rem+var(--grow))]"
+        class="group"
         :style="{ '--grow': `${boxGrowth(t.raised)}px` }"
         :class="[
+          t.day ? 'size-9 rounded-md sm:size-11' : 'aspect-square w-[calc(1.25rem+var(--grow))] rounded-full sm:w-[calc(1.5rem+var(--grow))]',
           physical ? 'pointer-events-auto absolute top-0 left-0 will-change-transform focus-within:z-10' : 'relative',
           physical && !active ? 'opacity-0 focus-within:opacity-100' : !physical && matches && !percents.has(t.id) && 'opacity-40',
           !physical && held.has(t.id) && 'invisible',
@@ -452,8 +536,13 @@ onBeforeUnmount(() => {
           :aria-label="t.label"
           :aria-expanded="open === t.id"
           :aria-describedby="open === t.id ? 'pool-tip' : undefined"
-          class="absolute inset-0 cursor-pointer overflow-hidden rounded-full border-0 bg-night-panel p-0 select-none after:pointer-events-none after:absolute after:inset-0 after:rounded-full after:bg-linear-135 after:from-night-text/60 after:via-night-text/5 after:via-45% after:to-transparent after:ring-1 after:ring-night-text/30 after:ring-inset hover:brightness-115 active:cursor-grabbing [&>svg]:size-full motion-safe:hover:animate-wiggle motion-safe:aria-expanded:animate-pop focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime aria-expanded:outline-2 aria-expanded:outline-offset-2 aria-expanded:outline-night-text"
-          :class="physical && 'touch-none'"
+          class="absolute inset-0 cursor-pointer overflow-hidden border-0 p-0 select-none after:pointer-events-none after:absolute after:inset-0 after:bg-linear-135 after:from-night-text/60 after:via-night-text/5 after:via-45% after:to-transparent after:ring-1 after:ring-night-text/30 after:ring-inset hover:brightness-115 active:cursor-grabbing motion-safe:hover:animate-wiggle motion-safe:aria-expanded:animate-pop focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime aria-expanded:outline-2 aria-expanded:outline-offset-2 aria-expanded:outline-night-text"
+          :class="[
+            physical && 'touch-none',
+            t.day
+              ? ['grid place-items-center rounded-md text-night-text after:rounded-md', t.status === 'open' ? 'border-[1.5px] border-dashed border-night-edge bg-night-panel' : 'bg-night-tile']
+              : 'rounded-full bg-night-panel after:rounded-full',
+          ]"
           @click="clicked(t.id, $event)"
           @pointerenter="hovered(t.id, $event)"
           @pointerleave="unhovered(t.id, $event)"
@@ -463,8 +552,13 @@ onBeforeUnmount(() => {
           @pointercancel="lifted"
           @focus="focused(t.id, $event)"
           @blur="blurred(t.id, $event)"
-          v-html="artwork.get(t.id)"
-        ></button>
+        >
+          <template v-if="t.day">
+            <span v-if="t.status !== 'open'" aria-hidden="true" class="absolute inset-x-0 top-0 h-[3px]" :class="tones[t.status!].dot"></span>
+            <span aria-hidden="true" class="font-mono text-sm leading-none font-semibold sm:text-base">{{ pad(t.day) }}</span>
+          </template>
+          <span v-else aria-hidden="true" class="absolute inset-0 [&>svg]:size-full" v-html="artwork.get(t.id)"></span>
+        </button>
         <span
           v-if="physical && ranking === 'classifier' && percents.has(t.id)"
           aria-hidden="true"

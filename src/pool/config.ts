@@ -27,6 +27,10 @@ export const poolConfig = {
     // A problem sent from the join form splashes the ideas it lands near. Losing more than impact metres per second of
     // downward speed in one step counts as landing.
     drop: { impact: 2, splash: { radius: 160, speed: 6 } },
+    // Browsing throws the days out of the grid. They fly up at speed pixels per second, and sideways at spread pixels
+    // per second for every pixel they start from the grid's middle, each staggerMs after the one before. On phones they
+    // all start in the thin progress bar, so they pass through each other for ghostMs.
+    burst: { speed: [250, 650], spread: 1.4, spin: 8, staggerMs: 14, ghostMs: 450 },
   },
   boxes: {
     pxPerPound: 1,

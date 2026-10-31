@@ -11,6 +11,7 @@ import {
   countdown,
   dayDate,
   dayStart,
+  pad,
   raised,
   statusLabel,
   tones,
@@ -22,7 +23,7 @@ import {
 import { TOTAL_DAYS, money } from "../data/site";
 import { poolConfig } from "../pool/config";
 import { loadIdeas } from "../pool/data";
-import { DEV_FEWER, JOIN_CLOSE, SENT, boxOf, lob, pop, shift, type Box, type SentProblem } from "../pool/flight";
+import { DEV_FEWER, JOIN_CLOSE, SENT, boxOf, fold, lob, pop, settle, shift, type Box, type SentProblem } from "../pool/flight";
 import { createSearch, type Match, type Ranking } from "../pool/search";
 import { excerpt } from "../../worker/problems";
 
@@ -157,32 +158,78 @@ onBeforeUnmount(() => {
 });
 
 // The Browse link sits in the page's static markup, so the board picks up its clicks and keeps its state in sync.
+// Browsing folds the day box away, throws the 40 days out of the grid into the pool, and leaves the pool filling the
+// screen under the title. Closing puts the days back in their slots, then unfolds the day box.
 const browsing = ref(false);
+const folded = ref(false);
+const hero = ref<HTMLElement>();
 const browsed = ref<Floated | null>(null);
-const poolIdeas = computed(() => pool.value.map((p) => p.idea!));
 const browseLinks = () => document.querySelectorAll<HTMLAnchorElement>('a[href="#browse"]');
+const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+let moving = false;
 
-function openBrowse() {
+const dayIdeas = computed(() => board.value.days.flatMap((d) => (d.idea ? [d.idea] : [])));
+const browsable = computed(() => [...pool.value.map((p) => p.idea!), ...dayIdeas.value]);
+const dayOf = computed(() => new Map(board.value.days.flatMap((d) => (d.idea ? [[d.idea.id, d.key] as const] : []))));
+
+async function openBrowse() {
+  if (browsing.value || moving) return;
+  moving = true;
   dispatchEvent(new Event(JOIN_CLOSE));
-  browsing.value = true;
   browseLinks().forEach((link) => link.setAttribute("aria-expanded", "true"));
   window.posthog?.capture("browse_opened");
-  // Results float up out of the pool just below the panel, so bring both into view.
-  nextTick(() => {
-    const floor = document.getElementById("problems");
-    (floor?.getClientRects().length ? floor : document.getElementById("browse"))?.scrollIntoView({ block: "end" });
+  scrollTo({ top: 0, behavior: still() ? "instant" : "smooth" });
+  if (hero.value && !still()) await fold(hero.value, false);
+  folded.value = true;
+  await nextTick();
+  const pieces = board.value.days.flatMap((d) => {
+    const slot = slotOf(d.key);
+    return slot ? [{ id: d.key, from: boxOf(slot) }] : [];
   });
+  pieces.forEach((p) => problems.value?.hold(p.id));
+  browsing.value = true;
+  moving = false;
+  await problems.value?.burst(pieces);
 }
 
-function closeBrowse() {
+// Picking something while browsing closes it and opens that in the day box.
+async function closeBrowse(key?: string) {
+  if (!browsing.value || moving) return;
+  moving = true;
+  const from = problems.value?.boxes(board.value.days.map((d) => d.key)) ?? new Map();
   browsing.value = false;
   browsed.value = null;
+  if (key) {
+    backed.value = null;
+    amount.value = DEFAULT_AMOUNT;
+    picked.value = key;
+  }
   browseLinks().forEach((link) => link.setAttribute("aria-expanded", "false"));
-  browseLinks()[0]?.focus({ preventScroll: true });
+  await nextTick();
+  if (!still()) {
+    await Promise.all(
+      board.value.days.flatMap((d, i) => {
+        const slot = slotOf(d.key);
+        const box = from.get(d.key);
+        return slot && box ? [settle(slot, box, i * 12)] : [];
+      }),
+    );
+  }
+  folded.value = false;
+  await nextTick();
+  if (hero.value && !still()) await fold(hero.value, true);
+  moving = false;
+  if (key) document.getElementById("day-box")?.focus({ preventScroll: true });
+  else if (!document.body.hasAttribute("data-joining")) browseLinks()[0]?.focus({ preventScroll: true });
 }
 
 function browseClicked(event: MouseEvent) {
-  if (!(event.target instanceof Element && event.target.closest('a[href="#browse"]'))) return;
+  const link = event.target instanceof Element && event.target.closest('a[href="#browse"], a[href="#join"]');
+  if (!link) return;
+  if (link.getAttribute("href") === "#join") {
+    if (browsing.value) closeBrowse();
+    return;
+  }
   event.preventDefault();
   if (browsing.value) closeBrowse();
   else openBrowse();
@@ -339,8 +386,11 @@ const poolTiles = computed<PoolTile[]>(() =>
 // how alike two problems are. When it's down, word matches only rank, so just the best few float up, without a
 // percentage.
 const similar = ref<{ ranking: Ranking; matches: Match[] } | null>(null);
-// While someone's writing a problem, its matches float up rather than Browse's.
-const lifted = computed(() => similar.value ?? browsed.value);
+// While someone's writing a problem, its matches float up rather than Browse's. A match on a day's idea floats the day.
+const lifted = computed(() => {
+  if (similar.value || !browsed.value) return similar.value;
+  return { ...browsed.value, matches: browsed.value.matches.map((m) => ({ ...m, id: dayOf.value.get(m.id) ?? m.id })) };
+});
 const search = createSearch({ ideas: () => poolTiles.value });
 let typing: ReturnType<typeof setTimeout> | undefined;
 
@@ -362,6 +412,24 @@ function typed(event: Event) {
   }, poolConfig.search.debounceMs);
 }
 
+const dayTiles = computed<PoolTile[]>(() =>
+  board.value.days.map((d) => {
+    const label = statusLabel(d, board.value.today);
+    return {
+      key: d.key,
+      id: d.key,
+      day: d.day,
+      status: d.status,
+      title: d.status === "guest" || !d.idea ? label : d.idea.title,
+      problem: d.status === "guest" ? "" : (d.idea?.problem ?? ""),
+      kicker: [`Day ${pad(d.day!)}`, d.date, d.idea && d.status !== "guest" && label].filter(Boolean).join(" · "),
+      label: tileLabel(d),
+      raised: 0,
+    };
+  }),
+);
+const tiles = computed(() => (browsing.value ? [...poolTiles.value, ...dayTiles.value] : poolTiles.value));
+
 const tileSub = (e: Entry) => {
   if (e.status === "live") return "Live now";
   if (e.status !== "queued" && e.status !== "pool") return "";
@@ -371,8 +439,8 @@ const tileSub = (e: Entry) => {
 </script>
 
 <template>
-  <div class="relative">
-    <div class="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 pt-7 pb-8 lg:px-12">
+  <div class="relative" :class="browsing && 'flex min-h-dvh flex-col'">
+    <div class="mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-4 pt-7 pb-8 lg:px-12">
       <div class="flex flex-wrap items-end justify-between gap-x-12 gap-y-4">
         <div class="flex flex-col gap-3">
           <slot name="title" />
@@ -389,7 +457,13 @@ const tileSub = (e: Entry) => {
               :key="d.key"
               :data-day-slot="d.key"
               class="h-2.5 flex-1 rounded-xs"
-              :class="[tones[d.status].dot, d.status === 'live' && 'motion-safe:animate-pulse', incoming === d.key && 'invisible', landed === d.key && 'animate-pop']"
+              :class="[
+                tones[d.status].dot,
+                d.status === 'live' && 'motion-safe:animate-pulse',
+                incoming === d.key && 'invisible',
+                browsing && 'max-sm:invisible',
+                landed === d.key && 'animate-pop',
+              ]"
             ></span>
           </div>
           <ul class="m-0 flex list-none flex-wrap gap-x-4 gap-y-1.5 p-0 font-mono text-[11px] text-night-muted">
@@ -398,28 +472,31 @@ const tileSub = (e: Entry) => {
         </div>
       </div>
       <div class="flex flex-col gap-4">
-        <div class="hidden in-data-joining:block"><slot name="join" /></div>
-        <DayBox
-          :key="selected.key"
-          class="in-data-joining:hidden"
-          :aria-busy="loading"
-          :class="loading && 'opacity-60 motion-safe:animate-pulse'"
-          :entry="selected"
-          :days="board.days"
-          :pool="pool"
-          :today="board.today"
-          :is-today="board.isToday"
-          :now="now"
-          :amount="amount"
-          :backed="backed === selected.key"
-          :headline="kicker"
-          :next-day="nextDay"
-          @sponsor="sponsorLocally"
-          @again="backed = null"
-          @pick="pick"
-        />
+        <div v-show="!folded" ref="hero">
+          <div class="hidden in-data-joining:block"><slot name="join" /></div>
+          <DayBox
+            :key="selected.key"
+            class="in-data-joining:hidden"
+            :aria-busy="loading"
+            :class="loading && 'opacity-60 motion-safe:animate-pulse'"
+            :entry="selected"
+            :days="board.days"
+            :pool="pool"
+            :today="board.today"
+            :is-today="board.isToday"
+            :now="now"
+            :amount="amount"
+            :backed="backed === selected.key"
+            :headline="kicker"
+            :next-day="nextDay"
+            @sponsor="sponsorLocally"
+            @again="backed = null"
+            @pick="pick"
+          />
+        </div>
 
         <ul
+          v-show="!browsing"
           aria-label="The 40 days"
           :aria-busy="loading"
           class="m-0 hidden list-none grid-cols-[repeat(auto-fill,minmax(5rem,5.5rem))] justify-between gap-2 p-0 sm:grid"
@@ -443,18 +520,19 @@ const tileSub = (e: Entry) => {
           />
         </ul>
 
-        <BrowsePanel v-if="browsing" class="in-data-joining:hidden" :ideas="poolIdeas" @float="browsed = $event" @close="closeBrowse" />
+        <BrowsePanel v-if="browsing" :ideas="browsable" @float="browsed = $event" @close="closeBrowse()" />
 
       </div>
     </div>
 
     <ProblemsPool
       ref="problems"
-      :tiles="poolTiles"
+      :tiles="tiles"
       :matches="lifted?.matches ?? null"
       :ranking="lifted?.ranking"
       :quiet="!similar && !!browsed"
-      @pick="select"
+      :tall="browsing"
+      @pick="(key) => (browsing ? closeBrowse(key) : select(key))"
     />
 
     <div

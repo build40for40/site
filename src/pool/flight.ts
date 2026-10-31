@@ -83,3 +83,26 @@ export const boxOf = (element: Element): Box => {
   const { left, top, width, height } = element.getBoundingClientRect();
   return { left, top, width, height };
 };
+
+// The element folds up and away to nothing, taking the gap after it with it, or unfolds back out of nowhere.
+export async function fold(element: HTMLElement, open: boolean, gap = 16) {
+  const shown = { height: `${element.scrollHeight}px`, marginBottom: "0px", opacity: 1, translate: "0 0" };
+  const folded = { height: "0px", marginBottom: `${-gap}px`, opacity: 0, translate: "0 -40px" };
+  element.style.overflow = "hidden";
+  await element.animate(open ? [folded, shown] : [shown, folded], { duration: 480, easing: "cubic-bezier(.65,0,.35,1)" }).finished;
+  element.style.overflow = "";
+}
+
+// The element grows back into its slot from wherever its stand-in was, tilted the way the stand-in was.
+export function settle(element: Element, from: Box & { angle?: number }, delay = 0) {
+  const to = boxOf(element);
+  const dx = from.left + from.width / 2 - (to.left + to.width / 2);
+  const dy = from.top + from.height / 2 - (to.top + to.height / 2);
+  return element.animate(
+    [
+      { translate: `${dx}px ${dy}px`, scale: `${from.width / to.width} ${from.height / to.height}`, rotate: `${from.angle ?? 0}rad` },
+      { translate: "0 0", scale: "1 1", rotate: "0rad" },
+    ],
+    { duration: 620, delay, easing: "cubic-bezier(.34,1.25,.64,1)", fill: "backwards" },
+  ).finished;
+}
