@@ -78,6 +78,7 @@ Everything lives in the `40for40` D1 database, with the schema in `worker/migrat
 
 - **`people`:** one row per email. The first form someone sends creates it, and later forms fill in or change answers without clearing ones they leave out, keeping the original `joined_at`. `involved` is a JSON array and `sponsor` is the amount in pence picked before checkout.
 - **`problems`:** one row per problem submitted, so a second problem from the same person never replaces the first.
+- **`problem_categories`:** how well each problem fits each category, from 0 to 1. `problems` records who sorted it (`categorised_by`), against which list (`categories_version`) and how buildable it looks.
 - **`payments`:** one row per paid Stripe Checkout Session, written by the webhook.
 - **`help_offers`** and **`guest_applications`:** one row per submission of the hidden help and guest forms.
 
@@ -88,6 +89,26 @@ To change the schema, add a numbered `.sql` file to `worker/migrations/`. `npm r
 `GET /api/problems?offset=&limit=` returns problems ranked by money raised, with the team's `title` (or the start of the problem when there isn't one), the submitter's first name and each payment as an anonymous sponsor. Emails never leave the Worker. The home page loads the first 40 for the days, then the rest a page at a time once the page has loaded, and each one drops into the pool.
 
 `GET /api/pool/search?q=` finds candidates with D1 full-text search (`problems_fts`, kept in sync by triggers) and reranks them with TypeSafe's Jev when `TYPESAFE_API_KEY` is set. If Jev is slow, down or unset, it returns the full-text ranking, and the browser falls back to its own word match if the Worker fails. Only the search and each candidate's title and problem text are sent to Jev. To try Jev locally, put a key in `.dev.vars`. In production, `npm run wrangler -- secret put TYPESAFE_API_KEY`.
+
+### Categories
+
+Every problem is sorted into the categories in `src/data/categories.ts`, which the Browse panel offers as topic chips. Jev answers one yes or no per category, plus whether the problem is something you could build at all, and every answer's score goes into `problem_categories`. A problem is in each category scoring at least `fits` (up to three, best first), and in Other when none do. Only the title and problem text are sent to Jev.
+
+New problems are sorted right after they're saved, and a cron every 15 minutes sorts any that were missed. Bumping `CATEGORIES_VERSION` after changing the list sorts everything again. Each sort sends a `problem_categorised` event to PostHog with the problem's id, its categories, `fit` (`fits`, `unsure` or `none`), its best score and `buildable`, so an insight or alert on `fit != fits` finds the ones that need a look. The thresholds only change how scores are read, so moving them needs no new sort.
+
+To sort a problem by hand, mark it as the team's so the classifier leaves it alone, and give each category it's in a score of 1. With no categories it's in Other:
+
+```sh
+npm run wrangler -- d1 execute 40for40 --remote --command "UPDATE problems SET categorised_by = 'team' WHERE id = '<id>'; DELETE FROM problem_categories WHERE problem_id = '<id>'; INSERT INTO problem_categories VALUES ('<id>', 'food', 1)"
+```
+
+To list the problems that fit nothing or might be junk:
+
+```sh
+npm run wrangler -- d1 execute 40for40 --remote --command "SELECT p.id, p.title, p.buildable, max(c.score) AS best FROM problems p JOIN problem_categories c ON c.problem_id = p.id GROUP BY p.id HAVING best < 0.7 OR p.buildable < 0.5 ORDER BY best"
+```
+
+Locally, the seed sorts its fake problems by hand. To try the cron with a key in `.dev.vars`, run `npm run wrangler -- dev --test-scheduled` and open `/__scheduled`.
 
 Artwork is seeded from the problem id. Setting `ARTWORK_SUBMITTER_SEEDS` to `on` (with an `ARTWORK_SEED_SECRET` secret) gives one person's problems a family look, which also reveals that they came from the same person.
 

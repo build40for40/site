@@ -25,6 +25,7 @@
     { "pattern": "build40for40.com", "custom_domain": true },
     { "pattern": "www.build40for40.com", "custom_domain": true }
   ],
+  "triggers": { "crons": ["*/15 * * * *"] },
   "workers_dev": true,
   "preview_urls": true
 }

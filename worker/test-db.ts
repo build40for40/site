@@ -18,11 +18,19 @@ export function testDb() {
         async all() {
           return { results: sqlite.prepare(sql).all(...(args as never[])) };
         },
+        async first() {
+          return sqlite.prepare(sql).get(...(args as never[])) ?? null;
+        },
         async run() {
           return { meta: sqlite.prepare(sql).run(...(args as never[])) };
         },
       };
       return statement;
+    },
+    async batch(statements: { run(): Promise<unknown> }[]) {
+      const results = [];
+      for (const statement of statements) results.push(await statement.run());
+      return results;
     },
   };
   return { db: db as unknown as D1Database, sqlite };

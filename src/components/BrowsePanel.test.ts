@@ -35,6 +35,22 @@ test("the chips show each kind of idea with its count, and hide kinds with none"
   expect(titles().map((t) => t.match(/Pet|Noisy/)![0])).toEqual(["Pet", "Noisy"]);
 });
 
+test("topic chips appear once problems are sorted, and narrow the list and the other chips' counts", async () => {
+  wrapper = mount(BrowsePanel, { props: { entries, selected: "day-1" } });
+  expect(wrapper.find("[aria-label=Topic]").exists()).toBe(false);
+
+  const sorted = entries.map((e, i) => ({ ...e, idea: { ...e.idea!, categories: [["finance"], ["community", "home"], ["home"], ["other"]][i] } }));
+  await wrapper.setProps({ entries: sorted });
+  const topics = () => wrapper!.findAll("[aria-label=Topic] button");
+  expect(topics().map((b) => b.text())).toEqual(["Finance 1", "Home 2", "Friends & community 1", "Other 1"]);
+
+  await topics()[1].trigger("click");
+  expect(titles().map((t) => t.match(/Dog|Pet/)![0])).toEqual(["Dog", "Pet"]);
+  expect(chip("Simmering").text()).toBe("Simmering 1");
+  await topics()[1].trigger("click");
+  expect(titles()).toHaveLength(4);
+});
+
 test("searching shows word matches straight away, then the classifier's ranking with how well each one fits", async () => {
   wrapper = mount(BrowsePanel, { props: { entries, selected: "day-1" } });
   await wrapper.find("input").setValue("dog walks");

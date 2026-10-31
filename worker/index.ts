@@ -1,4 +1,5 @@
 import { SPONSOR_AMOUNTS, TOTAL_DAYS, backings, helpTypes, involvement } from "../src/data/site";
+import { categoriseBacklog, categoriseProblem, verdict, type Sorted } from "./categories";
 import { jevClassifier } from "./classifier";
 import { listProblems } from "./problems";
 import { searchIdeas } from "./search";
@@ -193,6 +194,8 @@ async function stripeWebhook(request: Request, env: Env, ctx: ExecutionContext) 
   return text("Saved.", 200);
 }
 
+const CATEGORISE_TIMEOUT_MS = 8000;
+
 const json = (body: unknown, cacheControl = "no-store") => Response.json(body, { headers: { "Cache-Control": cacheControl } });
 
 async function problems(request: Request, env: Env) {
@@ -207,9 +210,16 @@ async function problems(request: Request, env: Env) {
   );
 }
 
+const classifierFor = (env: Env, timeoutMs?: number) =>
+  env.TYPESAFE_API_KEY ? jevClassifier({ apiKey: env.TYPESAFE_API_KEY, baseUrl: env.TYPESAFE_API_URL || undefined, timeoutMs }) : undefined;
+
+// Lets the team find problems that fit no category, or might be junk, without the problem's text leaving the Worker.
+const reportSorted = (env: Env, ctx: ExecutionContext, via: string) => (id: string, sorted: Sorted) =>
+  ctx.waitUntil(capture(env, "problem_categorised", id, { problem_id: id, via, model: sorted.model, ...verdict(sorted) }).catch(() => {}));
+
 async function poolSearch(request: Request, env: Env) {
   const query = new URL(request.url).searchParams.get("q") ?? "";
-  const classifier = env.TYPESAFE_API_KEY ? jevClassifier({ apiKey: env.TYPESAFE_API_KEY, baseUrl: env.TYPESAFE_API_URL || undefined }) : undefined;
+  const classifier = classifierFor(env);
   const cache = typeof caches === "undefined" ? undefined : (caches as unknown as { default: Cache }).default;
   return json({ query, ...(await searchIdeas(query, { db: env.DB, classifier, cache })) });
 }
@@ -310,6 +320,15 @@ export default {
     ]);
     track("form_saved", { form_type: form, involvement: values.involved, backing: values.backing });
 
+    const classifier = problemId && classifierFor(env, CATEGORISE_TIMEOUT_MS);
+    if (problemId && classifier) ctx.waitUntil(categoriseProblem(env.DB, classifier, problemId, reportSorted(env, ctx, "submit")).catch(() => {}));
+
     return home;
+  },
+
+  // Catches problems the submit missed, and sorts everything again when the category list changes.
+  async scheduled(_controller, env, ctx) {
+    const classifier = classifierFor(env, CATEGORISE_TIMEOUT_MS);
+    if (classifier) await categoriseBacklog(env.DB, classifier, { report: reportSorted(env, ctx, "backlog") });
   },
 } satisfies ExportedHandler<Env>;

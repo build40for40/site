@@ -1,11 +1,13 @@
 // Structured decisions only: scores and choices about text, never generated text.
 export type Question =
   | { type: "score"; instructions: string; criteria: string[] }
-  | { type: "choice"; instructions: string; criteria: Record<string, string | null> };
+  | { type: "choice"; instructions: string; criteria: Record<string, string | null> }
+  | { type: "noul"; instructions: string };
 
 export type Answer =
   | { type: "score"; score: number; confidence: number }
-  | { type: "choice"; choice: string; confidence: number; probabilities: Record<string, number> };
+  | { type: "choice"; choice: string; confidence: number; probabilities: Record<string, number> }
+  | { type: "noul"; noul: number };
 
 export interface Classifier {
   version: string;
@@ -60,7 +62,7 @@ export interface ClassifiableIdea {
 }
 
 // Only the title and problem text are sent, whatever else the idea carries.
-export async function classifyIdea(idea: ClassifiableIdea, schema: Record<string, Question>, classifier: Classifier) {
-  const { model, answers } = await classifier.ask({ idea: { title: idea.title, problem: idea.problem } }, schema);
+export async function classifyIdea(idea: ClassifiableIdea, schema: Record<string, Question>, classifier: Classifier, signal?: AbortSignal) {
+  const { model, answers } = await classifier.ask({ idea: { title: idea.title, problem: idea.problem } }, schema, signal);
   return { classifierVersion: model, answers };
 }

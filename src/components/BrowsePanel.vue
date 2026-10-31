@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { OTHER, categories } from "../data/categories";
 import { pad, raised, tones, type Entry } from "../data/days";
 import { money } from "../data/site";
 import { poolConfig } from "../pool/config";
@@ -16,15 +17,30 @@ const filters: { key: string; label: string; keep: (e: Entry) => boolean }[] = [
   { key: "shipped", label: "Shipped", keep: (e) => e.status === "shipped" },
 ];
 
+const topicList = [...categories, OTHER];
+const inTopic = (key: string | null) => (e: Entry) => !key || !!e.idea!.categories?.includes(key);
+
 const filter = ref("all");
+const topic = ref<string | null>(null);
 const query = ref("");
 const found = ref<{ ranking: Ranking; matches: Match[] } | null>(null);
 const input = ref<HTMLInputElement>();
 
-const chips = computed(() =>
-  filters.map((f) => ({ ...f, count: props.entries.filter(f.keep).length })).filter((f) => f.key === "all" || f.key === filter.value || f.count),
-);
-const kept = computed(() => props.entries.filter(filters.find((f) => f.key === filter.value)!.keep));
+const keep = computed(() => filters.find((f) => f.key === filter.value)!.keep);
+
+// Each row's counts take the other row's pick into account.
+const chips = computed(() => {
+  const inPick = props.entries.filter(inTopic(topic.value));
+  return filters.map((f) => ({ ...f, count: inPick.filter(f.keep).length })).filter((f) => f.key === "all" || f.key === filter.value || f.count);
+});
+const topics = computed(() => {
+  const inPick = props.entries.filter(keep.value);
+  return topicList.map((t) => ({ ...t, count: inPick.filter(inTopic(t.key)).length })).filter((t) => t.key === topic.value || t.count);
+});
+// Until anything's been sorted into a category, there's nothing to pick from.
+const sorted = computed(() => props.entries.some((e) => e.idea!.categories));
+
+const kept = computed(() => props.entries.filter(keep.value).filter(inTopic(topic.value)));
 
 const results = computed(() => {
   if (!found.value) return kept.value.map((entry) => ({ entry, percent: undefined }));
@@ -129,6 +145,20 @@ onBeforeUnmount(() => {
         @click="filter = chip.key"
       >
         {{ chip.label }} <span :class="filter === chip.key ? 'opacity-70' : 'text-night-muted'">{{ chip.count }}</span>
+      </button>
+    </div>
+
+    <div v-if="sorted" role="group" aria-label="Topic" class="-mx-3 flex gap-2 overflow-x-auto px-3 sm:mx-0 sm:flex-wrap sm:px-0">
+      <button
+        v-for="t in topics"
+        :key="t.key"
+        type="button"
+        :aria-pressed="topic === t.key"
+        class="shrink-0 cursor-pointer rounded-full border px-3 py-1 font-mono text-xs focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand-lime"
+        :class="topic === t.key ? 'border-night-text bg-night-text text-night' : 'border-night-line bg-night text-night-sub hover:border-night-text hover:text-night-text'"
+        @click="topic = topic === t.key ? null : t.key"
+      >
+        {{ t.label }} <span :class="topic === t.key ? 'opacity-70' : 'text-night-muted'">{{ t.count }}</span>
       </button>
     </div>
 

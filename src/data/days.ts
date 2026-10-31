@@ -15,6 +15,7 @@ export interface Idea {
   sponsors: Sponsor[];
   seed?: string;
   submittedAt?: string;
+  categories?: string[];
 }
 
 export interface Short {

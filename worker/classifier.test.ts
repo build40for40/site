@@ -40,6 +40,6 @@ test("classifyIdea sends only the title and problem", async () => {
   const ask = vi.fn(async () => answer as Awaited<ReturnType<Classifier["ask"]>>);
   const idea = { id: "x", title: "T", problem: "P", owner: "Ada", email: "ada@example.com", sponsors: [] };
   const result = await classifyIdea(idea, {}, { version: "v", ask });
-  expect(ask).toHaveBeenCalledWith({ idea: { title: "T", problem: "P" } }, {});
+  expect(ask).toHaveBeenCalledWith({ idea: { title: "T", problem: "P" } }, {}, undefined);
   expect(result.classifierVersion).toBe("jev-1.13.0");
 });
