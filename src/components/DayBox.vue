@@ -250,10 +250,14 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
           </template>
 
           <template v-else-if="entry.status === 'us'">
-            <video v-if="sponsorUs.video" :src="sponsorUs.video" controls playsinline class="absolute inset-0 size-full bg-player object-cover"></video>
+            <video v-if="sponsorUs.video" :src="sponsorUs.video" :poster="sponsorUs.still" controls playsinline class="absolute inset-0 size-full bg-player object-cover"></video>
             <template v-else>
-              <span :class="kicker">Video coming soon</span>
-              <p class="m-0 font-mono text-xs text-night-muted">We’re recording it. Probably in one take.</p>
+              <img :src="sponsorUs.still" alt="" class="absolute inset-0 size-full object-cover brightness-75 saturate-75" />
+              <div class="absolute inset-0 bg-night/45"></div>
+              <div class="relative flex flex-col gap-1.5 rounded-lg bg-night/80 px-4 py-3 backdrop-blur-sm">
+                <span :class="kicker">Video coming soon</span>
+                <p class="m-0 font-mono text-xs text-night-text">We’re recording it. Probably in one take.</p>
+              </div>
             </template>
           </template>
 

@@ -32,6 +32,8 @@ export const sponsorUs = {
   team: "Lawrence, Samira and Ben",
   share: "Share it, help us get real jobs",
   video: "",
+  // A still from the stream, behind the "coming soon" note and as the video's poster once it's in.
+  still: "/sponsor-us/still.webp",
 };
 
 export const companySponsors = [{ name: "Superthread", url: "https://superthread.com", logo: "/sponsors/superthread.svg", width: 320, height: 64 }];
