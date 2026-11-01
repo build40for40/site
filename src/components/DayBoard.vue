@@ -16,6 +16,7 @@ import {
   statusLabel,
   tones,
   type Entry,
+  type EntryStatus,
   type Idea,
   type ShippedIdea,
   type Sponsor,
@@ -206,8 +207,17 @@ let moving = false;
 // Open and guest days have no problem to search, so they stay out of the pool.
 const thrown = computed(() => board.value.days.filter((d) => d.idea));
 const dayIdeas = computed(() => board.value.days.flatMap((d) => (d.idea ? [d.idea] : [])));
-const browsable = computed(() => [...pool.value.map((p) => p.idea!), ...dayIdeas.value]);
-const browseStatuses = computed(() => Object.fromEntries([...pool.value, ...board.value.days].flatMap((e) => (e.idea ? [[e.idea.id, e.status]] : []))));
+// The clock rebuilds the board every second, so these keep their last value until something in them changes. A fresh
+// one each tick re-renders the browse panel, which closes and reopens an open category picker in Firefox.
+const browsable = computed<Idea[]>((last) => {
+  const ideas = [...pool.value.map((p) => p.idea!), ...dayIdeas.value];
+  return last?.length === ideas.length && ideas.every((idea, i) => idea === last[i]) ? last : ideas;
+});
+const browseStatuses = computed<Record<string, EntryStatus>>((last) => {
+  const statuses = Object.fromEntries([...pool.value, ...board.value.days].flatMap((e) => (e.idea ? [[e.idea.id, e.status]] : [])));
+  const ids = Object.keys(statuses);
+  return last && ids.length === Object.keys(last).length && ids.every((id) => statuses[id] === last[id]) ? last : statuses;
+});
 const dayOf = computed(() => new Map(board.value.days.flatMap((d) => (d.idea ? [[d.idea.id, d.key] as const] : []))));
 
 async function openBrowse() {
