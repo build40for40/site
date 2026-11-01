@@ -95,8 +95,8 @@ const line = computed(() => {
   }
   if (status !== "queued") return "";
   if (isUpFirst.value) return "Once the clock starts we get 4 hours 40 minutes to ship it.";
-  if (!total.value) return `#${rank} in the queue, pencilled in for ${date}. If it’s still at $0 by 9:00 that day, the day stays locked.`;
-  if (rank === 1) return `Top of the queue. If nothing outfunds it by 9:00 on ${date}, we build it.`;
+  if (!total.value) return `#${rank} in the queue, pencilled in for ${date}. If it’s still at $0 by 10:00 that day, the day stays locked.`;
+  if (rank === 1) return `Top of the queue. If nothing outfunds it by 10:00 on ${date}, we build it.`;
   return `#${rank} in the queue. Outfund the ones above it to move up.`;
 });
 
@@ -220,7 +220,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
               <div class="flex gap-[.35em] font-mono text-[clamp(28px,4.4vw,52px)] leading-none font-medium tabular-nums" role="timer">
                 <span v-for="[value, unit] in countdownParts(start - now)" :key="unit">{{ pad(value) }}<small class="text-[.4em] text-night-muted">{{ unit }}</small></span>
               </div>
-              <p class="m-0 font-mono text-xs leading-normal text-night-muted">9:00 {{ entry.date }} UK. Then the clock starts: 4:40:00.</p>
+              <p class="m-0 font-mono text-xs leading-normal text-night-muted">10:00 {{ entry.date }} UK. Then the clock starts: 4:40:00.</p>
             </template>
             <span
               class="absolute top-2.5 left-2.5 z-1 flex items-center gap-1.5 rounded-[3px] px-2 py-0.5 font-mono text-[10px] font-medium tracking-wider text-night"
@@ -237,7 +237,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
             <div class="flex gap-[.35em] font-mono text-[clamp(28px,4.4vw,52px)] leading-none font-medium tabular-nums" role="timer">
               <span v-for="[value, unit] in countdownParts(start - now)" :key="unit">{{ pad(value) }}<small class="text-[.4em] text-night-muted">{{ unit }}</small></span>
             </div>
-            <p class="m-0 font-mono text-xs leading-normal text-night-muted">9:00 {{ entry.date }} UK, if it’s still funded by then.</p>
+            <p class="m-0 font-mono text-xs leading-normal text-night-muted">10:00 {{ entry.date }} UK, if it’s still funded by then.</p>
           </template>
 
           <template v-else-if="entry.status === 'guest'">
@@ -246,7 +246,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
               <path d="M8 11V7a4 4 0 0 1 8 0v4" />
             </svg>
             <span :class="kicker">Top secret</span>
-            <p class="m-0 font-mono text-xs text-night-muted">Revealed live at 9:00 UK on {{ entry.date }}</p>
+            <p class="m-0 font-mono text-xs text-night-muted">Revealed live at 10:00 UK on {{ entry.date }}</p>
           </template>
 
           <template v-else-if="entry.status === 'us'">
@@ -354,7 +354,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
         </div>
         <p v-if="idea" class="m-0 line-clamp-3 text-[15px] leading-snug text-night-sub text-pretty" :title="idea.problem"><span class="text-brand-yellow">(</span>{{ idea.problem }}<span class="text-brand-yellow">)</span></p>
         <template v-else>
-          <p class="m-0 text-[15px] leading-snug text-night-sub text-pretty">A special guest brings their own problem and builds it with us. It stays a secret until 9:00 on {{ entry.date }}.</p>
+          <p class="m-0 text-[15px] leading-snug text-night-sub text-pretty">A special guest brings their own problem and builds it with us. It stays a secret until 10:00 on {{ entry.date }}.</p>
           <p class="m-0 text-[15px] leading-snug text-pretty">Same rules as every day: 4 hours 40 minutes on the clock, live on Twitch.</p>
         </template>
         <p v-if="entry.status === 'us'" class="m-0 text-[15px] leading-snug text-pretty">{{ sponsorUs.pitch }}</p>

@@ -1,7 +1,7 @@
 import type { Brand } from "./brands";
 
 export const UK_TZ = "Europe/London";
-export const START = "2026-11-02T09:00:00Z";
+export const START = "2026-11-02T10:00:00Z";
 export const TOTAL_DAYS = 40;
 
 const handle = "build40for40";

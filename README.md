@@ -8,7 +8,7 @@ Before Day 1, its job is to get people to help, in this priority order: office s
 
 **Audiences:** supporters (space, tools, a CTO for a day), special guests, problem owners, unlockers and sponsors, viewers and builders, press.
 
-**The daily cycle:** at 9am the day's box appears, locked, and a timer starts counting up. The first payment unlocks it, credits the payer and reveals the problem and guests. The team then moves it through Building and Check-in to Shipped, or marks it Paused. At 5pm the app link and demo recording go up.
+**The daily cycle:** at 10am the day's box appears, locked, and a timer starts counting up. The first payment unlocks it, credits the payer and reveals the problem and guests. The team then moves it through Building and Check-in to Shipped, or marks it Paused. At 5pm the app link and demo recording go up.
 
 ## Releases
 

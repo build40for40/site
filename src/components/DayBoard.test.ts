@@ -17,8 +17,8 @@ const physics = () => ({
   }),
 });
 
-// 34 of the 40 days take ideas before Day 1, so the last 10 of these 44 land in the pool, beside the disco ball.
-const idea = (i: number) => ({ id: `idea-${i}`, title: `Idea ${i}`, problem: `Problem number ${i}`, sponsors: i < 34 ? [{ name: "Anonymous", amount: 100 - i }] : [] });
+// 39 of the 40 days take ideas before Day 1, so the last 5 of these 44 land in the pool, beside the disco ball.
+const idea = (i: number) => ({ id: `idea-${i}`, title: `Idea ${i}`, problem: `Problem number ${i}`, sponsors: i < 39 ? [{ name: "Anonymous", amount: 100 - i }] : [] });
 const pages: Record<string, unknown> = {
   0: { ideas: Array.from({ length: 40 }, (_, i) => idea(i)), next: 40 },
   40: { ideas: Array.from({ length: 4 }, (_, i) => idea(40 + i)), next: null },
@@ -88,7 +88,7 @@ afterEach(() => {
 async function board() {
   const { default: DayBoard } = await import("./DayBoard.vue");
   wrapper = mount(DayBoard, { props: { history: {}, builtAt: Date.now() }, attachTo: document.body });
-  await vi.waitFor(() => expect(wrapper!.findAll("ul[aria-labelledby=pool-title] li")).toHaveLength(11), { timeout: 3000 });
+  await vi.waitFor(() => expect(wrapper!.findAll("ul[aria-labelledby=pool-title] li")).toHaveLength(6), { timeout: 3000 });
   await flushPromises();
   return wrapper;
 }
@@ -102,36 +102,36 @@ const poolTitles = (w: VueWrapper) =>
 describe("the problems pool", () => {
   test("shows every idea that didn't make the days, as bodies once it's on screen", async () => {
     const w = await board();
-    expect(poolTitles(w)).toEqual(Array.from({ length: 10 }, (_, i) => `Idea ${34 + i}`));
-    await vi.waitFor(() => expect(bodies.registered).toHaveLength(11));
+    expect(poolTitles(w)).toEqual(Array.from({ length: 5 }, (_, i) => `Idea ${39 + i}`));
+    await vi.waitFor(() => expect(bodies.registered).toHaveLength(6));
     expect(pool(w).classes()).toContain("absolute");
   });
 
   test("paying for an idea moves it into the days and bumps the last one into the pool", async () => {
     outcome = { status: "paid", amount: 104, name: "Ada" };
     const w = await board();
-    await vi.waitFor(() => expect(bodies.registered).toHaveLength(11));
-    w.findComponent({ name: "DayBox" }).vm.$emit("pick", "pool-idea-34", 25);
+    await vi.waitFor(() => expect(bodies.registered).toHaveLength(6));
+    w.findComponent({ name: "DayBox" }).vm.$emit("pick", "pool-idea-39", 25);
     await flushPromises();
     await w.findAll("#day-box button").find((b) => b.text() === "$104")!.trigger("click");
     await w.find("#sponsor-button").trigger("click");
     await flushPromises();
 
-    expect(checkout.startCheckout).toHaveBeenCalledWith({ amount: 10400, anonymous: false, problem: "idea-34" });
-    expect(poolTitles(w)).not.toContain("Idea 34");
-    expect(poolTitles(w)).toContain("Idea 33");
-    await vi.waitFor(() => expect(bodies.unregistered).toEqual(["idea-34"]));
-    expect(bodies.registered.at(-1)).toBe("idea-33");
+    expect(checkout.startCheckout).toHaveBeenCalledWith({ amount: 10400, anonymous: false, problem: "idea-39" });
+    expect(poolTitles(w)).not.toContain("Idea 39");
+    expect(poolTitles(w)).toContain("Idea 38");
+    await vi.waitFor(() => expect(bodies.unregistered).toEqual(["idea-39"]));
+    expect(bodies.registered.at(-1)).toBe("idea-38");
   });
 
   test("closing checkout without paying leaves the idea where it was", async () => {
     outcome = { status: "closed" };
     const w = await board();
-    w.findComponent({ name: "DayBox" }).vm.$emit("pick", "pool-idea-34", 104);
+    w.findComponent({ name: "DayBox" }).vm.$emit("pick", "pool-idea-39", 104);
     await flushPromises();
     await w.find("#sponsor-button").trigger("click");
     await flushPromises();
-    expect(poolTitles(w)).toContain("Idea 34");
+    expect(poolTitles(w)).toContain("Idea 39");
     expect(w.text()).not.toContain("Thank you");
   });
 
@@ -150,25 +150,25 @@ describe("the problems pool", () => {
     const finished = new Promise<void>((resolve) => (landing = resolve));
     const animate =     vi.spyOn(Element.prototype, "animate").mockReturnValue({ finished } as unknown as Animation);
     const w = await board();
-    await vi.waitFor(() => expect(bodies.registered).toHaveLength(11));
+    await vi.waitFor(() => expect(bodies.registered).toHaveLength(6));
     const from = { left: 0, top: 0, width: 88, height: 72 };
     dispatchEvent(new CustomEvent("problem-sent", { detail: { problem: "My plant keeps dying.", name: "Sam Carter", amount: 80, from } }));
     await flushPromises();
 
     const day = (n: number) => w.find(`[data-day-slot=day-${n}] button`).attributes("aria-label");
-    expect(day(24)).toContain("Idea 20");
-    expect(day(25)).toContain("My plant keeps dying");
-    expect(day(26)).toContain("Idea 21");
-    expect(day(39)).toContain("Idea 32");
-    expect(animate.mock.calls.filter(([frames]) => String((frames as Keyframe[])[0].translate).endsWith("px"))).toHaveLength(12);
+    expect(day(22)).toContain("Idea 20");
+    expect(day(23)).toContain("My plant keeps dying");
+    expect(day(24)).toContain("Idea 21");
+    expect(day(40)).toContain("Idea 37");
+    expect(animate.mock.calls.filter(([frames]) => String((frames as Keyframe[])[0].translate).endsWith("px"))).toHaveLength(17);
 
     const ghost = () => document.querySelector("[aria-hidden=true].z-40");
-    expect(ghost()?.textContent).toContain("Idea 33");
+    expect(ghost()?.textContent).toContain("Idea 38");
     expect(bodies.dropped).toEqual([]);
     landing();
-    await vi.waitFor(() => expect(bodies.dropped).toEqual(["idea-33"]), { timeout: 3000 });
+    await vi.waitFor(() => expect(bodies.dropped).toEqual(["idea-38"]), { timeout: 3000 });
     expect(ghost()).toBeNull();
-    expect(poolTitles(w)).toContain("Idea 33");
+    expect(poolTitles(w)).toContain("Idea 38");
   });
 
   test("is laid out for physics from the start, with ideas hidden until they drop in", async () => {
@@ -210,7 +210,7 @@ describe("writing a problem in the join form", () => {
   async function write(text: string) {
     document.body.insertAdjacentHTML("beforeend", `<textarea id="join-problem"></textarea>`);
     const w = await board();
-    await vi.waitFor(() => expect(bodies.registered).toHaveLength(11));
+    await vi.waitFor(() => expect(bodies.registered).toHaveLength(6));
     const field = document.querySelector<HTMLTextAreaElement>("#join-problem")!;
     field.value = text;
     field.dispatchEvent(new Event("input", { bubbles: true }));
@@ -240,9 +240,9 @@ describe("writing a problem in the join form", () => {
 test("Browse throws the days with problems into the pool, floats matching problems and days, and picking one puts them back", async () => {
   document.body.insertAdjacentHTML("beforeend", `<a href="#browse">Browse</a>`);
   const w = await board();
-  await vi.waitFor(() => expect(bodies.registered).toHaveLength(11));
+  await vi.waitFor(() => expect(bodies.registered).toHaveLength(6));
   document.querySelector<HTMLAnchorElement>("a[href='#browse']")!.click();
-  await vi.waitFor(() => expect(bodies.dropped.filter((id) => id.startsWith("day-"))).toHaveLength(34), { timeout: 2000 });
+  await vi.waitFor(() => expect(bodies.dropped.filter((id) => id.startsWith("day-"))).toHaveLength(39), { timeout: 2000 });
   expect(bodies.dropped).not.toContain("day-10");
   expect(w.find("ul[aria-label='The 40 days']").isVisible()).toBe(false);
 
@@ -254,6 +254,6 @@ test("Browse throws the days with problems into the pool, floats matching proble
   w.find("[data-pool-ball='idea-41']").element.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
   await vi.waitFor(() => expect(w.find("#browse").exists()).toBe(false));
   await vi.waitFor(() => expect(w.find("#day-box").text()).toContain("Idea 41"));
-  expect(bodies.unregistered.filter((id) => id.startsWith("day-"))).toHaveLength(34);
+  expect(bodies.unregistered.filter((id) => id.startsWith("day-"))).toHaveLength(39);
   expect([...bodies.hovers.values()].every((y) => y === null)).toBe(true);
 });

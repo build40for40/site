@@ -94,10 +94,10 @@ const kicker = computed(() => {
     return { tone: "text-live", dot: "bg-live motion-safe:animate-pulse", text: `Live now · ${left} left` };
   }
   if (phase === "before") {
-    return { tone: "text-night-muted", dot: "bg-queued", text: `Up next · 9:00 UK${isToday ? "" : `, ${dayDate(today)}`}` };
+    return { tone: "text-night-muted", dot: "bg-queued", text: `Up next · 10:00 UK${isToday ? "" : `, ${dayDate(today)}`}` };
   }
   if (today < TOTAL_DAYS) {
-    return { tone: "text-night-muted", dot: "bg-shipped", text: `Day ${today} shipped · Up next 9:00 UK, ${dayDate(today + 1)}` };
+    return { tone: "text-night-muted", dot: "bg-shipped", text: `Day ${today} shipped · Up next 10:00 UK, ${dayDate(today + 1)}` };
   }
   return { tone: "text-night-muted", dot: "bg-shipped", text: "That’s 40. What a ride." };
 });
