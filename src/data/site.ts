@@ -12,7 +12,6 @@ export const links = {
   email: "help@build40for40.com",
   socials: [
     { brand: "twitch", href: `https://www.twitch.tv/${handle}` },
-    { brand: "linkedin", href: `https://www.linkedin.com/company/${handle}` },
     { brand: "x", href: `https://x.com/${handle}` },
     { brand: "instagram", href: `https://www.instagram.com/${handle}` },
     { brand: "tiktok", href: `https://www.tiktok.com/@${handle}` },

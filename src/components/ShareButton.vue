@@ -37,8 +37,9 @@ async function copy() {
   setTimeout(() => (copied.value = false), 2000);
 }
 
-const pill =
-  "cursor-pointer rounded-full border border-night-edge bg-night/60 px-3 py-1.5 font-mono text-xs font-medium text-night-text no-underline hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime";
+const chip =
+  "cursor-pointer rounded-full border border-night-edge bg-night/60 text-night-text no-underline hover:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime";
+const pill = `${chip} px-3 py-1.5 font-mono text-xs font-medium`;
 </script>
 
 <template>
@@ -53,8 +54,8 @@ const pill =
         target="_blank"
         rel="noopener"
         :aria-label="`Share on ${brands[t.brand].name}`"
-        class="grid size-[30px] place-items-center p-0"
-        :class="pill"
+        class="grid size-[30px] place-items-center"
+        :class="chip"
         @click="track(brands[t.brand].name)"
       ><BrandIcon :brand="t.brand" class="size-3.5" /></a>
     </template>
