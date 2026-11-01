@@ -31,6 +31,8 @@ jobs:
 
       - run: npm ci
 
+      - run: npm test
+
       - run: npm run build
         env:
           PUBLIC_POSTHOG_PROJECT_TOKEN: ${{ secrets.PUBLIC_POSTHOG_PROJECT_TOKEN }}
