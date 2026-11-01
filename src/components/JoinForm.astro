@@ -91,7 +91,7 @@ const input =
           ))}
         </fieldset>
 
-        <fieldset class="m-0 flex flex-col gap-3 border-0 p-0">
+        <fieldset class="group/backing m-0 flex flex-col gap-3 border-0 p-0">
           <legend class:list={[heading, "mb-3 p-0"]}>
             <span class="text-[15px] leading-snug font-semibold">Now back it <span aria-hidden="true">*</span></span>
             <span class={hint}>Pick one to send it</span>
@@ -110,7 +110,7 @@ const input =
           <div>
             <ShareButton client:visible expanded label="Share" text="40 apps in 40 days, built live from London. Got a problem? Send it in" url="https://build40for40.com" />
           </div>
-          <div role="radiogroup" aria-label="How much?" class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div role="radiogroup" aria-label="How much?" class="hidden grid-cols-2 gap-2 group-has-[[name=backing][value=sponsor]:checked]/backing:grid sm:grid-cols-4">
             {SPONSOR_AMOUNTS.map((amount) => (
               <label class="cursor-pointer font-normal!">
                 <input type="radio" name="sponsor" value={amount * 100} class="peer sr-only" />
@@ -161,11 +161,9 @@ const input =
       const backed = backing === "share" || (backing === "sponsor" && data.has("sponsor"));
       submit.disabled = Boolean(String(data.get("problem") ?? "").trim()) && !backed;
     }
-    // Picking an amount means sponsoring, and promising to share drops the amount.
+    // The amounts only show once they pick sponsoring, and promising to share drops the amount.
     form.addEventListener("change", ({ target }) => {
-      if (!(target instanceof HTMLInputElement)) return;
-      if (target.name === "sponsor") form.querySelector<HTMLInputElement>("[name=backing][value=sponsor]")!.checked = true;
-      if (target.name === "backing" && target.value === "share") form.querySelectorAll<HTMLInputElement>("[name=sponsor]").forEach((amount) => (amount.checked = false));
+      if (target instanceof HTMLInputElement && target.name === "backing" && target.value === "share") form.querySelectorAll<HTMLInputElement>("[name=sponsor]").forEach((amount) => (amount.checked = false));
     });
     form.addEventListener("input", gate);
     form.addEventListener("change", gate);
