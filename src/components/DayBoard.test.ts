@@ -257,3 +257,18 @@ test("Browse throws the days with problems into the pool, floats matching proble
   expect(bodies.unregistered.filter((id) => id.startsWith("day-"))).toHaveLength(39);
   expect([...bodies.hovers.values()].every((y) => y === null)).toBe(true);
 });
+
+test("the clock ticking doesn't re-render Browse, so an open category picker stays open", async () => {
+  vi.useFakeTimers({ toFake: ["Date", "setInterval"] });
+  document.body.insertAdjacentHTML("beforeend", `<a href="#browse">Browse</a>`);
+  const w = await board();
+  document.querySelector<HTMLAnchorElement>("a[href='#browse']")!.click();
+  await vi.waitFor(() => expect(w.find("#browse").exists()).toBe(true), { timeout: 2000 });
+  const panel = w.findComponent({ name: "BrowsePanel" });
+  const { ideas, statuses } = panel.props();
+
+  vi.advanceTimersByTime(3000);
+  await flushPromises();
+  expect(panel.props("ideas")).toBe(ideas);
+  expect(panel.props("statuses")).toBe(statuses);
+});
