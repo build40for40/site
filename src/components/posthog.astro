@@ -29,7 +29,7 @@ const isDevelopment = import.meta.env.DEV;
         capture_unhandled_rejections: true,
         capture_console_errors: false,
       },
-      // The Join box hands the typed email to /join/ in the URL hash.
+      // The Join box can hand the typed email to the join form in the URL hash.
       before_send: (event) => {
         if (event) [event.properties, event.$set, event.$set_once].forEach(withoutHash);
         return event;

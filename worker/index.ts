@@ -1,4 +1,11 @@
-import { TOTAL_DAYS, helpTypes, involvement } from "../src/data/site";
+import { GUEST_DAYS } from "../src/data/days";
+import { TOTAL_DAYS, backings, helpTypes, involvement } from "../src/data/site";
+import { categoriseProblem, verdict, type Sorted } from "./categories";
+import { SPONSOR_CENTS, StripeError, openCheckout, readCheckout, recordPayment, statusOf, summary, type CheckoutSession, type Sponsoring } from "./checkout";
+import { jevClassifier } from "./classifier";
+import { listProblems } from "./problems";
+import { searchIdeas } from "./search";
+import { anthropicTitler, titleProblem } from "./titles";
 
 interface Field {
   name: string;
@@ -20,6 +27,10 @@ const forms: Record<string, Field[]> = {
     email,
     { name: "problem", max: 1000 },
     { name: "involved", options: involvement.map((option) => option.value), multiple: true },
+    ...involvement.map((option) => ({ name: option.note, max: 200 })),
+    { name: "backing", options: backings },
+    { name: "sponsor", options: SPONSOR_CENTS.map(String) },
+    { name: "contact", options: ["yes"] },
   ],
   help: [
     name,
@@ -70,20 +81,24 @@ interface Person {
   email: string;
   name: string | null;
   involved: string | null;
+  helpNote: string | null;
+  guestNote: string | null;
   now: string;
 }
 
 // A later form fills in or changes answers but never clears one it left out.
-const upsertPerson = (db: D1Database, { email, name, involved, now }: Person) =>
+const upsertPerson = (db: D1Database, { email, name, involved, helpNote, guestNote, now }: Person) =>
   db
     .prepare(
-      `INSERT INTO people (email, name, involved, joined_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?4)
+      `INSERT INTO people (email, name, involved, help_note, guest_note, joined_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6)
        ON CONFLICT (email) DO UPDATE SET
          name = coalesce(excluded.name, name),
          involved = coalesce(excluded.involved, involved),
+         help_note = coalesce(excluded.help_note, help_note),
+         guest_note = coalesce(excluded.guest_note, guest_note),
          updated_at = excluded.updated_at`,
     )
-    .bind(email, name, involved, now);
+    .bind(email, name, involved, helpNote, guestNote, now);
 
 async function capture(env: Env, event: string, distinctId: string, properties: Record<string, unknown>) {
   if (!env.PUBLIC_POSTHOG_PROJECT_TOKEN) return;
@@ -130,16 +145,7 @@ interface CheckoutSessionEvent {
   type: string;
   created: number;
   livemode: boolean;
-  data: {
-    object: {
-      id: string;
-      payment_status: string;
-      amount_total: number | null;
-      currency: string | null;
-      client_reference_id: string | null;
-      customer_details: { email: string | null } | null;
-    };
-  };
+  data: { object: CheckoutSession };
 }
 
 async function stripeWebhook(request: Request, env: Env, ctx: ExecutionContext) {
@@ -157,29 +163,89 @@ async function stripeWebhook(request: Request, env: Env, ctx: ExecutionContext) 
     (event.type === "checkout.session.completed" && session.payment_status === "paid");
   if (!paid) return text("Ignored.", 200);
 
-  // Stripe retries and can send an event twice, so a repeat is a no-op. A problem id from another database becomes null.
-  const { meta } = await env.DB.prepare(
-    `INSERT INTO payments (id, email, problem_id, amount, currency, livemode, paid_at)
-     VALUES (?1, ?2, (SELECT id FROM problems WHERE id = ?3), ?4, ?5, ?6, ?7)
-     ON CONFLICT (id) DO NOTHING`,
-  )
-    .bind(
-      session.id,
-      session.customer_details?.email?.toLowerCase() ?? null,
-      session.client_reference_id,
-      session.amount_total ?? 0,
-      session.currency ?? "",
-      event.livemode ? 1 : 0,
-      new Date(event.created * 1000).toISOString(),
-    )
-    .run();
-  // Stripe calls from its own servers, so this can't be tied to the visitor's cookieless id.
-  if (meta.changes) {
-    ctx.waitUntil(
-      capture(env, "payment_completed", session.id, { amount: session.amount_total ?? 0, currency: session.currency, livemode: event.livemode }),
-    );
-  }
+  if (await recordPayment(env.DB, session, new Date(event.created * 1000).toISOString())) paymentCompleted(env, ctx, session);
   return text("Saved.", 200);
+}
+
+// Stripe calls from its own servers, so this can't be tied to the visitor's cookieless id.
+const paymentCompleted = (env: Env, ctx: ExecutionContext, session: CheckoutSession) =>
+  ctx.waitUntil(capture(env, "payment_completed", session.id, { amount: session.amount_total ?? 0, currency: session.currency, livemode: session.livemode }));
+
+// Checkout on the page tells it when a payment goes through, and the page asks here. Stripe is asked directly rather
+// than waiting on the webhook.
+async function checkoutStatus(env: Env, ctx: ExecutionContext, id: string) {
+  if (!/^cs_(test|live)_[A-Za-z0-9]+$/.test(id)) return text("Not found.", 404);
+  let session: CheckoutSession;
+  try {
+    session = await readCheckout(env, id);
+  } catch (error) {
+    return text(error instanceof StripeError ? error.message : "Couldn’t reach Stripe.", 502);
+  }
+  if (statusOf(session) === "paid" && (await recordPayment(env.DB, session, new Date().toISOString()))) paymentCompleted(env, ctx, session);
+  return json(summary(session));
+}
+
+const isGuestDay = (day: unknown): day is number => typeof day === "number" && GUEST_DAYS.has(day);
+
+async function startCheckout(request: Request, env: Env) {
+  const input = (await request.json().catch(() => null)) as { amount?: unknown; problem?: unknown; day?: unknown; anonymous?: unknown } | null;
+  if (!input || typeof input.amount !== "number" || !SPONSOR_CENTS.includes(input.amount)) return text("That amount isn’t one of the options.", 400);
+  const day = isGuestDay(input.day) ? input.day : undefined;
+  const problemId = typeof input.problem === "string" ? input.problem : undefined;
+  const whole = input.day === undefined && input.problem === undefined;
+  if (!whole && Boolean(day) === Boolean(problemId)) return text("Sponsor a problem, a guest day or the whole thing.", 400);
+  if (problemId && !(await env.DB.prepare("SELECT 1 FROM problems WHERE id = ?1 AND awaiting_payment = 0").bind(problemId).first())) {
+    return text("That problem isn’t up for sponsoring.", 404);
+  }
+  return openCheckoutResponse(env, { cents: input.amount, problemId, day, anonymous: input.anonymous === true, origin: new URL(request.url).origin });
+}
+
+async function openCheckoutResponse(env: Env, sponsoring: Sponsoring, extra: Record<string, unknown> = {}) {
+  if (!env.STRIPE_SECRET_KEY) return text("Payments aren’t set up here yet.", 503);
+  try {
+    return json({ ...extra, checkout: await openCheckout(env, sponsoring) });
+  } catch (error) {
+    return text(error instanceof StripeError ? `Stripe said no: ${error.message}` : "Couldn’t reach Stripe. Mind trying again?", 502);
+  }
+}
+
+async function guestDays(_request: Request, env: Env) {
+  const { results } = await env.DB.prepare("SELECT day, name, amount FROM payments WHERE day IS NOT NULL ORDER BY paid_at").all<{ day: number; name: string | null; amount: number }>();
+  const sponsors: Record<number, { name: string; amount: number }[]> = {};
+  for (const { day, name, amount } of results) (sponsors[day] ??= []).push({ name: name ?? "Anonymous", amount: amount / 100 });
+  return json({ sponsors });
+}
+
+const CATEGORISE_TIMEOUT_MS = 8000;
+
+const json = (body: unknown, cacheControl = "no-store") => Response.json(body, { headers: { "Cache-Control": cacheControl } });
+
+async function problems(request: Request, env: Env) {
+  const url = new URL(request.url);
+  const seedSecret = (env.ARTWORK_SUBMITTER_SEEDS as string) === "on" ? env.ARTWORK_SEED_SECRET : undefined;
+  return json(
+    await listProblems(env.DB, {
+      offset: Number(url.searchParams.get("offset") ?? 0),
+      limit: Number(url.searchParams.get("limit") ?? 40),
+      seedSecret: seedSecret || undefined,
+    }),
+  );
+}
+
+const classifierFor = (env: Env, timeoutMs?: number) =>
+  env.TYPESAFE_API_KEY ? jevClassifier({ apiKey: env.TYPESAFE_API_KEY, baseUrl: env.TYPESAFE_API_URL || undefined, timeoutMs }) : undefined;
+
+const titlerFor = (env: Env) => (env.ANTHROPIC_API_KEY ? anthropicTitler({ apiKey: env.ANTHROPIC_API_KEY }) : undefined);
+
+// Lets the team find problems that fit no category, or might be junk, without the problem's text leaving the Worker.
+const reportSorted = (env: Env, ctx: ExecutionContext, via: string) => (id: string, sorted: Sorted) =>
+  ctx.waitUntil(capture(env, "problem_categorised", id, { problem_id: id, via, model: sorted.model, ...verdict(sorted) }).catch(() => {}));
+
+async function poolSearch(request: Request, env: Env) {
+  const query = new URL(request.url).searchParams.get("q") ?? "";
+  const classifier = classifierFor(env);
+  const cache = typeof caches === "undefined" ? undefined : (caches as unknown as { default: Cache }).default;
+  return json({ query, ...(await searchIdeas(query, { db: env.DB, classifier, cache })) });
 }
 
 export default {
@@ -187,15 +253,24 @@ export default {
     const url = new URL(request.url);
     if (/^\/api\/stripe\/webhook\/?$/.test(url.pathname)) return stripeWebhook(request, env, ctx);
 
+    const read = { "/api/problems": problems, "/api/pool/search": poolSearch, "/api/days": guestDays }[url.pathname.replace(/\/$/, "")];
+    const session = url.pathname.match(/^\/api\/checkout\/([^/]+)\/?$/)?.[1];
+    if (read || session) {
+      if (request.method !== "GET") return new Response("Method not allowed.", { status: 405, headers: { Allow: "GET" } });
+      return session ? checkoutStatus(env, ctx, session) : read!(request, env);
+    }
+
+    const starting = /^\/api\/checkout\/?$/.test(url.pathname);
     const form = url.pathname.match(/^\/api\/forms\/([a-z]+)\/?$/)?.[1];
     const fields = form && Object.hasOwn(forms, form) ? forms[form] : undefined;
-    if (!form || !fields) return text("Not found.", 404);
+    if (!starting && (!form || !fields)) return text("Not found.", 404);
     if (request.method !== "POST") return new Response("Method not allowed.", { status: 405, headers: { Allow: "POST" } });
 
     const origin = request.headers.get("Origin");
     if (origin && origin !== url.origin) return text("Forbidden.", 403);
+    if (starting || !form || !fields) return startCheckout(request, env);
 
-    const thanks = Response.redirect(new URL("/thanks/", url).href, 303);
+    const home = Response.redirect(new URL("/", url).href, 303);
     let data: FormData;
     try {
       data = await request.formData();
@@ -203,7 +278,7 @@ export default {
       return text("Bad request.", 400);
     }
     // Honeypot: bots fill in every field, people never see this one.
-    if (data.get("website")) return thanks;
+    if (data.get("website")) return home;
 
     const values = parse(fields, data);
     const now = new Date().toISOString();
@@ -219,14 +294,20 @@ export default {
         track("form_saved", { form_type: form });
       }
       const typed = String(data.get("email") ?? "").trim();
-      return Response.redirect(new URL(typed ? `/join/#email=${encodeURIComponent(typed)}` : "/join/", url).href, 303);
+      return Response.redirect(new URL(typed ? `/#join&email=${encodeURIComponent(typed)}` : "/#join", url).href, 303);
     }
 
     if (typeof values === "string") return text(values, 400);
+    if (form === "join" && values.problem && !values.backing) return text("Promise to share it or sponsor it, please.", 400);
+    if (values.backing === "sponsor" && !values.sponsor) return text("Pick how much you’re sponsoring.", 400);
+    if (values.backing === "sponsor" && values.problem && !env.STRIPE_SECRET_KEY) return text("Payments aren’t set up here yet.", 503);
 
     const id = crypto.randomUUID();
     const problemId = values.problem ? id : undefined;
+    const sponsoring = Boolean(problemId) && values.backing === "sponsor";
     const json = (value: string | string[] | undefined) => (value ? JSON.stringify(value) : null);
+    // A note only counts while its box is ticked, since unticking hides the note but keeps what was typed.
+    const note = (value: string, field: string) => ([values.involved ?? []].flat().includes(value) && values[field] ? String(values[field]) : null);
 
     const record =
       form === "help"
@@ -243,11 +324,17 @@ export default {
               "INSERT INTO guest_applications (id, email, role, nominated_by, bring, availability, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             ).bind(id, values.email, values.role, values.nominated_by ?? null, values.bring, json(values.availability), now)
           : problemId
-            ? env.DB.prepare("INSERT INTO problems (id, email, problem, affects, created_at) VALUES (?1, ?2, ?3, ?4, ?5)").bind(
+            ? env.DB.prepare(
+                "INSERT INTO problems (id, email, problem, affects, backing, pledge, contact, awaiting_payment, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+              ).bind(
                 problemId,
                 values.email,
                 values.problem,
                 values.affects ?? null,
+                values.backing ?? null,
+                values.backing === "sponsor" ? Number(values.sponsor) : null,
+                form === "join" ? Number(values.contact === "yes") : null,
+                Number(sponsoring),
                 now,
               )
             : undefined;
@@ -257,12 +344,23 @@ export default {
         email: String(values.email),
         name: values.name ? String(values.name) : null,
         involved: json(values.involved),
+        helpNote: note("kind", "help_note"),
+        guestNote: note("guest", "guest_note"),
         now,
       }),
       ...(record ? [record] : []),
     ]);
-    track("form_saved", { form_type: form, involvement: values.involved });
+    track("form_saved", { form_type: form, involvement: values.involved, backing: values.backing });
 
-    return thanks;
+    const classifier = problemId && classifierFor(env, CATEGORISE_TIMEOUT_MS);
+    if (problemId && classifier) ctx.waitUntil(categoriseProblem(env.DB, classifier, problemId, reportSorted(env, ctx, "submit")).catch(() => {}));
+    const titler = problemId && titlerFor(env);
+    if (problemId && titler) ctx.waitUntil(titleProblem(env.DB, titler, problemId).catch(() => {}));
+
+    if (sponsoring) {
+      const name = String(values.name ?? "").split(/\s+/)[0] || null;
+      return openCheckoutResponse(env, { cents: Number(values.sponsor), problemId, email: String(values.email), name, origin: url.origin }, { problem: problemId });
+    }
+    return request.headers.get("Accept")?.includes("application/json") ? Response.json({ problem: problemId ?? null }) : home;
   },
 } satisfies ExportedHandler<Env>;

@@ -1,0 +1,36 @@
+---
+import { companySponsors } from "../data/site";
+
+// A handful of logos fits the strip, so they only scroll once there are more than that.
+const scrolls = companySponsors.length > 5;
+---
+
+<section aria-labelledby="sponsors-title" class="mx-auto flex w-full max-w-[1600px] items-center gap-4 px-4 pb-8 lg:px-12">
+  <h2 id="sponsors-title" class="m-0 shrink-0 font-mono text-[10px] font-medium tracking-wider text-night-muted uppercase">Sponsors</h2>
+  <div class:list={["@container min-w-0 flex-1 overflow-hidden", scrolls && "mask-x-from-90%"]}>
+    <div class:list={["flex", scrolls && "w-max motion-safe:animate-credits hover:[animation-play-state:paused]"]}>
+      {
+        (scrolls ? [1, 2] : [1]).map((copy) => (
+          <ul
+            aria-hidden={copy === 2 ? "true" : undefined}
+            class="m-0 flex min-w-[100cqw] shrink-0 list-none flex-wrap items-center justify-around gap-x-16 gap-y-4 p-0 px-8 motion-reduce:not-first:hidden"
+          >
+            {companySponsors.map((sponsor) => (
+              <li class="shrink-0">
+                <a
+                  href={sponsor.url}
+                  target="_blank"
+                  rel="noopener"
+                  tabindex={copy === 2 ? -1 : undefined}
+                  class="block rounded-sm opacity-80 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-lime"
+                >
+                  <img src={sponsor.logo} alt={sponsor.name} width={sponsor.width} height={sponsor.height} class="block h-7 w-auto" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        ))
+      }
+    </div>
+  </div>
+</section>

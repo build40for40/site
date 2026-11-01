@@ -1,0 +1,75 @@
+---
+const times = [
+  { label: "Real", value: "" },
+  { label: "Day 7 live", value: "2026-11-10T11:20:00Z" },
+  { label: "Between days", value: "2026-11-10T19:00:00Z" },
+];
+const counts = [
+  { label: "Days", param: "grid", upTo: 1500 },
+  { label: "Pool", param: "pool", upTo: 0 },
+];
+const step = "grid size-5 cursor-pointer place-items-center rounded-full border border-night-edge bg-night p-0 text-night-sub hover:border-night-text hover:text-night-text";
+---
+
+<nav
+  aria-label="Dev variants"
+  class="fixed top-2 left-1/2 z-50 flex -translate-x-1/2 flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border border-night-edge bg-night-panel/95 px-3 py-1.5 font-mono text-[11px] text-night-muted shadow-lg"
+>
+  <div class="flex items-center gap-1">
+    <span class="mr-1 uppercase">Time</span>
+    {
+      times.map((option) => (
+        <a
+          href="#"
+          data-value={option.value}
+          class="rounded-full px-2 py-0.5 whitespace-nowrap text-night-sub no-underline hover:text-night-text aria-[current=true]:bg-night-text aria-[current=true]:text-night"
+        >
+          {option.label}
+        </a>
+      ))
+    }
+  </div>
+  {
+    counts.map(({ label, param, upTo }) => (
+      <div class="flex items-center gap-1">
+        <span class="mr-1 uppercase">{label}</span>
+        <button type="button" data-fewer={param} aria-label={`One fewer in ${label.toLowerCase()}`} class={step}>
+          −
+        </button>
+        <button type="button" data-send={upTo} aria-label={`Send a test problem to ${label.toLowerCase()}`} class={step}>
+          +
+        </button>
+      </div>
+    ))
+  }
+</nav>
+
+<script>
+  import { DEV_FEWER, DEV_SEND } from "../pool/flight";
+
+  const current = new URLSearchParams(location.search);
+
+  function go(param: string, value: string) {
+    const params = new URLSearchParams(current);
+    if (value) params.set(param, value);
+    else params.delete(param);
+    const query = params.toString();
+    return query ? `?${query}` : location.pathname;
+  }
+
+  for (const link of document.querySelectorAll<HTMLAnchorElement>("nav[aria-label='Dev variants'] a")) {
+    const value = link.dataset.value ?? "";
+    link.href = go("now", value);
+    if ((current.get("now") ?? "") === value) link.setAttribute("aria-current", "true");
+  }
+
+  // Spread evenly on a log scale, so a test send is as likely to land near the top of the days as near the bottom.
+  const anyAmount = (upTo: number) => (upTo ? Math.max(1, Math.round(upTo ** Math.random())) : 0);
+
+  for (const button of document.querySelectorAll<HTMLButtonElement>("nav[aria-label='Dev variants'] button")) {
+    const { fewer, send } = button.dataset;
+    button.addEventListener("click", () =>
+      dispatchEvent(fewer ? new CustomEvent(DEV_FEWER, { detail: fewer }) : new CustomEvent(DEV_SEND, { detail: { amount: anyAmount(Number(send)) } })),
+    );
+  }
+</script>
