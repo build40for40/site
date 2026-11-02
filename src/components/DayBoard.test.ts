@@ -108,16 +108,16 @@ describe("the problems pool", () => {
   });
 
   test("paying for an idea moves it into the days and bumps the last one into the pool", async () => {
-    outcome = { status: "paid", amount: 104, name: "Ada" };
+    outcome = { status: "paid", amount: 140, name: "Ada" };
     const w = await board();
     await vi.waitFor(() => expect(bodies.registered).toHaveLength(6));
     w.findComponent({ name: "DayBox" }).vm.$emit("pick", "pool-idea-39", 25);
     await flushPromises();
-    await w.findAll("#day-box button").find((b) => b.text() === "$104")!.trigger("click");
+    await w.findAll("#day-box button").find((b) => b.text() === "$140")!.trigger("click");
     await w.find("#sponsor-button").trigger("click");
     await flushPromises();
 
-    expect(checkout.startCheckout).toHaveBeenCalledWith({ amount: 10400, anonymous: false, problem: "idea-39" });
+    expect(checkout.startCheckout).toHaveBeenCalledWith({ amount: 14000, anonymous: false, problem: "idea-39" });
     expect(poolTitles(w)).not.toContain("Idea 39");
     expect(poolTitles(w)).toContain("Idea 38");
     await vi.waitFor(() => expect(bodies.unregistered).toEqual(["idea-39"]));
@@ -127,12 +127,35 @@ describe("the problems pool", () => {
   test("closing checkout without paying leaves the idea where it was", async () => {
     outcome = { status: "closed" };
     const w = await board();
-    w.findComponent({ name: "DayBox" }).vm.$emit("pick", "pool-idea-39", 104);
+    w.findComponent({ name: "DayBox" }).vm.$emit("pick", "pool-idea-39", 140);
     await flushPromises();
     await w.find("#sponsor-button").trigger("click");
     await flushPromises();
     expect(poolTitles(w)).toContain("Idea 39");
     expect(w.text()).not.toContain("Thank you");
+  });
+
+  test("custom sponsorship keeps its amount after closing checkout and can switch back to a preset", async () => {
+    outcome = { status: "closed" };
+    const w = await board();
+    w.findComponent({ name: "DayBox" }).vm.$emit("pick", "pool-idea-39", 40);
+    await flushPromises();
+    await w.findAll("#day-box button").find((b) => b.text() === "Custom")!.trigger("click");
+    expect(document.activeElement).toBe(w.find("#sponsor-custom").element);
+    expect(w.find("#day-box").text()).toContain("$4 minimum");
+    expect(w.find("#sponsor-button").attributes("disabled")).toBeDefined();
+    await w.find("#sponsor-custom").setValue("75.5");
+    expect(w.find("#sponsor-button").attributes("disabled")).toBeDefined();
+    await w.find("#sponsor-custom").setValue("75");
+    await w.find("#sponsor-button").trigger("click");
+    await flushPromises();
+    expect(checkout.startCheckout).toHaveBeenLastCalledWith({ amount: 7500, anonymous: false, problem: "idea-39" });
+    expect((w.find("#sponsor-custom").element as HTMLInputElement).value).toBe("75");
+    await w.findAll("#day-box button").find((b) => b.text() === "$140")!.trigger("click");
+    expect(w.find("#day-box").text()).not.toContain("$4 minimum");
+    await w.find("#sponsor-button").trigger("click");
+    await flushPromises();
+    expect(checkout.startCheckout).toHaveBeenLastCalledWith({ amount: 14000, anonymous: false, problem: "idea-39" });
   });
 
   test("a problem sent from the join form lands in the pool straight away", async () => {

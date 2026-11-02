@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 import { brands } from "../data/brands";
 import BrandIcon from "./BrandIcon.vue";
 import ShareButton from "./ShareButton.vue";
@@ -19,7 +19,7 @@ import {
   type Entry,
   type ShippedIdea,
 } from "../data/days";
-import { links, money, sponsorUs } from "../data/site";
+import { links, money, sponsorUs, isSponsorCents, SPONSOR_MIN, SPONSOR_MAX } from "../data/site";
 
 const props = defineProps<{
   entry: Entry;
@@ -36,6 +36,20 @@ const props = defineProps<{
 const emit = defineEmits<{ sponsor: [amount: number, anonymous: boolean]; pick: [key: string, amount: number]; again: [] }>();
 
 const amount = ref(props.amount);
+const custom = ref(false);
+const customAmount = ref("");
+const customInput = ref<HTMLInputElement>();
+const overlayInput = ref<HTMLInputElement>();
+async function enableCustom(overlay = false) {
+  custom.value = true;
+  await nextTick();
+  (overlay ? overlayInput.value : customInput.value)?.focus();
+}
+const selectedAmount = computed(() => custom.value ? Number(customAmount.value) : amount.value);
+const validAmount = computed(() => isSponsorCents(selectedAmount.value * 100));
+function sponsorSelected() {
+  if (validAmount.value) emit("sponsor", selectedAmount.value, anonymous.value);
+}
 const anonymous = ref(false);
 const showAll = ref(false);
 const video = ref<"recording" | "shorts">("shorts");
@@ -286,7 +300,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
                   :aria-label="copy === 1 ? 'Sponsors' : undefined"
                   class="m-0 flex min-w-[100cqw] shrink-0 list-none justify-around gap-8 p-0 px-4"
                 >
-                  <li v-for="r in rows" :key="r.name" class="whitespace-nowrap">{{ r.name }} <span class="text-night-text">{{ money(r.amount) }}</span></li>
+                  <li v-for="(r, index) in rows" :key="index" class="whitespace-nowrap">{{ r.name }} <span class="text-night-text">{{ money(r.amount) }}</span></li>
                 </ul>
               </div>
             </div>
@@ -297,24 +311,30 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
 
       <div v-if="(isLive || isNext) && (backed || sponsoring)" class="border-t border-night-line px-2.5 py-2 sm:absolute sm:top-12 sm:right-2.5 sm:z-1 sm:max-w-[calc(100%-1.25rem)] sm:border-0 sm:p-0">
         <p v-if="backed" class="m-0 py-1.5 font-mono text-xs text-night-text sm:rounded-full sm:bg-night/60 sm:px-3">You’re sponsor #{{ count }}. Thank you!</p>
-        <div v-else class="flex flex-wrap gap-1.5 sm:justify-end" role="group" aria-label="Amount">
+        <form v-else class="grid grid-cols-4 gap-1.5 rounded-lg bg-night-panel p-2" aria-label="Amount" @submit.prevent="sponsorSelected">
           <button
             v-for="a in SPONSOR_AMOUNTS"
             :key="a"
             type="button"
             :aria-label="`Sponsor with ${money(a)}`"
-            class="px-2.5!"
+            class="min-w-0 px-1!"
             :class="overlayPill"
             @click="emit('sponsor', a, anonymous)"
           >{{ money(a) }}</button>
-          <button
-            type="button"
-            :aria-pressed="anonymous"
-            class="px-2.5! aria-pressed:border-brand-lime aria-pressed:text-brand-lime"
-            :class="overlayPill"
-            @click="anonymous = !anonymous"
-          >Anonymous</button>
-        </div>
+          <button type="button" :aria-expanded="custom" :class="[overlayPill, custom ? 'col-span-1' : 'col-span-2']" @click="enableCustom(true)">Custom</button>
+          <input v-if="custom" ref="overlayInput" v-model="customAmount" type="number" inputmode="numeric" :min="SPONSOR_MIN" :max="SPONSOR_MAX" step="1" required placeholder="$" aria-label="Custom amount (USD)" :title="`${money(SPONSOR_MIN)} minimum`" class="w-full min-w-0 rounded-full border border-night-edge bg-night px-2 py-1 text-sm text-night-text focus-visible:outline-2 focus-visible:outline-brand-lime" />
+          <div class="col-span-2 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              :aria-pressed="anonymous"
+              class="px-2.5! aria-pressed:border-brand-lime aria-pressed:text-brand-lime"
+              :class="overlayPill"
+              @click="anonymous = !anonymous"
+            >Anonymous</button>
+            <span v-if="custom" class="text-[10px] whitespace-nowrap text-night-muted">{{ money(SPONSOR_MIN) }} minimum</span>
+          </div>
+          <button v-if="custom" type="submit" :disabled="!validAmount" :class="overlayPill" class="col-span-2 disabled:opacity-40">{{ validAmount ? `Sponsor ${money(selectedAmount)}` : "Sponsor" }}</button>
+        </form>
       </div>
 
     </div>
@@ -386,7 +406,10 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
 
           <template v-else>
             <div class="relative flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-              <div :class="kicker">{{ { guest: "Sponsor this day", us: "Sponsor us" }[entry.status as "guest" | "us"] ?? "Sponsor this idea" }}</div>
+              <div class="flex items-baseline gap-2">
+                <span :class="kicker">{{ { guest: "Sponsor this day", us: "Sponsor us" }[entry.status as "guest" | "us"] ?? "Sponsor this idea" }}</span>
+                <span v-if="custom" class="text-[10px] whitespace-nowrap text-night-muted">{{ money(SPONSOR_MIN) }} minimum</span>
+              </div>
               <button
                 v-if="rows.length"
                 type="button"
@@ -399,7 +422,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
                 v-if="showAll"
                 class="absolute inset-x-0 bottom-full z-10 m-0 mb-1.5 flex max-h-40 list-none flex-col gap-1.5 overflow-y-auto rounded-md border border-night-edge bg-night-tile p-2.5 text-sm shadow-xl"
               >
-                <li v-for="r in rows" :key="r.name" class="flex justify-between gap-3">
+                <li v-for="(r, index) in rows" :key="index" class="flex justify-between gap-3">
                   <span>{{ r.name }}</span><span class="font-mono text-xs font-medium">{{ money(r.amount) }}</span>
                 </li>
               </ul>
@@ -407,19 +430,21 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
             <p v-if="sponsorNote" class="m-0 text-sm text-night-sub text-pretty">{{ sponsorNote }}</p>
 
             <div class="@container flex flex-wrap gap-1.5">
-              <div class="grid min-w-max flex-[2] grid-cols-[repeat(2,auto)] gap-1.5 @min-[18rem]:grid-cols-[repeat(4,auto)]" role="group" aria-label="Amount">
+              <form class="grid min-w-[18rem] flex-[2] grid-cols-4 gap-1.5" aria-label="Amount" @submit.prevent="sponsorSelected">
                 <button
                   v-for="a in SPONSOR_AMOUNTS"
                   :key="a"
                   type="button"
-                  :aria-pressed="amount === a"
-                  class="px-1 py-2 aria-pressed:border-brand-lime aria-pressed:text-brand-lime"
+                  :aria-pressed="!custom && amount === a"
+                  class="min-w-0 px-1 py-2 aria-pressed:border-brand-lime aria-pressed:text-brand-lime"
                   :class="pill"
-                  @click="amount = a"
+                  @click="amount = a; custom = false"
                 >{{ money(a) }}</button>
-              </div>
-              <button id="sponsor-button" type="button" class="flex-1 whitespace-nowrap" :class="mainButton" @click="emit('sponsor', amount, anonymous)">
-                Sponsor {{ money(amount) }}
+                <button type="button" :aria-pressed="custom" class="min-w-0 px-1 py-2 aria-pressed:border-brand-lime aria-pressed:text-brand-lime" :class="[pill, custom ? 'col-span-1' : 'col-span-2']" @click="enableCustom()">Custom</button>
+                <input v-if="custom" id="sponsor-custom" ref="customInput" v-model="customAmount" type="number" inputmode="numeric" :min="SPONSOR_MIN" :max="SPONSOR_MAX" step="1" required placeholder="$" aria-label="Custom amount (USD)" :title="`${money(SPONSOR_MIN)} minimum`" class="w-full min-w-0 rounded-full border border-night-edge bg-night px-2 py-2 text-sm text-night-text focus-visible:outline-2 focus-visible:outline-brand-lime" />
+              </form>
+              <button id="sponsor-button" type="button" :disabled="!validAmount" class="flex-1 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-40" :class="mainButton" @click="sponsorSelected">
+                {{ validAmount ? `Sponsor ${money(selectedAmount)}` : "Sponsor" }}
               </button>
             </div>
             <label class="flex cursor-pointer items-center gap-2 text-sm text-night-sub">

@@ -6,6 +6,7 @@ export { SPONSOR_AMOUNTS } from "./site";
 export interface Sponsor {
   name: string;
   amount: number;
+  group?: string;
 }
 
 export interface Idea {
@@ -122,13 +123,21 @@ export function countdownParts(ms: number): [number, string][] {
 export const countdown = (ms: number) => countdownParts(ms).map(([value, unit]) => `${pad(value)}${unit}`).join(" ");
 
 export function mergedSponsors(sponsors: Sponsor[]) {
-  const rows = new Map<string, number>();
-  for (const { name, amount } of sponsors) rows.set(name, (rows.get(name) ?? 0) + amount);
-  return [...rows].map(([name, amount]) => ({ name, amount })).toSorted((a, b) => b.amount - a.amount);
+  const rows: Sponsor[] = [];
+  const named = new Map<string, Sponsor>();
+  for (const sponsor of sponsors) {
+    const previous = sponsor.name !== "Anonymous" && sponsor.group ? named.get(sponsor.group) : undefined;
+    if (previous) previous.amount += sponsor.amount;
+    else {
+      const row = { ...sponsor };
+      rows.push(row);
+      if (sponsor.name !== "Anonymous" && sponsor.group) named.set(sponsor.group, row);
+    }
+  }
+  return rows.toSorted((a, b) => b.amount - a.amount);
 }
 
-export const sponsorCount = (sponsors: Sponsor[]) =>
-  new Set(sponsors.filter((s) => s.name !== "Anonymous").map((s) => s.name)).size + sponsors.filter((s) => s.name === "Anonymous").length;
+export const sponsorCount = (sponsors: Sponsor[]) => mergedSponsors(sponsors).length;
 
 export const listOf = (names: string[]) => (names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : names[0]);
 

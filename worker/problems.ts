@@ -1,5 +1,6 @@
 import { categoriesOf } from "../src/data/categories";
 import type { Idea } from "../src/data/days";
+import { publicSponsors, type SponsorPayment } from "./sponsors";
 
 export const MAX_PAGE = 60;
 
@@ -44,15 +45,16 @@ export interface ListOptions {
   offset: number;
   limit: number;
   seedSecret?: string;
+  sponsorSecret?: string;
 }
 
-export async function listProblems(db: D1Database, { offset, limit, seedSecret }: ListOptions) {
+export async function listProblems(db: D1Database, { offset, limit, seedSecret, sponsorSecret }: ListOptions) {
   const size = Math.min(Math.max(1, Math.floor(limit) || 1), MAX_PAGE);
   const start = Math.max(0, Math.floor(offset) || 0);
   const { results } = await db
     .prepare(
       `SELECT p.id, p.title, p.problem, people.name, p.email, p.created_at, p.categorised_by,
-         coalesce(json_group_array(json_object('name', pay.name, 'amount', pay.amount)) FILTER (WHERE pay.id IS NOT NULL), '[]') AS sponsors,
+         coalesce(json_group_array(json_object('name', pay.name, 'email', pay.email, 'amount', pay.amount)) FILTER (WHERE pay.id IS NOT NULL), '[]') AS sponsors,
          (SELECT json_group_object(c.category, c.score) FROM problem_categories c WHERE c.problem_id = p.id) AS scores
        FROM problems p
        LEFT JOIN people ON people.email = p.email
@@ -72,7 +74,7 @@ export async function listProblems(db: D1Database, { offset, limit, seedSecret }
       problem: row.problem,
       owner: firstName(row.name),
       submittedAt: row.created_at,
-      sponsors: (JSON.parse(row.sponsors) as { name: string | null; amount: number }[]).map((s) => ({ name: s.name ?? "Anonymous", amount: s.amount / 100 })),
+      sponsors: await publicSponsors(JSON.parse(row.sponsors) as SponsorPayment[], sponsorSecret),
       ...(row.categorised_by ? { categories: categoriesOf(JSON.parse(row.scores)) } : {}),
       ...(seedSecret ? { seed: await submitterSeed(row.email, row.id, seedSecret) } : {}),
     })),

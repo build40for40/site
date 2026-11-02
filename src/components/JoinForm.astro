@@ -1,5 +1,5 @@
 ---
-import { SPONSOR_AMOUNTS, involvement, money } from "../data/site";
+import { SPONSOR_AMOUNTS, SPONSOR_MIN, SPONSOR_MAX, involvement, money } from "../data/site";
 import ShareButton from "./ShareButton.vue";
 import SubmitButton from "./forms/SubmitButton.astro";
 
@@ -94,7 +94,7 @@ const input =
         <fieldset class="group/backing m-0 flex flex-col gap-3 border-0 p-0">
           <legend class:list={[heading, "mb-3 p-0"]}>
             <span class="text-[15px] leading-snug font-semibold">Now back it <span aria-hidden="true">*</span></span>
-            <span class={hint}>Pick one to send it</span>
+            <span data-backing-hint class={hint}>Pick one to send it</span>
           </legend>
           <div class="grid gap-2 sm:grid-cols-2">
             {backings.map(({ value, title, body }) => (
@@ -110,15 +110,22 @@ const input =
           <div>
             <ShareButton client:visible expanded label="Share" text="40 apps in 40 days, built live from London. Got a problem? Send it in" url="https://build40for40.com" />
           </div>
-          <div role="radiogroup" aria-label="How much?" class="hidden grid-cols-2 gap-2 group-has-[[name=backing][value=sponsor]:checked]/backing:grid sm:grid-cols-4">
+          <div role="radiogroup" aria-label="How much?" class="hidden min-w-0 grid-cols-4 gap-2 group-has-[[name=backing][value=sponsor]:checked]/backing:grid">
             {SPONSOR_AMOUNTS.map((amount) => (
               <label class="cursor-pointer font-normal!">
                 <input type="radio" name="sponsor" value={amount * 100} class="peer sr-only" />
-                <span class="block rounded-full border border-night-edge px-3 py-2 text-center text-[15px] font-semibold whitespace-nowrap text-night-text hover:border-night-text peer-checked:border-night-text peer-checked:bg-night-text peer-checked:text-night peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-lime">
+                <span class="block rounded-full border border-night-edge px-1 py-2 text-center text-sm font-semibold whitespace-nowrap text-night-text hover:border-night-text peer-checked:border-night-text peer-checked:bg-night-text peer-checked:text-night peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-lime">
                   {money(amount)}
                 </span>
               </label>
             ))}
+            <label class="col-span-2 cursor-pointer font-normal! has-checked:col-span-1">
+              <input type="radio" name="sponsor" value="custom" class="peer sr-only" />
+              <span class="block rounded-full border border-night-edge px-3 py-2 text-center text-[15px] font-semibold text-night-text hover:border-night-text peer-checked:border-night-text peer-checked:bg-night-text peer-checked:text-night peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand-lime">Custom</span>
+            </label>
+            <div data-custom-sponsor hidden class="min-w-0">
+              <input id="join-sponsor-custom" type="number" inputmode="numeric" min={SPONSOR_MIN} max={SPONSOR_MAX} step="1" placeholder="$" disabled aria-label="Custom amount (USD)" title={`${money(SPONSOR_MIN)} minimum`} class="h-full w-full min-w-0 rounded-full border border-night-edge bg-night px-2 py-2 text-sm text-night-text focus-visible:outline-2 focus-visible:outline-brand-lime" />
+            </div>
           </div>
         </fieldset>
 
@@ -142,7 +149,7 @@ const input =
 </section>
 
 <script>
-  import { money } from "../data/site";
+  import { money, isSponsorCents, SPONSOR_MIN } from "../data/site";
   import { DEV_SEND, JOIN_CLOSE, SENT, type Box, type SentProblem } from "../pool/flight";
   import { pay, type Opened } from "./forms/checkout";
 
@@ -157,12 +164,24 @@ const input =
     const name = panel.querySelector<HTMLInputElement>("#join-name")!;
     const form = panel.querySelector<HTMLFormElement>("form[method=post]")!;
     const submit = form.querySelector<HTMLButtonElement>("[data-submit]")!;
+    const customAmount = form.querySelector<HTMLInputElement>("#join-sponsor-custom")!;
+    const customPanel = form.querySelector<HTMLElement>("[data-custom-sponsor]")!;
+    const backingHint = form.querySelector<HTMLElement>("[data-backing-hint]")!;
+    // Both the send-in-place handler and our local form reads receive the same amount in cents.
+    form.addEventListener("formdata", (event) => {
+      if (event.formData.get("sponsor") === "custom") event.formData.set("sponsor", String(Number(customAmount.value) * 100));
+    });
 
     // A problem only sends once they've promised to share it or picked an amount to sponsor it.
     function gate() {
+      const isCustom = Boolean(form.querySelector('[name=backing][value=sponsor]:checked') && form.querySelector('[name=sponsor][value=custom]:checked'));
+      customPanel.hidden = !isCustom;
+      customAmount.disabled = !isCustom;
+      customAmount.required = isCustom;
+      backingHint.textContent = isCustom ? `${money(SPONSOR_MIN)} minimum` : "Pick one to send it";
       const data = new FormData(form);
       const backing = data.get("backing");
-      const backed = backing === "share" || (backing === "sponsor" && data.has("sponsor"));
+      const backed = backing === "share" || (backing === "sponsor" && isSponsorCents(Number(data.get("sponsor"))));
       submit.disabled = Boolean(String(data.get("problem") ?? "").trim()) && !backed;
     }
     // The amounts only show once they pick sponsoring, and promising to share drops the amount.
@@ -171,6 +190,12 @@ const input =
     });
     form.addEventListener("input", gate);
     form.addEventListener("change", gate);
+    form.addEventListener("click", ({ target }) => {
+      if (target instanceof HTMLInputElement && target.name === "sponsor" && target.value === "custom") {
+        gate();
+        customAmount.focus();
+      }
+    });
     gate();
 
     // The form takes the day box's place while data-joining is on the body.
@@ -252,11 +277,11 @@ const input =
       gate();
     }
 
-    async function send(amount: number, { id, test }: { id?: string | null; test?: boolean } = {}) {
+    async function send(amount: number, { id, test, group }: { id?: string | null; test?: boolean; group?: string } = {}) {
       const data = new FormData(form);
       const problem = String(data.get("problem") ?? "").trim();
       if (problem) {
-        const detail: SentProblem = { id: id ?? undefined, problem, name: String(data.get("name") ?? "").trim(), amount, from: null, test };
+        const detail: SentProblem = { id: id ?? undefined, problem, name: String(data.get("name") ?? "").trim(), amount, from: null, test, ...(group ? { group } : {}) };
         if (!matchMedia("(prefers-reduced-motion: reduce)").matches) detail.from = await fold();
         dispatchEvent(new CustomEvent(SENT, { detail }));
       }
@@ -272,7 +297,7 @@ const input =
       const { problem, checkout } = (event as CustomEvent<{ problem?: string | null; checkout?: Opened }>).detail;
       if (!checkout) return send(0, { id: problem });
       const outcome = await pay(async () => checkout, `Sponsor ${money(Number(new FormData(form).get("sponsor")) / 100)}`);
-      if (outcome.status === "paid") return send(outcome.amount, { id: problem });
+      if (outcome.status === "paid") return send(outcome.amount, { id: problem, group: outcome.group });
       if (outcome.status === "processing") {
         reset();
         status.textContent = "Your payment’s still going through. Your problem joins the queue as soon as it clears.";

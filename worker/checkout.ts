@@ -1,5 +1,4 @@
 import { GUEST_DAYS } from "../src/data/days";
-import { SPONSOR_AMOUNTS } from "../src/data/site";
 
 // Pinned to the release Stripe.js is on (@stripe/stripe-js v10 is "endive"), so the session and the page agree.
 const STRIPE_VERSION = "2026-10-28.endive";
@@ -8,8 +7,6 @@ const NAME_MAX = 50;
 // The checkout dialog's night-panel and brand-lime tokens from src/styles/global.css. Inconsolata is Stripe's closest
 // font to JetBrains Mono.
 const BRANDING ={ background_color: "#10224a", button_color: "#a6e22e", border_style: "rounded", font_family: "inconsolata" };
-
-export const SPONSOR_CENTS = SPONSOR_AMOUNTS.map((amount) => amount * 100);
 
 export interface CheckoutSession {
   id: string;
