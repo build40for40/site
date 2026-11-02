@@ -30,7 +30,7 @@ Before Day 1, its job is to get people to help, in this priority order: office s
 
 ## Status
 
-The R1 UI is built. Forms are saved to D1, sponsors pay through Stripe Embedded Checkout, and the days and problems pool are ranked from the problems in D1. Shipped history in `src/data/days.ts` is still mock data. Still to come: Stripe with auto-unlock, the admin screen, day pages, the app gallery and OG images. Open questions include prices, VAT and the receiving entity.
+The R1 UI is built. Forms are saved to D1, sponsors pay through Stripe Embedded Checkout, and the days and problems pool are ranked from the problems in D1. Shipped days are added by hand to `history` in `src/data/days.ts`. Still to come: Stripe with auto-unlock, the admin screen, day pages, the app gallery and OG images. Open questions include prices, VAT and the receiving entity.
 
 ## Stack
 
