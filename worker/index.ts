@@ -18,6 +18,7 @@ interface Field {
 
 const name: Field = { name: "name", required: true, max: 200 };
 const email: Field = { name: "email", required: true, max: 254, email: true };
+const newsletter: Field = { name: "newsletter", options: ["yes"] };
 const weeks = Array.from({ length: Math.ceil(TOTAL_DAYS / 7) }, (_, w) => `week-${w + 1}`);
 
 const forms: Record<string, Field[]> = {
@@ -31,6 +32,7 @@ const forms: Record<string, Field[]> = {
     { name: "backing", options: backings },
     { name: "sponsor", options: SPONSOR_CENTS.map(String) },
     { name: "contact", options: ["yes"] },
+    newsletter,
   ],
   help: [
     name,
@@ -38,6 +40,7 @@ const forms: Record<string, Field[]> = {
     { name: "company", max: 200 },
     { name: "type", required: true, options: helpTypes.map((type) => type.value) },
     { name: "note", max: 1000 },
+    newsletter,
   ],
   guest: [
     name,
@@ -46,12 +49,14 @@ const forms: Record<string, Field[]> = {
     { name: "nominated_by", max: 200 },
     { name: "bring", required: true, max: 1000 },
     { name: "availability", options: weeks, multiple: true },
+    newsletter,
   ],
   problem: [
     name,
     email,
     { name: "problem", required: true, max: 500 },
     { name: "affects", required: true, max: 200 },
+    newsletter,
   ],
 };
 
@@ -83,22 +88,24 @@ interface Person {
   involved: string | null;
   helpNote: string | null;
   guestNote: string | null;
+  newsletter: boolean;
   now: string;
 }
 
-// A later form fills in or changes answers but never clears one it left out.
-const upsertPerson = (db: D1Database, { email, name, involved, helpNote, guestNote, now }: Person) =>
+// A later form fills in or changes answers but never clears one it left out. Newsletter consent keeps its first time.
+const upsertPerson = (db: D1Database, { email, name, involved, helpNote, guestNote, newsletter, now }: Person) =>
   db
     .prepare(
-      `INSERT INTO people (email, name, involved, help_note, guest_note, joined_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6)
+      `INSERT INTO people (email, name, involved, help_note, guest_note, newsletter_at, joined_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7)
        ON CONFLICT (email) DO UPDATE SET
          name = coalesce(excluded.name, name),
          involved = coalesce(excluded.involved, involved),
          help_note = coalesce(excluded.help_note, help_note),
          guest_note = coalesce(excluded.guest_note, guest_note),
+         newsletter_at = coalesce(newsletter_at, excluded.newsletter_at),
          updated_at = excluded.updated_at`,
     )
-    .bind(email, name, involved, helpNote, guestNote, now);
+    .bind(email, name, involved, helpNote, guestNote, newsletter ? now : null, now);
 
 async function capture(env: Env, event: string, distinctId: string, properties: Record<string, unknown>) {
   if (!env.PUBLIC_POSTHOG_PROJECT_TOKEN) return;
@@ -346,11 +353,12 @@ export default {
         involved: json(values.involved),
         helpNote: note("kind", "help_note"),
         guestNote: note("guest", "guest_note"),
+        newsletter: values.newsletter === "yes",
         now,
       }),
       ...(record ? [record] : []),
     ]);
-    track("form_saved", { form_type: form, involvement: values.involved, backing: values.backing });
+    track("form_saved", { form_type: form, involvement: values.involved, backing: values.backing, newsletter: values.newsletter === "yes" });
 
     const classifier = problemId && classifierFor(env, CATEGORISE_TIMEOUT_MS);
     if (problemId && classifier) ctx.waitUntil(categoriseProblem(env.DB, classifier, problemId, reportSorted(env, ctx, "submit")).catch(() => {}));
