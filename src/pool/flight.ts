@@ -20,6 +20,7 @@ export interface SentProblem {
   problem: string;
   name: string;
   amount: number;
+  group?: string;
   from: Box | null;
   test?: boolean;
 }

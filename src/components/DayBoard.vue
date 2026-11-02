@@ -307,11 +307,11 @@ const evicted = ref<{ idea: Idea; from: Box } | null>(null);
 const evictedGhost = ref<HTMLElement>();
 
 async function arrive(event: Event) {
-  const { id, problem, name, amount, from, test } = (event as CustomEvent<SentProblem>).detail;
+  const { id, problem, name, amount, from, test, group } = (event as CustomEvent<SentProblem>).detail;
   search.cancel();
   similar.value = null;
   const owner = name.split(/\s+/)[0] || undefined;
-  const sponsors = amount ? [{ name: owner ?? "Anonymous", amount }] : [];
+  const sponsors = amount ? [{ name: owner ?? "Anonymous", amount, ...(group ? { group } : {}) }] : [];
   // Test sends from the tweak bar count as the oldest, so they win ties.
   const submittedAt = new Date(test ? 0 : Date.now()).toISOString();
   const idea: Idea = { id: id ?? `sent-${crypto.randomUUID()}`, title: excerpt(problem), problem, owner, sponsors, submittedAt };
@@ -418,7 +418,7 @@ async function sponsor(amount: number, anonymous: boolean) {
   const entry = selected.value;
   const target = entry.status === "guest" ? { day: entry.day } : entry.status === "us" ? {} : { problem: entry.idea?.id };
   const outcome = await pay(() => startCheckout({ amount: amount * 100, anonymous, ...target }), `Sponsor ${money(amount)}`);
-  if (outcome.status === "paid") credit(entry, { name: outcome.name ?? "Anonymous", amount: outcome.amount });
+  if (outcome.status === "paid") credit(entry, { name: outcome.name ?? "Anonymous", amount: outcome.amount, ...(outcome.group ? { group: outcome.group } : {}) });
 }
 
 function credit({ key, day, status, idea: entryIdea }: Entry, sponsor: Sponsor) {

@@ -10,6 +10,7 @@ export interface Paid {
   status: "paid" | "processing";
   amount: number;
   name: string | null;
+  group?: string;
   problem: string | null;
   day: number | null;
 }

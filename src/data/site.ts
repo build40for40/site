@@ -42,7 +42,12 @@ export const companySponsors = [{ name: "Superthread", url: "https://superthread
 
 export const backings = ["share", "sponsor"] as const;
 
-export const SPONSOR_AMOUNTS = [4, 40, 104, 400, 4_000, 40_000, 400_000, 4_000_000];
+export const SPONSOR_AMOUNTS = [4, 40, 80, 140, 4_040, 400_040];
+export const SPONSOR_MIN = 4;
+export const SPONSOR_MAX = 4_040_040;
+// Every sponsorship is a whole USD amount; API requests and D1 use cents.
+export const isSponsorCents = (cents: unknown): cents is number =>
+  typeof cents === "number" && Number.isSafeInteger(cents) && cents % 100 === 0 && cents >= SPONSOR_MIN * 100 && cents <= SPONSOR_MAX * 100;
 
 export const helpTypes = [
   { value: "office", label: "Office space" },

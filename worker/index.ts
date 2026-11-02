@@ -1,10 +1,11 @@
 import { GUEST_DAYS } from "../src/data/days";
-import { TOTAL_DAYS, backings, helpTypes, involvement } from "../src/data/site";
+import { TOTAL_DAYS, backings, helpTypes, involvement, isSponsorCents, SPONSOR_MIN, SPONSOR_MAX, money } from "../src/data/site";
 import { categoriseProblem, verdict, type Sorted } from "./categories";
-import { SPONSOR_CENTS, StripeError, openCheckout, readCheckout, recordPayment, statusOf, summary, type CheckoutSession, type Sponsoring } from "./checkout";
+import { StripeError, openCheckout, readCheckout, recordPayment, statusOf, summary, type CheckoutSession, type Sponsoring } from "./checkout";
 import { jevClassifier } from "./classifier";
 import { listProblems } from "./problems";
 import { searchIdeas } from "./search";
+import { publicSponsors, sponsorGroup, type SponsorPayment } from "./sponsors";
 import { anthropicTitler, titleProblem } from "./titles";
 
 interface Field {
@@ -30,7 +31,7 @@ const forms: Record<string, Field[]> = {
     { name: "involved", options: involvement.map((option) => option.value), multiple: true },
     ...involvement.map((option) => ({ name: option.note, max: 200 })),
     { name: "backing", options: backings },
-    { name: "sponsor", options: SPONSOR_CENTS.map(String) },
+    { name: "sponsor" },
     { name: "contact", options: ["yes"] },
     newsletter,
   ],
@@ -61,6 +62,7 @@ const forms: Record<string, Field[]> = {
 };
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const amountError = `Pick a whole USD amount from ${money(SPONSOR_MIN)} to ${money(SPONSOR_MAX)}.`;
 
 const text = (body: string, status: number) => new Response(body, { status, headers: { "Content-Type": "text/plain; charset=utf-8" } });
 
@@ -189,14 +191,16 @@ async function checkoutStatus(env: Env, ctx: ExecutionContext, id: string) {
     return text(error instanceof StripeError ? error.message : "Couldn’t reach Stripe.", 502);
   }
   if (statusOf(session) === "paid" && (await recordPayment(env.DB, session, new Date().toISOString()))) paymentCompleted(env, ctx, session);
-  return json(summary(session));
+  const payment = summary(session);
+  const group = await sponsorGroup(payment.name, session.customer_details?.email ?? null, env.STRIPE_SECRET_KEY);
+  return json({ ...payment, ...(group ? { group } : {}) });
 }
 
 const isGuestDay = (day: unknown): day is number => typeof day === "number" && GUEST_DAYS.has(day);
 
 async function startCheckout(request: Request, env: Env) {
   const input = (await request.json().catch(() => null)) as { amount?: unknown; problem?: unknown; day?: unknown; anonymous?: unknown } | null;
-  if (!input || typeof input.amount !== "number" || !SPONSOR_CENTS.includes(input.amount)) return text("That amount isn’t one of the options.", 400);
+  if (!input || !isSponsorCents(input.amount)) return text(amountError, 400);
   const day = isGuestDay(input.day) ? input.day : undefined;
   const problemId = typeof input.problem === "string" ? input.problem : undefined;
   const whole = input.day === undefined && input.problem === undefined;
@@ -217,9 +221,10 @@ async function openCheckoutResponse(env: Env, sponsoring: Sponsoring, extra: Rec
 }
 
 async function guestDays(_request: Request, env: Env) {
-  const { results } = await env.DB.prepare("SELECT day, name, amount FROM payments WHERE day IS NOT NULL ORDER BY paid_at").all<{ day: number; name: string | null; amount: number }>();
-  const sponsors: Record<number, { name: string; amount: number }[]> = {};
-  for (const { day, name, amount } of results) (sponsors[day] ??= []).push({ name: name ?? "Anonymous", amount: amount / 100 });
+  const { results } = await env.DB.prepare("SELECT day, name, email, amount FROM payments WHERE day IS NOT NULL ORDER BY paid_at").all<SponsorPayment & { day: number }>();
+  const payments: Record<number, SponsorPayment[]> = {};
+  for (const payment of results) (payments[payment.day] ??= []).push(payment);
+  const sponsors = Object.fromEntries(await Promise.all(Object.entries(payments).map(async ([day, rows]) => [day, await publicSponsors(rows, env.STRIPE_SECRET_KEY)])));
   return json({ sponsors });
 }
 
@@ -235,6 +240,7 @@ async function problems(request: Request, env: Env) {
       offset: Number(url.searchParams.get("offset") ?? 0),
       limit: Number(url.searchParams.get("limit") ?? 40),
       seedSecret: seedSecret || undefined,
+      sponsorSecret: env.STRIPE_SECRET_KEY,
     }),
   );
 }
@@ -307,6 +313,7 @@ export default {
     if (typeof values === "string") return text(values, 400);
     if (form === "join" && values.problem && !values.backing) return text("Promise to share it or sponsor it, please.", 400);
     if (values.backing === "sponsor" && !values.sponsor) return text("Pick how much you’re sponsoring.", 400);
+    if (values.sponsor && !isSponsorCents(Number(values.sponsor))) return text(amountError, 400);
     if (values.backing === "sponsor" && values.problem && !env.STRIPE_SECRET_KEY) return text("Payments aren’t set up here yet.", 503);
 
     const id = crypto.randomUUID();

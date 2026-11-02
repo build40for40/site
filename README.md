@@ -86,7 +86,7 @@ To change the schema, add a numbered `.sql` file to `worker/migrations/`. `npm r
 
 ### Problems and the pool
 
-`GET /api/problems?offset=&limit=` returns problems ranked by money raised, with the team's `title` (or the start of the problem when there isn't one), the submitter's first name and each payment's sponsor, by the name they gave or as Anonymous. Problems waiting for their payment are left out. Emails never leave the Worker. The home page loads the first 40 for the days, then the rest a page at a time once the page has loaded, and each one drops into the pool.
+`GET /api/problems?offset=&limit=` returns problems ranked by money raised, with the team's `title` (or the start of the problem when there isn't one), the submitter's first name and each payment's sponsor, by the name they gave or as Anonymous. Named payments group only by the payer's email; anonymous payments always stay separate. The same rule applies to guest-day sponsors. Emails never leave the Worker; named sponsors get an opaque HMAC group token signed with the Stripe key so new payments can join the right group in the browser. Problems waiting for their payment are left out. The home page loads the first 40 for the days, then the rest a page at a time once the page has loaded, and each one drops into the pool.
 
 `GET /api/pool/search?q=` finds candidates with D1 full-text search (`problems_fts`, kept in sync by triggers) and reranks them with TypeSafe's Jev when `TYPESAFE_API_KEY` is set. If Jev is slow, down or unset, it returns the full-text ranking, and the browser falls back to its own word match if the Worker fails. Both leave out filler words such as "my" and "the", which would match almost every problem. Browse lists every word match. The join form floats up only the best few, without a match percentage, since word matches rank problems but don't say how alike they are. Only the search and each candidate's title and problem text are sent to Jev. To try Jev locally, put a key in `.env`. In production, `npm run wrangler -- secret put TYPESAFE_API_KEY`.
 
@@ -138,7 +138,7 @@ Day box Sponsor button ───────▶ POST /api/checkout ───┐ 
 - **Leaving the page:** payment methods that redirect come back to `/?checkout=<id>`, which saves the payment and opens what was paid for.
 - **Still processing:** bank-style payments that clear later stay hidden until Stripe sends `checkout.session.async_payment_succeeded`.
 
-Amounts come from `SPONSOR_AMOUNTS` in `src/data/site.ts`, priced in dollars on the session itself, so Stripe needs no price or link per amount. The Worker pins Stripe's API to the same release as `@stripe/stripe-js` (`STRIPE_VERSION` in `worker/checkout.ts`), so bump them together.
+Suggested amounts come from `SPONSOR_AMOUNTS` in `src/data/site.ts`. Each picker also has Custom for a custom whole-dollar USD amount from $4 to $4,040,040, validated on both submission routes using the shared limits in that file. Amounts are priced on the session itself, so Stripe needs no price or link per amount. The Worker pins Stripe's API to the same release as `@stripe/stripe-js` (`STRIPE_VERSION` in `worker/checkout.ts`), so bump them together.
 
 Local dev uses the Stripe sandbox and everything on a URL (production and PR previews) uses live Stripe and the production database, since previews share the Worker's secrets:
 
