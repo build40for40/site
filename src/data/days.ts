@@ -125,7 +125,7 @@ export const history: Record<number, ShippedIdea> = {
     appUrl: "https://build40for40.com/joyo/",
     recordingUrl: "https://www.youtube.com/watch?v=KA8ltrIe1Lk",
     postUrl: "https://build40for40.substack.com/p/we-spent-104-to-find-out-what-time",
-    screenshot: "/screenshots/joyo.png",
+    screenshot: "/screenshots/joyo.webp",
     shorts: [],
   },
 };
