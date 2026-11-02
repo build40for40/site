@@ -12,10 +12,12 @@ export const links = {
   email: "help@build40for40.com",
   socials: [
     { brand: "twitch", href: `https://www.twitch.tv/${handle}` },
-    { brand: "x", href: `https://x.com/${handle}` },
+    { brand: "youtube", href: `https://www.youtube.com/@${handle}` },
+    { brand: "x", href: "https://x.com/ben_bourdin", label: "Ben on X" },
+    { brand: "linkedin", href: "https://www.linkedin.com/in/createsandbreaksthings/", label: "Samira on LinkedIn" },
     { brand: "instagram", href: `https://www.instagram.com/${handle}` },
     { brand: "tiktok", href: `https://www.tiktok.com/@${handle}` },
-  ] satisfies { brand: Brand; href: string }[],
+  ] satisfies { brand: Brand; href: string; label?: string }[],
 };
 
 export const involvement = [
