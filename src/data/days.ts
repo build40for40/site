@@ -109,52 +109,7 @@ export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, 
   return { today, phase, isToday, days, pool };
 }
 
-const names = [
-  "Maia Okafor", "Rohan Mehta", "Priya Shah", "Ken Watanabe", "Lena Fischer", "Sam Carter", "Tom Hughes", "Jo Bennett",
-  "Ayesha Khan", "Dan Murphy", "Ellie Parker", "Femi Adeyemi", "Grace Lin", "Hugo Laurent", "Isla Campbell", "Kemi Bello",
-  "Leo Russo", "Nina Kowalski", "Omar Haddad", "Ravi Patel", "Sofia Rossi", "Theo Clarke", "Wren Doyle", "Zara Ahmed",
-];
-
-function mockSponsors(total: number, count: number, seed: number): Sponsor[] {
-  const n = Math.min(count, total);
-  if (!n) return [];
-  const weights = Array.from({ length: n }, (_, i) => 1 / (i + 1));
-  const sum = weights.reduce((a, b) => a + b, 0);
-  const amounts = weights.map((w) => Math.max(1, Math.round((total * w) / sum)));
-  amounts[0] += total - amounts.reduce((a, b) => a + b, 0);
-  return amounts.map((amount, i) => ({ name: i % 4 === 3 ? "Anonymous" : names[(seed * 5 + i * 3) % names.length], amount }));
-}
-
-const mockIdea = ([title, problem, total, count]: [string, string, number, number], id: number): Idea => ({
-  id: `shipped-${id}`,
-  title,
-  problem,
-  owner: names[(id * 7 + 2) % names.length],
-  sponsors: mockSponsors(total, count, id),
-});
-
-const mockShipped = (day: number, title: string, problem: string, total: number, count: number, buildTime: string): ShippedIdea => ({
-  ...mockIdea([title, problem, total, count], day),
-  buildTime,
-  appUrl: "#",
-  recordingUrl: "#",
-  screenshot: "/screenshots/mock-app.svg",
-  shorts: [
-    { title: "The idea in 30 seconds", platform: "tiktok", url: "#" },
-    { title: "The bit where it broke", platform: "instagram", url: "#" },
-    { title: "Shipped with 2 minutes left", platform: "tiktok", url: "#" },
-  ],
-});
-
-export const history: Record<number, ShippedIdea> = {
-  1: mockShipped(1, "Splitting rent fairly", "A calculator that splits rent by room size, light and closet space.", 110, 2, "4:38:12"),
-  2: mockShipped(2, "Forgotten subscriptions", "Forward your receipts and it lists every recurring charge before it renews.", 100, 1, "4:12:40"),
-  3: mockShipped(3, "Meetings across time zones", "Paste a list of cities, get the three least painful hours for everyone.", 40, 3, "4:39:58"),
-  4: mockShipped(4, "Dying houseplants", "Snap a plant and get a watering schedule dropped into your calendar.", 1000, 1, "3:57:21"),
-  5: mockShipped(5, "Group trip budgets", "One shared link where everyone logs costs and sees who owes whom.", 1010, 2, "4:31:05"),
-  6: mockShipped(6, "Lost warranty receipts", "Photograph a receipt once and get pinged before the warranty runs out.", 25, 3, "4:40:00"),
-  7: mockShipped(7, "What's for dinner", "List what's in your fridge and get three recipes that use it up.", 110, 2, "4:21:07"),
-};
+export const history: Record<number, ShippedIdea> = {};
 
 export const pad = (n: number) => String(n).padStart(2, "0");
 
