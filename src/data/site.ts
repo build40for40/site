@@ -13,6 +13,7 @@ export const links = {
   socials: [
     { brand: "twitch", href: `https://www.twitch.tv/${handle}` },
     { brand: "youtube", href: `https://www.youtube.com/@${handle}` },
+    { brand: "substack", href: `https://${handle}.substack.com/` },
     { brand: "x", href: "https://x.com/ben_bourdin", label: "Ben on X" },
     { brand: "linkedin", href: "https://www.linkedin.com/in/createsandbreaksthings/", label: "Samira on LinkedIn" },
     { brand: "instagram", href: `https://www.instagram.com/${handle}` },
