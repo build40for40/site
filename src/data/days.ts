@@ -30,7 +30,8 @@ export interface ShippedIdea extends Idea {
   buildTime: string;
   appUrl: string;
   recordingUrl: string;
-  screenshot: string;
+  postUrl?: string;
+  screenshot?: string;
   shorts: Short[];
 }
 
@@ -85,8 +86,11 @@ export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, 
   const started = (day: number) => day < today || (day === today && phase !== "before");
   // Only ideas with money behind them get a day, the most first and the oldest first on a tie. Everything at $0 waits
   // in the pool, after any funded overflow.
-  const ranked = ideas.filter((idea) => raised(idea) > 0).toSorted((a, b) => raised(b) - raised(a) || (a.submittedAt ?? "").localeCompare(b.submittedAt ?? ""));
-  const unfunded = ideas.filter((idea) => raised(idea) === 0);
+  const loaded = new Map(ideas.map((idea) => [idea.id, idea]));
+  const shipped = new Set(Object.values(history).map((idea) => idea.id));
+  const waiting = ideas.filter((idea) => !shipped.has(idea.id));
+  const ranked = waiting.filter((idea) => raised(idea) > 0).toSorted((a, b) => raised(b) - raised(a) || (a.submittedAt ?? "").localeCompare(b.submittedAt ?? ""));
+  const unfunded = waiting.filter((idea) => raised(idea) === 0);
   const days: Day[] = [];
   let next = 0;
   let rank = 0;
@@ -96,7 +100,7 @@ export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, 
     if (GUEST_DAYS.has(day)) {
       days.push({ ...base, status: "guest", sponsors: guestSponsors[day] ?? [] });
     } else if (started(day)) {
-      const idea = history[day] ?? ranked[next++];
+      const idea = history[day] ? { ...history[day], ...loaded.get(history[day].id) } : ranked[next++];
       const status = day === today && phase === "live" ? "live" : "shipped";
       days.push(idea ? { ...base, status, idea } : { ...base, status: "open" });
     } else if (next < ranked.length) {
@@ -110,7 +114,21 @@ export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, 
   return { today, phase, isToday, days, pool };
 }
 
-export const history: Record<number, ShippedIdea> = {};
+export const history: Record<number, ShippedIdea> = {
+  1: {
+    id: "708b9fc7-f16c-4d31-b542-eadb1ede7350",
+    title: "Unknown birth time",
+    problem: "I want to know what time i was born on my birthday to get an accurate astrology reading",
+    owner: "Samira",
+    sponsors: [{ name: "Samira", amount: 104 }],
+    buildTime: "4:40:00",
+    appUrl: "https://build40for40.com/joyo/",
+    recordingUrl: "https://www.youtube.com/watch?v=KA8ltrIe1Lk",
+    postUrl: "https://build40for40.substack.com/p/we-spent-104-to-find-out-what-time",
+    screenshot: "/screenshots/joyo.png",
+    shorts: [],
+  },
+};
 
 export const pad = (n: number) => String(n).padStart(2, "0");
 

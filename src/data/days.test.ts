@@ -34,3 +34,10 @@ test("on a tie, the idea sent in first gets the earlier day", () => {
   const board = buildBoard([sent("later", "2026-10-02T09:00:00.000Z"), sent("first", "2026-10-01T09:00:00.000Z")], {}, beforeDayOne);
   expect(board.days.filter((d) => d.idea).map((d) => d.idea!.id)).toEqual(["first", "later"]);
 });
+
+test("a shipped idea keeps its day with live sponsors and doesn't take another one", () => {
+  const shipped = { ...idea("joyo", 10), buildTime: "4:40:00", appUrl: "/joyo/", recordingUrl: "#", shorts: [] };
+  const board = buildBoard([idea("joyo", 50), idea("next", 20)], { 1: shipped }, Date.parse("2026-11-02T16:00:00Z"));
+  expect(board.days[0].idea).toMatchObject({ id: "joyo", appUrl: "/joyo/", sponsors: [{ amount: 50 }] });
+  expect(board.days.filter((d) => d.idea).map((d) => d.idea!.id)).toEqual(["joyo", "next"]);
+});

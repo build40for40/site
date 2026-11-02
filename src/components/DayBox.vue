@@ -69,6 +69,9 @@ const isNext = computed(() => props.entry.day === props.nextDay && (props.entry.
 const isShipped = computed(() => props.entry.status === "shipped");
 const liveStyle = computed(() => isLive.value || isNext.value || isShipped.value);
 const watch = computed(() => (isLive.value ? links.twitch : isShipped.value ? shippedIdea.value.recordingUrl : null));
+const watchBrand = computed(() => (watch.value?.includes("youtube.com") ? "youtube" : "twitch"));
+const hasShorts = computed(() => !!shippedIdea.value?.shorts?.length);
+const view = computed(() => (hasShorts.value ? video.value : "recording"));
 
 function toggleSponsoring() {
   if (props.backed) emit("again");
@@ -193,7 +196,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
       <div class="flex aspect-video flex-col bg-player lg:min-h-100">
         <div class="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-2.5 p-4 text-center">
           <template v-if="isShipped">
-            <div v-if="video === 'shorts'" class="absolute inset-0 flex justify-center gap-2 px-3 pt-13 pb-3">
+            <div v-if="view === 'shorts'" class="absolute inset-0 flex justify-center gap-2 px-3 pt-13 pb-3">
               <a
                 v-for="short in shippedIdea.shorts"
                 :key="short.title"
@@ -209,11 +212,11 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
               </a>
             </div>
             <template v-else>
-              <img :src="shippedIdea.screenshot" alt="" class="absolute inset-0 size-full object-cover object-top opacity-35" />
+              <img v-if="shippedIdea.screenshot" :src="shippedIdea.screenshot" alt="" class="absolute inset-0 size-full object-cover object-top opacity-35" />
               <a :href="shippedIdea.recordingUrl" target="_blank" rel="noopener" class="relative rounded-full bg-brand-lime text-brand-lime-ink hover:bg-brand-lime-hover px-5 py-3 text-[15px] font-semibold no-underline">▶ Watch the full build</a>
-              <p class="relative m-0 font-mono text-xs text-night-sub">All {{ shippedIdea.buildTime }} of it, on Twitch.</p>
+              <p class="relative m-0 font-mono text-xs text-night-sub">All {{ shippedIdea.buildTime }} of it, on {{ brands[watchBrand].name }}.</p>
             </template>
-            <div class="absolute top-2.5 left-2.5 z-1 flex gap-1.5" role="group" aria-label="Video">
+            <div v-if="hasShorts" class="absolute top-2.5 left-2.5 z-1 flex gap-1.5" role="group" aria-label="Video">
               <button
                 v-for="[value, text] in [['recording', 'Full build'], ['shorts', 'Shorts']]"
                 :key="value"
@@ -370,8 +373,8 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
           <h2 class="m-0 min-w-0 text-[26px] leading-[1.04] font-semibold tracking-tight md:text-3xl">{{ dayPrefix }}{{ idea?.title ?? "Guest day" }}</h2>
           <!-- Narrow screens have no room for the player, so its links move up here. -->
           <div v-if="watch || share" class="flex shrink-0 items-center gap-1.5 max-[24rem]:flex-col max-[24rem]:items-end lg:hidden">
-            <a v-if="watch" :href="watch" target="_blank" rel="noopener" aria-label="Watch on Twitch" class="grid size-[30px] place-items-center p-0" :class="overlayPill"
-              ><BrandIcon brand="twitch" class="size-3.5"
+            <a v-if="watch" :href="watch" target="_blank" rel="noopener" :aria-label="`Watch on ${brands[watchBrand].name}`" class="grid size-[30px] place-items-center p-0" :class="overlayPill"
+              ><BrandIcon :brand="watchBrand" class="size-3.5"
             /></a>
             <ShareButton v-if="share" class="justify-end" v-bind="share" label="Share" />
           </div>
@@ -387,7 +390,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
         <p v-if="upNext" class="m-0 text-[15px] leading-snug text-pretty">Up next on Day {{ upNext.day }}: {{ upNext.title }}.</p>
         <div v-if="isShipped" class="flex flex-wrap items-center gap-x-4 gap-y-2">
           <a :href="shippedIdea.appUrl" target="_blank" rel="noopener" class="min-w-56" :class="mainButton">Try this idea ↗</a>
-          <span class="font-mono text-xs text-night-muted">Shipped in {{ shippedIdea.buildTime }}</span>
+          <a v-if="shippedIdea.postUrl" :href="shippedIdea.postUrl" target="_blank" rel="noopener" :class="smallLink">Read how it went ↗</a>
         </div>
         <a v-if="entry.status === 'guest'" href="#join" class="self-start" :class="smallLink">Suggest a guest</a>
 
