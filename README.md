@@ -44,7 +44,7 @@ npm run preview  # build + the Worker with a local D1 on localhost:8787
 npm run types    # regenerate worker types after changing wrangler.jsonc
 npm test         # unit tests (Vitest), next to the files they cover
 npm run db:seed  # fake problems and payments in the local D1
-npm run deploy   # build + wrangler deploy
+npm run deploy   # emergency only: production deploys come from CI on main
 npm run wrangler -- deployments list
 ```
 
