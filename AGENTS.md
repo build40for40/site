@@ -6,7 +6,7 @@ Static Astro site with Vue islands, served by a Cloudflare Worker as static asse
 
 - **Lean by default:** pages and sections are `.astro` and ship no JS. Use a Vue component only where something must be interactive, hydrated with `client:visible` unless it's above the fold.
 - **Tailwind only:** no custom CSS. Colours and fonts are tokens in the `@theme` block of `src/styles/global.css`, so add a token there rather than a hex value in markup. Keep text at WCAG AA contrast.
-- **Content lives in `src/data/`:** `site.ts` holds dates, links, prices, guests and team, and `days.ts` ranks ideas into the 40 days. Ideas are the `problems` in D1, loaded from `/api/problems`. Shipped days go in `history` in `days.ts`, by hand once each app ships, with the D1 problem `id` so its title, problem and sponsors stay live.
+- **Content lives in `src/data/`:** `site.ts` holds dates, links, prices, guests and team, and `days.ts` ranks ideas into the 40 days. Ideas are the `problems` in D1, loaded from `/api/problems`. Shipped days go in `history` in `days.ts`, by hand once each app ships, with the D1 problem `id` so its title, problem and sponsors stay live. The `finish-day` skill in `.claude/skills/` walks through it.
 - **The problems pool lives in `src/pool/`:** physics, motion, artwork, search and data are separate modules, and `ProblemsPool.vue` only wires them together. Tunables are in `src/pool/config.ts`.
 - **UK time:** every time shown is Europe/London, with the viewer's local time beside it where it matters.
 - **Phone first:** check layouts at 390px wide with no horizontal scroll.
