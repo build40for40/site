@@ -126,7 +126,7 @@ export const history: Record<number, ShippedIdea> = {
     recordingUrl: "https://www.youtube.com/watch?v=KA8ltrIe1Lk",
     postUrl: "https://build40for40.substack.com/p/we-spent-104-to-find-out-what-time",
     screenshot: "/screenshots/joyo.webp",
-    shorts: [],
+    shorts: [{ title: "Can you find what time you were born using astrology?", platform: "youtube", url: "https://www.youtube.com/shorts/F3FZkOdvFHc" }],
   },
 };
 
