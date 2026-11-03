@@ -21,3 +21,11 @@ The home page runs on the real clock. Add `?now=2026-11-10T11:20Z` to its URL to
 Run wrangler as `npm run wrangler -- <args>`, never `npx wrangler`: the script runs as the `40for40` auth profile and drops the global Cloudflare credentials in the shell, which would otherwise win.
 
 Astro docs: https://docs.astro.build. Check the relevant guide before working on routing, framework components, content collections or styling.
+
+## Deploys
+
+Production is whatever CI last deployed from `main`. Ship a change by merging its PR and let the Deploy workflow put it live, which takes about a minute. To try a change before it merges, use the preview link CI comments on the PR.
+
+Never deploy by hand: no `npm run deploy`, `npm run wrangler -- deploy` or `versions deploy`. A local deploy replaces production with your checkout, so anything merged since you last pulled vanishes from the live site until the next merge to `main`. If CI is down and something has to go out, ask a human first, then deploy from a clean checkout of `origin/main`.
+
+`npm run wrangler -- deployments list` shows what's live. CI deploys have no author, and hand deploys show an email.
