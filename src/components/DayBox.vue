@@ -72,6 +72,13 @@ const watch = computed(() => (isLive.value ? links.twitch : isShipped.value ? sh
 const watchBrand = computed(() => (watch.value?.includes("youtube.com") ? "youtube" : "twitch"));
 const hasShorts = computed(() => !!shippedIdea.value?.shorts?.length);
 const view = computed(() => (hasShorts.value ? video.value : "recording"));
+// YouTube shorts play in place, but only load YouTube once someone presses play.
+const youtubeId = (url: string) => url.match(/youtube\.com\/shorts\/([\w-]+)/)?.[1];
+const playing = ref("");
+function play(url: string) {
+  playing.value = url;
+  window.posthog?.capture("short_played", { url });
+}
 
 function toggleSponsoring() {
   if (props.backed) emit("again");
@@ -197,9 +204,29 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
         <div class="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-2.5 p-4 text-center">
           <template v-if="isShipped">
             <div v-if="view === 'shorts'" class="absolute inset-0 flex justify-center gap-2 px-3 pt-13 pb-3">
+              <template v-for="short in shippedIdea.shorts" :key="short.title">
+              <iframe
+                v-if="playing === short.url"
+                :src="`https://www.youtube-nocookie.com/embed/${youtubeId(short.url)}?autoplay=1`"
+                :title="short.title"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowfullscreen
+                class="aspect-[9/16] h-full min-w-0 rounded-md border-0 bg-night-tile"
+              ></iframe>
+              <button
+                v-else-if="youtubeId(short.url)"
+                type="button"
+                class="relative flex aspect-[9/16] h-full min-w-0 cursor-pointer flex-col justify-between overflow-hidden rounded-md border-0 bg-night-tile p-2.5 text-left text-night-text ring-night-edge hover:ring-1 focus-visible:outline-2 focus-visible:outline-brand-lime"
+                @click="play(short.url)"
+              >
+                <img :src="`https://i.ytimg.com/vi/${youtubeId(short.url)}/hq2.jpg`" alt="" class="absolute inset-0 size-full object-cover opacity-60" />
+                <BrandIcon :brand="short.platform" class="relative size-3.5 text-night-text" />
+                <span class="sr-only">Play on {{ brands[short.platform].name }}</span>
+                <span class="relative self-center text-2xl" aria-hidden="true">▶</span>
+                <span class="relative rounded bg-night/70 p-1 text-xs leading-snug font-semibold text-pretty">{{ short.title }}</span>
+              </button>
               <a
-                v-for="short in shippedIdea.shorts"
-                :key="short.title"
+                v-else
                 :href="short.url"
                 target="_blank"
                 rel="noopener"
@@ -210,6 +237,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
                 <span class="self-center text-2xl" aria-hidden="true">▶</span>
                 <span class="text-xs leading-snug font-semibold text-pretty">{{ short.title }}</span>
               </a>
+              </template>
             </div>
             <template v-else>
               <img v-if="shippedIdea.screenshot" :src="shippedIdea.screenshot" alt="" class="absolute inset-0 size-full object-cover object-top opacity-35" />
