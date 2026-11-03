@@ -128,6 +128,17 @@ export const history: Record<number, ShippedIdea> = {
     screenshot: "/screenshots/joyo.webp",
     shorts: [{ title: "Can you find what time you were born using astrology?", platform: "youtube", url: "https://www.youtube.com/shorts/F3FZkOdvFHc" }],
   },
+  2: {
+    id: "08b686ea-ed39-441f-9f21-d3b82dbd2f86",
+    title: "Learning games from scratch",
+    problem: "I want to play video games, but I never learned how. I’d love to play games like Fortnite with my family, but almost everything designed to help assumes I already understand how modern games work.",
+    owner: "JaneZee",
+    sponsors: [{ name: "JaneZee", amount: 104 }],
+    buildTime: "4:40:00",
+    appUrl: "https://build40for40.com/sidekick/",
+    recordingUrl: "https://www.twitch.tv/build40for40",
+    shorts: [],
+  },
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");

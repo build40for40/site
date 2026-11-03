@@ -56,7 +56,7 @@ const video = ref<"recording" | "shorts">("shorts");
 const sponsoring = ref(false);
 
 const idea = computed(() => props.entry.idea);
-const shippedIdea = computed(() => props.entry.idea as ShippedIdea);
+const shippedIdea = computed(() => ({ recordingUrl: links.twitch, buildTime: "4:40:00", ...props.entry.idea }) as ShippedIdea);
 const sponsors = computed(() => idea.value?.sponsors ?? props.entry.sponsors ?? []);
 const total = computed(() => sponsors.value.reduce((sum, s) => sum + s.amount, 0));
 const isTodayEntry = computed(() => props.entry.day === props.today);
@@ -416,8 +416,8 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
         <ShareButton v-if="share && !liveStyle" class="max-lg:hidden" v-bind="share" />
         <p v-if="line" class="m-0 text-[15px] leading-snug text-pretty">{{ line }}</p>
         <p v-if="upNext" class="m-0 text-[15px] leading-snug text-pretty">Up next on Day {{ upNext.day }}: {{ upNext.title }}.</p>
-        <div v-if="isShipped" class="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <a :href="shippedIdea.appUrl" target="_blank" rel="noopener" class="min-w-56" :class="mainButton">Try this idea ↗</a>
+        <div v-if="isShipped && (shippedIdea.appUrl || shippedIdea.postUrl)" class="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <a v-if="shippedIdea.appUrl" :href="shippedIdea.appUrl" target="_blank" rel="noopener" class="min-w-56" :class="mainButton">Try this idea ↗</a>
           <a v-if="shippedIdea.postUrl" :href="shippedIdea.postUrl" target="_blank" rel="noopener" :class="smallLink">Read how it went ↗</a>
         </div>
         <a v-if="entry.status === 'guest'" href="#join" class="self-start" :class="smallLink">Suggest a guest</a>
