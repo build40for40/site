@@ -1,0 +1,333 @@
+---
+import PostHog from "../components/posthog.astro";
+const title = "The Naughty List: who's been naughty or nice this Christmas?";
+const description = "Check the shops you already use before you buy. Elf Cam shows the evidence on the company behind the gift, and you can be Santa's informer. Day 3 of 40 for 40.";
+const url = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/naughty-list/icon-festive.svg" />
+    <link rel="canonical" href={url} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="40 for 40" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={url} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="theme-color" content="#1f6b3f" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@500;700;800;900&family=Caveat+Brush&family=VT323&display=swap" />
+    <PostHog />
+    <style is:global>
+/* Layout: festive Naughty List base (red, pine, snow, gold, candy stripes); Elf Cam's dark CCTV look appears only where the product is shown.
+   Deliberately a single light, festive look. */
+:root{
+  color-scheme:light;
+  --snow:#fffaf2; --cream:#f6ecdc; --red:#d42a2a; --red-dk:#a51d1d; --green:#1f6b3f; --pine:#123d26;
+  --gold:#f5c04a; --gold-dk:#b9862a; --ink:#2a1a14; --sub:#5b4a40; --line:#eadfce; --hole:#fff1c2; --hole-ink:#7a5a00;
+  --cam-bg:#0a0e0b; --cam-ph:#7dff9a; --cam-soft:#9cc7a6; --cam-line:#1d2b20; --cam-rec:#ff3b30;
+  --f-display:"Lilita One",system-ui,sans-serif; --f-body:"Nunito",system-ui,-apple-system,sans-serif;
+  --f-scrawl:"Caveat Brush","Comic Sans MS",cursive; --f-cam:"VT323",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0}
+body{background:var(--snow);color:var(--ink);font:500 17px/1.6 var(--f-body)}
+.w{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;line-height:1.02;margin:0;text-wrap:balance}
+h2{font-size:clamp(34px,4.4vw,48px);color:var(--red)}
+h3{font-size:24px;color:var(--green)}
+p{margin:0}
+a{color:var(--red)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.scrawl{font-family:var(--f-scrawl);color:var(--gold)}
+.hole{background:var(--hole);color:var(--hole-ink);padding:0 5px;border-radius:4px;font-weight:700;font-size:.9em}
+.btn{display:inline-block;font:900 16px/1 var(--f-body);text-decoration:none;padding:15px 24px;border-radius:999px;background:var(--red);color:var(--snow);box-shadow:0 5px 0 var(--red-dk)}
+.btn.gold{background:var(--gold);color:var(--pine);box-shadow:0 5px 0 var(--gold-dk)}
+.btn:active{transform:translateY(2px);box-shadow:0 3px 0 var(--red-dk)}
+.snowfall{background-image:radial-gradient(circle,rgba(255,255,255,.75) 2px,transparent 2.6px),radial-gradient(circle,rgba(255,255,255,.45) 1.4px,transparent 1.9px),radial-gradient(circle,rgba(255,255,255,.3) 3px,transparent 3.6px);background-size:61px 67px,37px 41px,113px 97px;background-position:0 0,19px 23px,40px 11px}
+.stripe{height:14px;background:repeating-linear-gradient(-45deg,var(--snow) 0 12px,var(--red) 12px 24px)}
+
+/* hero: pine green with snow and a drift */
+.hero{background-color:var(--green);color:var(--snow);position:relative;overflow:hidden;padding-block:0 110px}
+.hero::after{content:"";position:absolute;left:-5%;right:-5%;bottom:-1px;height:80px;background:var(--snow);border-radius:50% 50% 0 0/100% 100% 0 0}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:18px;position:relative;z-index:1}
+.mark{display:flex;align-items:center;gap:10px;font:24px var(--f-display);color:var(--snow);text-decoration:none}
+.mark img{width:46px;height:46px;margin:-6px}
+.top .btn{padding:11px 18px;font-size:15px}
+.hgrid{display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:center;padding-top:30px;position:relative;z-index:1}
+.hgrid>*{min-width:0}
+.hero h1{font-size:clamp(46px,6.4vw,76px);text-shadow:0 5px 0 rgba(0,30,15,.4)}
+.hero .scrawl{font-size:clamp(28px,3.4vw,38px);margin:12px 0 10px;transform:rotate(-2deg);transform-origin:left}
+.lede{font-size:19px;opacity:.95;margin-bottom:26px;max-width:36ch}
+.ctas{display:flex;flex-wrap:wrap;gap:14px}
+.fine{font-size:14px;opacity:.85;margin-top:16px}
+
+/* the product: the one place Elf Cam lives */
+.product{position:relative;transform:rotate(1.5deg)}
+.product img{display:block;width:100%;max-width:340px;height:auto;margin-left:auto;border-radius:8px;box-shadow:0 22px 50px rgba(0,25,10,.45)}
+.product .tag{position:absolute;top:-16px;left:6%;font:22px/1 var(--f-cam);text-transform:uppercase;color:var(--cam-ph);background:var(--cam-bg);padding:6px 12px;border:2px solid var(--cam-ph)}
+.product .tag b{color:var(--cam-rec);font-weight:400}
+
+section{padding-block:64px}
+.kicker{font-size:27px;color:var(--green);margin:6px 0 28px;transform:rotate(-1deg);transform-origin:left}
+
+/* shop window: Elf Cam cards on the festive base */
+.window{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.shop{background:var(--cam-bg);color:var(--cam-ph);border-radius:14px;padding:16px;display:grid;gap:8px;align-content:start;font-family:var(--f-cam);text-transform:uppercase;box-shadow:0 6px 0 var(--pine)}
+.shop .aisle{font-size:18px;color:var(--cam-soft);display:flex;align-items:center;gap:6px}
+.shop .aisle::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--cam-rec)}
+.shop b{font-size:34px;line-height:.9;font-weight:400}
+.shop small{font:12px/1.4 var(--f-body);text-transform:none;color:var(--cam-soft)}
+.pill{justify-self:start;font-size:19px;border:1px solid var(--cam-line);color:var(--cam-soft);padding:4px 8px;white-space:nowrap}
+.pill.on{border-color:var(--cam-ph);color:var(--cam-ph)}
+.vote{display:flex;gap:6px;margin-top:2px}
+.vote button{white-space:nowrap;font:800 13px/1 var(--f-body);background:transparent;color:var(--cam-soft);border:1px solid var(--cam-line);border-radius:999px;padding:7px 10px;cursor:not-allowed;opacity:.65}
+.shop.rest{background:var(--cream);color:var(--ink);font-family:var(--f-body);text-transform:none;border:3px dashed var(--line);box-shadow:none;align-content:center}
+.shop.rest b{font:34px/1 var(--f-display);color:var(--red)}
+.shop.rest small{font-size:14px;color:var(--sub)}
+.elf{width:20px;height:20px;flex:none}
+.vote button{display:inline-flex;align-items:center;gap:5px}
+h3.elves{display:flex;align-items:center;gap:6px}
+h3.elves .elf{width:30px;height:30px}
+.tokens{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.tok{background:var(--cream);border-radius:18px;padding:20px 22px;display:grid;gap:6px;align-content:start;border-top:6px solid var(--line)}
+.tok .em{font-size:30px;line-height:1}
+.tok b{font:24px var(--f-display);font-weight:400;color:var(--ink)}
+.tok b i{font-style:normal;color:var(--sub);margin-left:4px}
+.tok p{color:var(--sub);font-size:15px}
+.tok.gift{border-top-color:var(--green)}.tok.warn{border-top-color:var(--gold)}.tok.coal{border-top-color:var(--ink)}
+.rules{list-style:none;padding:0;margin:22px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:12px 28px}
+.rules li{color:var(--sub);padding-left:26px;position:relative}
+.rules li::before{content:"★";position:absolute;left:0;color:var(--gold)}
+.rules b{color:var(--ink);font-weight:900}
+.verdicts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:24px}
+.v{border-radius:18px;padding:18px 22px;display:grid;gap:4px}
+.v b{font:24px var(--f-display);font-weight:400}
+.v p{font-size:15px}
+.v.nice{background:var(--green);color:var(--snow)}
+.v.naughty{background:var(--red);color:var(--snow)}
+.v.unknown{background:var(--cream);color:var(--sub);border:3px dashed var(--line)}
+.v.unknown b{color:var(--ink)}
+@media (max-width:760px){.tokens,.verdicts,.rules{grid-template-columns:1fr}}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px}
+.legend div{background:var(--cream);border-radius:18px;padding:18px 22px}
+.legend p{color:var(--sub);font-size:15px;margin-top:6px}
+.note{margin-top:16px;color:var(--sub);font-size:15px}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;list-style:none;margin:0;padding:0;counter-reset:s}
+.steps li{counter-increment:s;background:var(--cream);border-radius:18px;padding:22px}
+.steps li::before{content:counter(s);display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--red);color:var(--snow);font:24px var(--f-display);margin-bottom:10px}
+.steps p{color:var(--sub);margin-top:6px;font-size:16px}
+
+/* meet elf cam: green band */
+.band{background-color:var(--green);color:var(--snow)}
+.band h2{color:var(--snow)}
+.band .kicker{color:var(--gold)}
+.meet{display:grid;grid-template-columns:.9fr 1.1fr;gap:40px;align-items:center}
+.meet>*{min-width:0}
+.badge-shot{background:var(--snow);border-radius:22px;padding:28px;display:grid;gap:14px;justify-items:start;color:var(--sub)}
+.badge-shot img{max-width:100%;height:auto;box-shadow:0 10px 24px rgba(10,20,15,.3)}
+.badge-shot small{font-size:14px}
+.list{display:grid;gap:12px;margin-top:6px;padding:0;list-style:none}
+.list li{padding-left:30px;position:relative;opacity:.95}
+.list li::before{content:"★";position:absolute;left:2px;top:0;color:var(--gold)}
+.list b{font-weight:900}
+
+/* video, install, faq */
+.video{aspect-ratio:16/9;max-width:100%;background:var(--cream);border:3px dashed var(--line);border-radius:22px;display:grid;place-items:center;text-align:center;padding:20px}
+.install{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.card{background:var(--cream);border-radius:20px;padding:24px;min-width:0}
+.card ol{padding-left:20px;margin:12px 0 0;display:grid;gap:6px;color:var(--sub)}
+.card .fine{margin-top:12px;color:var(--sub);opacity:1}
+code{background:var(--snow);padding:1px 6px;border-radius:5px;font-size:.9em}
+.faq{display:grid;gap:10px}
+details{background:var(--cream);border-radius:16px;padding:16px 20px}
+summary{cursor:pointer;font:22px var(--f-display);color:var(--red);list-style:none;display:flex;justify-content:space-between;gap:16px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--green)}
+details[open] summary::after{content:"–"}
+details p{color:var(--sub);margin-top:8px;max-width:68ch}
+footer{background-color:var(--red);color:var(--snow);text-align:center;padding-block:28px 44px;font-size:14px}
+footer b{display:block;font:24px var(--f-display);margin-bottom:4px}
+
+@media (max-width:900px){.window{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){.hgrid,.meet,.install,.legend,.steps{grid-template-columns:1fr}.hgrid{gap:40px}.product{transform:none}}
+@media (prefers-reduced-motion:reduce){.btn:active{transform:none}}
+</style>
+  </head>
+  <body>
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- Nice elf: green-and-white hat on straight, rosy cheeks, happy smile -->
+    <symbol id="elf-nice" viewBox="0 -3 40 43">
+      <path d="M9.5 23 L2.5 17.5 L10.5 20 Z M30.5 23 L37.5 17.5 L29.5 20 Z" fill="#eab48d"/>
+      <circle cx="20" cy="25" r="11" fill="#f3c6a0"/>
+      <path d="M8 19 C9 10 15 4 25 2.5 C22.5 7 23.5 12 32 19 Z" fill="#1f6b3f"/>
+      <rect x="6.5" y="16.5" width="27" height="5.5" rx="2.75" fill="#fffaf2"/>
+      <circle cx="25.5" cy="3" r="3" fill="#fffaf2"/>
+      <circle cx="13" cy="28" r="2.3" fill="#f08a8a" opacity=".7"/>
+      <circle cx="27" cy="28" r="2.3" fill="#f08a8a" opacity=".7"/>
+      <circle cx="16" cy="25" r="1.5" fill="#2a1a14"/>
+      <circle cx="24" cy="25" r="1.5" fill="#2a1a14"/>
+      <path d="M15.5 29 Q20 33.5 24.5 29" fill="none" stroke="#2a1a14" stroke-width="1.6" stroke-linecap="round"/>
+    </symbol>
+    <!-- Naughty elf: red-and-white hat tipped sideways, a wink, a raised brow and a wry smile -->
+    <symbol id="elf-naughty" viewBox="0 -3 40 43">
+      <path d="M9.5 23 L2.5 17.5 L10.5 20 Z M30.5 23 L37.5 17.5 L29.5 20 Z" fill="#eab48d"/>
+      <circle cx="20" cy="25" r="11" fill="#f3c6a0"/>
+      <g transform="rotate(-14 20 18)">
+        <path d="M8 19 C9 10 15 4 25 2.5 C22.5 7 23.5 12 32 19 Z" fill="#d42a2a"/>
+        <rect x="6.5" y="16.5" width="27" height="5.5" rx="2.75" fill="#fffaf2"/>
+        <circle cx="25.5" cy="3" r="3" fill="#fffaf2"/>
+      </g>
+      <g transform="translate(0 1.5)"><path d="M13.8 25.3 Q16 23.6 18.2 25.3" fill="none" stroke="#2a1a14" stroke-width="1.6" stroke-linecap="round"/>
+      <circle cx="24" cy="25" r="1.5" fill="#2a1a14"/>
+      <path d="M21.8 21.6 L26.6 20.3" stroke="#2a1a14" stroke-width="1.4" stroke-linecap="round"/>
+      <path d="M15.5 30 Q20.5 31.5 25.5 27.5" fill="none" stroke="#2a1a14" stroke-width="1.6" stroke-linecap="round"/></g>
+    </symbol>
+  </defs>
+</svg>
+<header class="hero snowfall">
+  <div class="w">
+    <div class="top">
+      <a class="mark" href="/naughty-list"><img src="/naughty-list/icon-festive.svg" alt="">The Naughty List</a>
+      <a class="btn gold" href="#install">Get it free</a>
+    </div>
+    <div class="hgrid">
+      <div>
+        <h1>Who's been naughty or nice this Christmas?</h1>
+        <p class="scrawl">Check it twice before you buy.</p>
+        <p class="lede">See how the shops you already use treat their workers, their communities and the planet.</p>
+        <div class="ctas">
+          <a class="btn gold" href="#window">See the shops</a>
+          <a class="btn" href="#install">Get the extension</a>
+        </div>
+        <p class="fine">Free · no sign-up · no coal</p>
+      </div>
+      <div class="product">
+        <span class="tag"><b>●</b> Elf Cam</span>
+        <img src="/naughty-list/elfcam-casefile.png" alt="The Elf Cam stamp on an H&amp;M product page: not enough evidence for a verdict, reviewed business match H&amp;M, with the case file open">
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="window">
+  <div class="w">
+    <h2>Check the shops you already use. Then be Santa's informer.</h2>
+    <p class="scrawl kicker">Santa checks the evidence. You're his elf on the shop floor: tell him who's been naughty or nice.</p>
+    <div class="window">
+      <div class="shop"><span class="aisle">Marketplaces</span><b>Amazon</b><small>amazon.co.uk</small><span class="pill on">🎅 On file · score pending</span><div class="vote"><button disabled><svg class="elf" aria-hidden="true"><use href="#elf-nice"/></svg>Nice</button><button disabled><svg class="elf" aria-hidden="true"><use href="#elf-naughty"/></svg>Naughty</button></div></div>
+      <div class="shop"><span class="aisle">Supermarkets</span><b>Tesco</b><small>tesco.com</small><span class="pill">🎅 Santa's checking…</span><div class="vote"><button disabled><svg class="elf" aria-hidden="true"><use href="#elf-nice"/></svg>Nice</button><button disabled><svg class="elf" aria-hidden="true"><use href="#elf-naughty"/></svg>Naughty</button></div></div>
+      <div class="shop"><span class="aisle">Fashion &amp; sport</span><b>Primark</b><small>primark.com</small><span class="pill">🎅 Santa's checking…</span><div class="vote"><button disabled><svg class="elf" aria-hidden="true"><use href="#elf-nice"/></svg>Nice</button><button disabled><svg class="elf" aria-hidden="true"><use href="#elf-naughty"/></svg>Naughty</button></div></div>
+      <div class="shop"><span class="aisle">Beauty &amp; health</span><b>Boots</b><small>boots.com</small><span class="pill">🎅 Santa's checking…</span><div class="vote"><button disabled><svg class="elf" aria-hidden="true"><use href="#elf-nice"/></svg>Nice</button><button disabled><svg class="elf" aria-hidden="true"><use href="#elf-naughty"/></svg>Naughty</button></div></div>
+      <div class="shop"><span class="aisle">Electricals</span><b>Currys</b><small>currys.co.uk</small><span class="pill">🎅 Santa's checking…</span><div class="vote"><button disabled><svg class="elf" aria-hidden="true"><use href="#elf-nice"/></svg>Nice</button><button disabled><svg class="elf" aria-hidden="true"><use href="#elf-naughty"/></svg>Naughty</button></div></div>
+      <div class="shop"><span class="aisle">Toys &amp; gifts</span><b>Smyths Toys</b><small>smythstoys.com</small><span class="pill">🎅 Santa's checking…</span><div class="vote"><button disabled><svg class="elf" aria-hidden="true"><use href="#elf-nice"/></svg>Nice</button><button disabled><svg class="elf" aria-hidden="true"><use href="#elf-naughty"/></svg>Naughty</button></div></div>
+      <div class="shop"><span class="aisle">Home &amp; DIY</span><b>IKEA</b><small>ikea.com/gb</small><span class="pill">🎅 Santa's checking…</span><div class="vote"><button disabled><svg class="elf" aria-hidden="true"><use href="#elf-nice"/></svg>Nice</button><button disabled><svg class="elf" aria-hidden="true"><use href="#elf-naughty"/></svg>Naughty</button></div></div>
+      <div class="shop rest"><b>+93 more</b><small>From Argos to Waitrose, the shops you're most likely to buy from this Christmas.</small></div>
+    </div>
+    <div class="legend">
+      <div><h3>🎅 Santa Score</h3><p>Santa's verdict: Nice, Naughty or Not enough evidence, worked out from public records with a source and date for each. <a href="#rules">See how Santa decides</a>. Verdicts go live once his rules are signed off.</p></div>
+      <div><h3 class="elves"><svg class="elf" aria-hidden="true"><use href="#elf-nice"/></svg><svg class="elf" aria-hidden="true"><use href="#elf-naughty"/></svg>The elves' vote</h3><p>That's you. Think a shop has been naughty or nice? Tell Santa. Elves' votes sit next to the Santa Score and never change it. Voting opens soon.</p></div>
+    </div>
+    <p class="note">Not enough evidence on a shop? We say so. That never means naughty.</p>
+  </div>
+</section>
+
+<section id="rules" style="padding-top:0">
+  <div class="w">
+    <h2>How Santa decides</h2>
+    <p class="scrawl kicker">He checks his list twice, and he believes in second chances.</p>
+    <div class="tokens">
+      <div class="tok gift"><span class="em" aria-hidden="true">🎁</span><b>Gift <i>+1</i></b><p>The company is a Certified B Corp right now, checked directly with B Lab.</p></div>
+      <div class="tok warn"><span class="em" aria-hidden="true">⚠️</span><b>Warning <i>−1</i></b><p>It promised a regulator to change, like the CMA over misleading green claims. Nothing was proven in court.</p></div>
+      <div class="tok coal"><span class="em" aria-hidden="true">🪨</span><b>Lump of coal <i>−2</i></b><p>Something proven: a conviction or guilty plea, a fine, a regulator's order, or being named by the government for underpaying the minimum wage.</p></div>
+    </div>
+    <ul class="rules">
+      <li><b>Second chances.</b> Only the last 3 years count. Older history is shown as "Santa remembers", but it doesn't change the verdict.</li>
+      <li><b>Repeat offenders.</b> Each new incident within those 3 years doubles the coal.</li>
+      <li><b>Who's judged.</b> The company. Brands count under their owner, so George counts as Asda. A shop is judged on itself, never on the brands it sells.</li>
+      <li><b>What doesn't count.</b> A company's own promises, allegations, open investigations and news stories.</li>
+    </ul>
+    <div class="verdicts">
+      <div class="v nice"><b>🎅 Nice</b><p>A total of 0 or more, with at least one thing counted.</p></div>
+      <div class="v naughty"><b>🎅 Naughty</b><p>A total of −2 or lower. That's one proven offence, or two warnings in 3 years.</p></div>
+      <div class="v unknown"><b>Not enough evidence</b><p>Nothing counted yet, or a single warning on its own. We still show the warning.</p></div>
+    </div>
+    <p class="note">Santa's rules, version 0.3. Your 🧝 votes sit next to his verdict and never change it.</p>
+  </div>
+</section>
+
+<section>
+  <div class="w">
+    <h2>How it works</h2>
+    <p class="scrawl kicker">It's elf-explanatory.</p>
+    <ol class="steps">
+      <li><h3>Add the free extension</h3><p>For Chrome or Firefox, as soon as the stores approve it.</p></li>
+      <li><h3>Shop as usual</h3><p>On a shop we've checked, Elf Cam rolls for a few seconds, then a small stamp sits in the corner.</p></li>
+      <li><h3>Open the case file</h3><p>Open it to see what we know and where it came from.</p></li>
+    </ol>
+  </div>
+</section>
+
+<div class="stripe"></div>
+<section class="band snowfall">
+  <div class="w meet">
+    <div class="badge-shot">
+      <img src="/naughty-list/elfcam-badge.png" alt="The Elf Cam stamp in the corner of an H&amp;M page" width="310" height="280">
+      <small>The stamp sits in a corner and moves out of the way of the price and the basket.</small>
+    </div>
+    <div>
+      <h2>Meet Elf Cam</h2>
+      <p class="scrawl kicker">Santa's security camera, pointed at the brands. Never at you.</p>
+      <ul class="list">
+        <li><b>Evidence, not opinions.</b> Every result shows its source and the date we checked.</li>
+        <li><b>Private.</b> It only sends the shop's web address to look it up. No browsing history, no account.</li>
+        <li><b>Fair.</b> If we don't know enough about a shop, it says so instead of guessing.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<div class="stripe"></div>
+
+<section id="install" style="padding-top:0">
+  <div class="w">
+    <h2>Get it free</h2>
+    <p class="scrawl kicker">Free, and on its way down the chimney.</p>
+    <div class="install">
+      <div class="card">
+        <h3>Chrome, Edge, Brave or Arc</h3>
+        <p class="fine" style="font-size:16px">Coming soon to the Chrome Web Store. We've sent it to Google for review.</p>
+      </div>
+      <div class="card">
+        <h3>Firefox</h3>
+        <p class="fine" style="font-size:16px">Coming soon to Firefox Add-ons.</p>
+      </div>
+    </div>
+    <p class="note">Can't wait? It's open source: <a href="https://github.com/build40for40/naughty-list">see the code on GitHub</a>.</p>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="w">
+    <h2>Questions</h2>
+    <p class="scrawl kicker">Straight from the North Pole.</p>
+    <div class="faq">
+      <details><summary>How do you decide who's naughty or nice?</summary><p>Santa counts public records from the last 3 years: a gift for being a Certified B Corp, a warning for promising a regulator to change, and a lump of coal for anything proven, like a fine or being named for underpaying staff. Repeat offences double. One proven offence, or two warnings, makes a company Naughty. Too little evidence means "not enough evidence", never naughty. It's always about the company, not a single product. <a href="#rules">The full rules</a>.</p></details>
+      <details><summary>Does my vote change the Santa Score?</summary><p>No. Santa decides from the evidence 🎅. Your vote is the elves' view, shown next to it so everyone can see what other shoppers think.</p></details>
+      <details><summary>Is it watching me?</summary><p>No. It only runs on the shops on our list, and it only sends that shop's web address to look it up. No browsing history and no account. <a href="/privacy">Privacy notice</a>.</p></details>
+      <details><summary>Think we've got a shop wrong?</summary><p>Email help@build40for40.com with a source and we'll check it twice.</p></details>
+    </div>
+  </div>
+</section>
+
+<footer class="snowfall"><div class="w"><b>Merry checking!</b>The Naughty List · made by <a href="/" style="color:inherit">40 for 40</a> · help@build40for40.com</div></footer>
+  </body>
+</html>

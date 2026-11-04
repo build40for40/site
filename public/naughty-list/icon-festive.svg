@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- 96px artwork centred with 16px transparent padding (Chrome store rule) -->
+  <rect x="16" y="16" width="96" height="96" rx="24" fill="#D42A2A"/>
+  <!-- Santa's scroll: body plus rolled ends -->
+  <rect x="34" y="30" width="48" height="62" rx="4" fill="#FFFAF2"/>
+  <rect x="30" y="24" width="56" height="12" rx="6" fill="#F2E3C9"/>
+  <rect x="30" y="86" width="56" height="12" rx="6" fill="#F2E3C9"/>
+  <rect x="42" y="44" width="30" height="6" rx="3" fill="#1F6B3F"/>
+  <rect x="42" y="57" width="22" height="6" rx="3" fill="#1F6B3F"/>
+  <!-- checked twice: gold badge with a green tick -->
+  <circle cx="84" cy="82" r="19" fill="#F5C04A" stroke="#A51D1D" stroke-width="5"/>
+  <path d="M75 82.5l6.5 6.5 11.5-13" fill="none" stroke="#123D26" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
