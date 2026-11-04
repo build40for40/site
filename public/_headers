@@ -9,3 +9,7 @@
 
 https://:worker.:subdomain.workers.dev/*
   X-Robots-Tag: noindex
+
+/naughty-list/download/*
+  Content-Disposition: attachment
+  Cache-Control: public, max-age=3600
