@@ -17,7 +17,7 @@ curl -s https://build40for40.com/api/problems | jq -c --argjson shipped '["<hist
 
 The first result is the problem the site is showing now. On Day 3 a problem submitted at 09:30 overtook the one that had been top the night before, so if the top two are close, or the top one was submitted overnight, ask the user which one the team is building. If the day is in `GUEST_DAYS`, ask the user for the problem.
 
-Ask for the form factor too if the Superthread page still says TBC.
+Ask for the form factor too if the Superthread page still says TBC, and for the app's name. The repo is named after the app (`joyo`, `sidekick`, `naughty-list`), lowercase with hyphens. If the app doesn't have a name yet, use `dayN` for now and rename it in step 5.
 
 ## 2. Check the Superthread page
 
@@ -29,16 +29,16 @@ Use the `superthread-cli` skill. In the General space (id 2), find the "Day N" p
 
 ## 3. Create the repo
 
-Follow "Starting a new repo" in the 40 for 40 folder's `CLAUDE.md` (the parent of the site checkout). Check `gh repo view build40for40/dayN` first, and skip anything that already exists.
+Follow "Starting a new repo" in the 40 for 40 folder's `CLAUDE.md` (the parent of the site checkout). Below, `<repo>` is the app's name, or `dayN` if it hasn't got one. Check `gh repo view build40for40/<repo>` first, and skip anything that already exists.
 
 ```bash
-gh repo create build40for40/day4 --public --description "<title>, built live for 40 for 40"
-gh repo edit build40for40/day4 --enable-auto-merge --delete-branch-on-merge
+gh repo create build40for40/<repo> --public --description "<title>, built live for 40 for 40"
+gh repo edit build40for40/<repo> --enable-auto-merge --delete-branch-on-merge
 ```
 
-The second line copies Joyo's settings. GitHub sometimes answers these with a 502, so check they took with `gh api repos/build40for40/day4 --jq '{allow_auto_merge, delete_branch_on_merge}'`, and run it again if they didn't.
+The second line copies Joyo's settings. GitHub sometimes answers these with a 502, so check they took with `gh api repos/build40for40/<repo> --jq '{allow_auto_merge, delete_branch_on_merge}'`, and run it again if they didn't.
 
-In the 40 for 40 folder, `git init -b main` a `dayN` folder next to `site/` with `origin` set to `git@github.com:build40for40/dayN.git`, and commit straight to `main`:
+In the 40 for 40 folder, `git init -b main` a `<repo>` folder next to `site/` with `origin` set to `git@github.com:build40for40/<repo>.git`, and commit straight to `main`:
 
 - `AGENTS.md` about this repo only: the day number and date, the problem's title and full text, the owner, the form factor, a pointer to `../AGENTS.md` for shared context, and that it's served at `build40for40.com/<app>/` once it has a name.
 - `CLAUDE.md` as a symlink: `ln -s AGENTS.md CLAUDE.md`.
@@ -46,7 +46,7 @@ In the 40 for 40 folder, `git init -b main` a `dayN` folder next to `site/` with
 
 The pre-commit hooks run on their own. If one blocks the commit, fix the content and never bypass it. If a push fails with an Internal Server Error, push again.
 
-CI deploys use the `CLOUDFLARE_API_TOKEN` organisation secret, so don't add one to the repo. Check the repo can see it with `gh api repos/build40for40/day4/actions/organization-secrets --jq '.secrets[].name'`, and if it can't, tell the user.
+CI deploys use the `CLOUDFLARE_API_TOKEN` organisation secret, so don't add one to the repo. Check the repo can see it with `gh api repos/build40for40/<repo>/actions/organization-secrets --jq '.secrets[].name'`, and if it can't, tell the user.
 
 ## 4. Report
 
@@ -54,7 +54,17 @@ Tell the user the repo link, whether the page needed fixing, and whether the for
 
 ## 5. When the app has a name
 
-Apps are served at `build40for40.com/<app>/` by their own Worker, so this waits until the team names the app. Once the repo has a scaffold with a `package.json`, open a PR on the day's repo that copies these from `joyo`:
+If the repo started as `dayN`, rename it after the app first:
+
+```bash
+gh repo rename <app> -R build40for40/dayN --yes
+mv dayN <app>    # in the 40 for 40 folder
+git -C <app> remote set-url origin git@github.com:build40for40/<app>.git
+```
+
+GitHub redirects the old name. Update the `**Repo:**` link on the Superthread page and the title in `AGENTS.md` too.
+
+Apps are served at `build40for40.com/<app>/` by their own Worker. Once the repo has a scaffold with a `package.json`, open a PR on the day's repo that copies these from `joyo`:
 
 - **`wrangler.jsonc`:** the 40 for 40 `account_id`, routes for `build40for40.com/<app>` and `build40for40.com/<app>/*` on the `build40for40.com` zone, and `preview_urls: true` so PRs get preview links. Change `name`, the routes and anything under `/joyo/` to the app's name.
 - **The `wrangler` script in `package.json`:** `env -u CLOUDFLARE_API_KEY -u CLOUDFLARE_EMAIL wrangler --profile 40for40`.
