@@ -84,7 +84,7 @@ Add the day to `history` in `src/data/days.ts`, in the same shape as the entries
 
 ## 8. Set up the next day
 
-Day N+1 needs a Superthread board and a Superthread page before 10:00. Its GitHub repo gets made when the day kicks off, not here. Skip this after Day 40.
+Day N+1 needs a Superthread board and a Superthread page before 10:00. Its GitHub repo gets made at 10:00 by the `kickoff-day` skill, not here. Skip this after Day 40.
 
 ### Find the problem
 
