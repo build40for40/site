@@ -40,24 +40,31 @@ Write three hook options, then use the strongest one in the post.
 
 ## 3. Write the post
 
-Text only: no links, no URLs, no "build40for40.com". The team adds links in the comments. Follow the shape of Day 1 and Day 2:
+Text only: no links, no URLs, no "build40for40.com". LinkedIn shows posts with links in the body to fewer people, so every link goes in the comments (step 4). Follow the shape of Day 1 and Day 2:
 
 1. **Title line:** `Day N of 40: <App name> <emoji>`. Day 1 used Unicode bold for this line and for one feature label, since LinkedIn has no formatting. Keep bold to those, because screen readers struggle with it.
 2. **Hook:** one to three short lines.
 3. **What we built, in a fun way:** who asked for it and why (name the problem owner or sponsor), then what the app does in two or three sentences. Describe what it's like to use, not the stack.
 4. **Insights or events from the day:** two or three short paragraphs, each led by an emoji (Day 2 used 🎧 and 🧠, Day 1 used 🎁). One is a moment from the day. One is something we learned that another builder would find useful.
-5. **Call to action:** where the run is up to (`3 apps live. 37 to go 🚀`), then one ask, such as `💡 Want us to build your idea? Sponsor a day 👇`. Linking to the comments is fine, but the post itself has no URL.
+5. **Call to action:** where the run is up to (`3 apps live. 37 to go 🚀`), then one ask, such as `💡 Want us to build your idea? Sponsor a day 👇`. Pointing to the comments ("link in comments") is fine, but the post itself has no URL.
 6. **Hashtags:** `#40for40 #BuildInPublic #VibeCoding`, plus one or two about the day's topic.
 
 **Voice:** informal and funny, British spelling, "we" for the team. Short lines with a blank line between paragraphs, between 120 and 250 words. No corporate words (leverage, excited to announce, game-changer). No dashes mid-sentence: use a colon, a comma or a new sentence. Every claim, number and quote must come from the sources. If the post says a brand is naughty or nice, say what the app found and how it worked that out, not what we think of the brand.
 
-## 4. Tags and media
+## 4. Comments, tags and media
 
-After the post, list:
+After the post, add these sections.
+
+- **Comments:** the links, written as comments for the user to post under the post, one comment each, in this order:
+  1. The app, from `appUrl` in `history`, for example `Try it 👉 build40for40.com/naughty-list`.
+  2. The code, for example `It's open source 👉 github.com/build40for40/naughty-list`. Check the repo is public first with `gh repo view build40for40/<repo> --json visibility`.
+  3. The call to action's link, for example `Sponsor a day 👉 build40for40.com`.
+
+  Add a link to the full build recording or a write-up when there is one. Write links without `https://`, like Day 1's comments, and check each one answers 200 before adding it.
 
 - **Tag:** each person or organisation worth tagging and why: the problem owner, the sponsor, guests, the companies or tools that played a part. Mark where they appear in the post with their plain name, so the user can turn each one into a tag. Don't look up or write any LinkedIn URLs.
 - **Media:** every post needs an image or a video. Suggest one main piece and one or two backups, using real files where they exist, with their paths: screenshots in the day's repo, store or launch art, the thumbnail in `public/screenshots/`, and the board or the live app. If nothing fits, say exactly what to capture (for example a 20 second screen recording of the app doing its best trick). For video, follow the 60 second format on the "40 for 40: Daily Social Workflow" page (id 19): hook first, the clock, what went wrong, the demo, a real reaction. Leave out other people's photos or brands' product shots unless the point of the post is what the app shows on their page.
 
 ## 5. Save it
 
-Put the post, the hook options, the tags and the media list on a "Day N - <App name>" page under "Linkedin Posts" (id 4), with the post first so it can be copied as it is. If the page already has content, show the user what's there and ask before replacing it. Then show the post in the chat as well.
+Put the post, the hook options, the comments, the tags and the media list on a "Day N - <App name>" page under "Linkedin Posts" (id 4), with the post first so it can be copied as it is. If the page already has content, show the user what's there and ask before replacing it. Then show the post in the chat as well.
