@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch as watchDescription } from "vue";
 import { brands } from "../data/brands";
 import BrandIcon from "./BrandIcon.vue";
 import ShareButton from "./ShareButton.vue";
@@ -56,6 +56,27 @@ const video = ref<"recording" | "shorts">("shorts");
 const sponsoring = ref(false);
 
 const idea = computed(() => props.entry.idea);
+const description = ref<HTMLParagraphElement>();
+const descriptionExpanded = ref(false);
+const descriptionOverflows = ref(false);
+let descriptionObserver: ResizeObserver | undefined;
+function measureDescription() {
+  const el = description.value;
+  if (!el) return;
+  // Compare with three lines even while expanded, so resizing keeps the toggle accurate.
+  descriptionOverflows.value = el.scrollHeight > parseFloat(getComputedStyle(el).lineHeight) * 3 + 1;
+}
+onMounted(() => {
+  descriptionObserver = new ResizeObserver(measureDescription);
+  if (description.value) descriptionObserver.observe(description.value);
+  measureDescription();
+});
+onBeforeUnmount(() => descriptionObserver?.disconnect());
+watchDescription(() => idea.value?.problem, async () => {
+  descriptionExpanded.value = false;
+  await nextTick();
+  measureDescription();
+});
 const shippedIdea = computed(() => ({ recordingUrl: links.twitch, buildTime: "4:40:00", ...props.entry.idea }) as ShippedIdea);
 const sponsors = computed(() => idea.value?.sponsors ?? props.entry.sponsors ?? []);
 const total = computed(() => sponsors.value.reduce((sum, s) => sum + s.amount, 0));
@@ -407,7 +428,17 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
             <ShareButton v-if="share" class="justify-end" v-bind="share" label="Share" />
           </div>
         </div>
-        <p v-if="idea" class="m-0 line-clamp-3 text-[15px] leading-snug text-night-sub text-pretty" :title="idea.problem"><span class="text-brand-yellow">(</span>{{ idea.problem }}<span class="text-brand-yellow">)</span></p>
+        <div v-if="idea" class="min-w-0 shrink-0">
+          <p id="day-description" ref="description" class="m-0 text-[15px] leading-snug wrap-anywhere whitespace-pre-line text-night-sub text-pretty" :class="!descriptionExpanded && 'line-clamp-3'"><span class="text-brand-yellow">(</span>{{ idea.problem }}<span class="text-brand-yellow">)</span></p>
+          <button
+            v-if="descriptionOverflows"
+            type="button"
+            :aria-expanded="descriptionExpanded"
+            aria-controls="day-description"
+            class="min-h-11 cursor-pointer rounded border-0 bg-transparent px-1 text-left font-mono text-xs font-medium text-night-sub underline underline-offset-3 hover:text-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime"
+            @click="descriptionExpanded = !descriptionExpanded"
+          >{{ descriptionExpanded ? "Show less" : "Read more" }}</button>
+        </div>
         <template v-else>
           <p class="m-0 text-[15px] leading-snug text-night-sub text-pretty">A special guest brings their own problem and builds it with us. It stays a secret until 10:00 on {{ entry.date }}.</p>
           <p class="m-0 text-[15px] leading-snug text-pretty">Same rules as every day: 4 hours 40 minutes on the clock, live on Twitch.</p>
