@@ -24,7 +24,7 @@ Ask for the form factor too if the Superthread page still says TBC, and for the 
 Use the `superthread-cli` skill. In the General space (id 2), find the "Day N" page under Days (id 7) and the `dayN` board.
 
 - If the page is missing, or shows a different problem, write it again in the same format as "Day 2": `**Problem:**` with the title, `**Form factor:**`, then the problem in full. Use `st pages update <id> --content` on an existing page.
-- If the board is missing, create it as in step 8 of `finish-day`.
+- If the board is missing, create it as in step 8 of `finish-day`. If it isn't public, make it public the same way.
 - Add the repo link to the page once the repo exists: a `**Repo:**` line under the form factor.
 
 ## 3. Create the repo

@@ -102,6 +102,16 @@ Everything goes in the General space (id 2). Use the `superthread-cli` skill for
   st boards create -s 2 --title day4 --list "To do:todo" --list "Doing:doing" --list "Done:done" --list "Cancelled:canceled"
   ```
 
+- **Make the board public**, like every day board, so viewers can follow along. `st` can't do this, so call the API with the token `st auth login` saved, without printing it:
+
+  ```bash
+  curl -s -X PATCH -H "Authorization: Bearer $(awk '/^token:/{print $2}' ~/.config/superthread/config.yaml | tr -d '"')" \
+    -H "Content-Type: application/json" -d '{"is_public": true}' \
+    "https://api.superthread.com/v1/tSyziWPE/boards/<board id>" | jq -r '.board.public_settings.url'
+  ```
+
+  It prints the board's public link. Run it on an existing day board too if it isn't public yet.
+
 - **Starter cards** in To do. Every day so far started by defining the problem, and the Day 2 retro asked for a content check on the board:
   - "Define the 5 W's"
   - "Where are we on content progress?"
@@ -122,4 +132,4 @@ Everything goes in the General space (id 2). Use the `superthread-cli` skill for
 
 ### Report
 
-Tell the user what you created, with links to the board and the page, and whether the form factor is still TBC. The ranking can still change if someone sponsors before 10:00, so tell them to check the page against the site when the box opens.
+Tell the user what you created, with links to the board (its public link too) and the page, and whether the form factor is still TBC. The ranking can still change if someone sponsors before 10:00, so tell them to check the page against the site when the box opens.
