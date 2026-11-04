@@ -139,6 +139,18 @@ export const history: Record<number, ShippedIdea> = {
     recordingUrl: "https://www.twitch.tv/build40for40",
     shorts: [],
   },
+  3: {
+    id: "061c4947-8b2e-4a55-a628-12b3e843fdef",
+    title: "Hard to know which brands are ethical",
+    problem: "Christmas is the busiest shopping period of the year, but it's hard to know which brands have actually been good all year. Nobody has time to research every company behind the toys and gifts on their list.",
+    owner: "Santa",
+    sponsors: [{ name: "Santa", amount: 105 }],
+    buildTime: "4:40:00",
+    appUrl: "https://build40for40.com/naughty-list/",
+    recordingUrl: "https://www.twitch.tv/build40for40",
+    screenshot: "/screenshots/naughty-list.jpg",
+    shorts: [],
+  },
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");
