@@ -18,6 +18,7 @@ Ask for everything below in one message, and go ahead with whatever the user has
 | Build time, if it wasn't the full 4:40:00 | `buildTime` | `"4:40:00"` |
 | Shorts: title, platform and link for each | `shorts` | `[]` |
 | A screenshot or GIF that shows what the app does | `screenshot` | Offer to take one of the live app |
+| A still from the day's stream | `still` | Pick a frame from the Twitch recording's thumbnails, save as `public/stills/day-NN.webp` |
 | Substack write-up | `postUrl` | Leave it out |
 
 The problem's title, text, owner and sponsors aren't needed from the user: they come from D1.

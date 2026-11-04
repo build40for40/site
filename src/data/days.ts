@@ -32,6 +32,8 @@ export interface ShippedIdea extends Idea {
   recordingUrl: string;
   postUrl?: string;
   screenshot?: string;
+  // A frame from the day's stream, behind "Watch the full build".
+  still?: string;
   shorts: Short[];
 }
 
@@ -126,6 +128,7 @@ export const history: Record<number, ShippedIdea> = {
     recordingUrl: "https://www.youtube.com/watch?v=KA8ltrIe1Lk",
     postUrl: "https://build40for40.substack.com/p/we-spent-104-to-find-out-what-time",
     screenshot: "/screenshots/joyo.webp",
+    still: "/stills/day-01.webp",
     shorts: [{ title: "Can you find what time you were born using astrology?", platform: "youtube", url: "https://www.youtube.com/shorts/F3FZkOdvFHc" }],
   },
   2: {
@@ -137,6 +140,7 @@ export const history: Record<number, ShippedIdea> = {
     buildTime: "4:40:00",
     appUrl: "https://build40for40.com/sidekick/",
     recordingUrl: "https://www.twitch.tv/build40for40",
+    still: "/stills/day-02.webp",
     shorts: [],
   },
   3: {

@@ -261,7 +261,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
               </template>
             </div>
             <template v-else>
-              <img v-if="shippedIdea.screenshot" :src="shippedIdea.screenshot" alt="" class="absolute inset-0 size-full object-cover object-top opacity-35" />
+              <img v-if="shippedIdea.still ?? shippedIdea.screenshot" :src="shippedIdea.still ?? shippedIdea.screenshot" alt="" class="absolute inset-0 size-full object-cover object-top opacity-35" />
               <a :href="shippedIdea.recordingUrl" target="_blank" rel="noopener" class="relative rounded-full bg-brand-lime text-brand-lime-ink hover:bg-brand-lime-hover px-5 py-3 text-[15px] font-semibold no-underline">▶ Watch the full build</a>
               <p class="relative m-0 font-mono text-xs text-night-sub">All {{ shippedIdea.buildTime }} of it, on {{ brands[watchBrand].name }}.</p>
             </template>
