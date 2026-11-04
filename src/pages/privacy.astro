@@ -44,6 +44,17 @@ const sections = [
     body: ["Form submissions are deleted 12 months after the project ends. Payment records are kept as long as the law requires."],
   },
   {
+    title: "The Naughty List browser extension",
+    body: [
+      "The Naughty List shows reviewed business information while you shop. It reads product and offer metadata, price elements and purchase controls on HTTPS pages inside your browser to detect likely shopping pages. It also checks page navigation locally to keep its information stamp up to date.",
+      "On a likely shopping page, it sends only the website hostname, such as www.patagonia.com, to naughty-list-api.40for40.workers.dev. The service uses it to look up stored business evidence. It does not receive the full page URL, page path, query string, product text, prices, page HTML or shopping signals. Requests omit cookies and referrers.",
+      "The service runs on Cloudflare, which processes network connection information, including IP addresses, to deliver and protect the service. The application does not write shopper lookups to its evidence database or log them in application code. This does not mean that Cloudflare has no operational or security logs. For questions about records held by the service, contact us using the address below.",
+      "The extension keeps your automatic-check and stamp-position settings on this device. It caches up to 50 hostname assessment results in browser-session storage for five minutes. Expired results are ignored and removed on later cache writes; session storage clears when the browser session ends. Settings and cached results are not synced to other devices.",
+      "There is no account, analytics SDK or extension-generated tracking identifier. We do not sell extension data, use it for advertising or use it to build a browsing profile. The website analytics described elsewhere in this notice are separate from the extension.",
+      "You can turn automatic checks off in the extension settings to stop new lookups and remove the stamp. This cannot recall a request already sent. You can dismiss the stamp for the current page, clear extension storage or uninstall the extension. For questions, corrections or data requests, email help@build40for40.com.",
+    ],
+  },
+  {
     title: "Your rights",
     body: [
       `You can ask to see, correct or delete your data, or object to how we use it, by emailing ${links.email}. If you're unhappy with our answer you can complain to the Information Commissioner's Office at ico.org.uk.`,
