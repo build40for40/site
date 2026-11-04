@@ -95,6 +95,26 @@ section{padding-block:64px}
 .vote button{display:inline-flex;align-items:center;gap:5px}
 h3.elves{display:flex;align-items:center;gap:6px}
 h3.elves .elf{width:30px;height:30px}
+.tokens{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.tok{background:var(--cream);border-radius:18px;padding:20px 22px;display:grid;gap:6px;align-content:start;border-top:6px solid var(--line)}
+.tok .em{font-size:30px;line-height:1}
+.tok b{font:24px var(--f-display);font-weight:400;color:var(--ink)}
+.tok b i{font-style:normal;color:var(--sub);margin-left:4px}
+.tok p{color:var(--sub);font-size:15px}
+.tok.gift{border-top-color:var(--green)}.tok.warn{border-top-color:var(--gold)}.tok.coal{border-top-color:var(--ink)}
+.rules{list-style:none;padding:0;margin:22px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:12px 28px}
+.rules li{color:var(--sub);padding-left:26px;position:relative}
+.rules li::before{content:"★";position:absolute;left:0;color:var(--gold)}
+.rules b{color:var(--ink);font-weight:900}
+.verdicts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:24px}
+.v{border-radius:18px;padding:18px 22px;display:grid;gap:4px}
+.v b{font:24px var(--f-display);font-weight:400}
+.v p{font-size:15px}
+.v.nice{background:var(--green);color:var(--snow)}
+.v.naughty{background:var(--red);color:var(--snow)}
+.v.unknown{background:var(--cream);color:var(--sub);border:3px dashed var(--line)}
+.v.unknown b{color:var(--ink)}
+@media (max-width:760px){.tokens,.verdicts,.rules{grid-template-columns:1fr}}
 .legend{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px}
 .legend div{background:var(--cream);border-radius:18px;padding:18px 22px}
 .legend p{color:var(--sub);font-size:15px;margin-top:6px}
@@ -214,10 +234,34 @@ footer b{display:block;font:24px var(--f-display);margin-bottom:4px}
       <div class="shop rest"><b>+93 more</b><small>From Argos to Waitrose, the shops you're most likely to buy from this Christmas.</small></div>
     </div>
     <div class="legend">
-      <div><h3>🎅 Santa Score</h3><p>Santa's verdict, worked out from public evidence, such as B Corp status, minimum-wage naming and regulator cases, with a source and date for each. Scores land once Santa's rules are agreed.</p></div>
+      <div><h3>🎅 Santa Score</h3><p>Santa's verdict: Nice, Naughty or Not enough evidence, worked out from public records with a source and date for each. <a href="#rules">See how Santa decides</a>. Verdicts go live once his rules are signed off.</p></div>
       <div><h3 class="elves"><svg class="elf" aria-hidden="true"><use href="#elf-nice"/></svg><svg class="elf" aria-hidden="true"><use href="#elf-naughty"/></svg>The elves' vote</h3><p>That's you. Think a shop has been naughty or nice? Tell Santa. Elves' votes sit next to the Santa Score and never change it. Voting opens soon.</p></div>
     </div>
     <p class="note">Not enough evidence on a shop? We say so. That never means naughty.</p>
+  </div>
+</section>
+
+<section id="rules" style="padding-top:0">
+  <div class="w">
+    <h2>How Santa decides</h2>
+    <p class="scrawl kicker">He checks his list twice, and he believes in second chances.</p>
+    <div class="tokens">
+      <div class="tok gift"><span class="em" aria-hidden="true">🎁</span><b>Gift <i>+1</i></b><p>The company is a Certified B Corp right now, checked directly with B Lab.</p></div>
+      <div class="tok warn"><span class="em" aria-hidden="true">⚠️</span><b>Warning <i>−1</i></b><p>It promised a regulator to change, like the CMA over misleading green claims. Nothing was proven in court.</p></div>
+      <div class="tok coal"><span class="em" aria-hidden="true">🪨</span><b>Lump of coal <i>−2</i></b><p>Something proven: a conviction or guilty plea, a fine, a regulator's order, or being named by the government for underpaying the minimum wage.</p></div>
+    </div>
+    <ul class="rules">
+      <li><b>Second chances.</b> Only the last 3 years count. Older history is shown as "Santa remembers", but it doesn't change the verdict.</li>
+      <li><b>Repeat offenders.</b> Each new incident within those 3 years doubles the coal.</li>
+      <li><b>Who's judged.</b> The company. Brands count under their owner, so George counts as Asda. A shop is judged on itself, never on the brands it sells.</li>
+      <li><b>What doesn't count.</b> A company's own promises, allegations, open investigations and news stories.</li>
+    </ul>
+    <div class="verdicts">
+      <div class="v nice"><b>🎅 Nice</b><p>A total of 0 or more, with at least one thing counted.</p></div>
+      <div class="v naughty"><b>🎅 Naughty</b><p>A total of −2 or lower. That's one proven offence, or two warnings in 3 years.</p></div>
+      <div class="v unknown"><b>Not enough evidence</b><p>Nothing counted yet, or a single warning on its own. We still show the warning.</p></div>
+    </div>
+    <p class="note">Santa's rules, version 0.3. Your 🧝 votes sit next to his verdict and never change it.</p>
   </div>
 </section>
 
@@ -276,7 +320,7 @@ footer b{display:block;font:24px var(--f-display);margin-bottom:4px}
     <h2>Questions</h2>
     <p class="scrawl kicker">Straight from the North Pole.</p>
     <div class="faq">
-      <details><summary>How do you decide who's naughty or nice?</summary><p>From public evidence about the company: B Corp certification, minimum-wage naming, regulator cases and more, each with a source and date. We don't show a verdict until our scoring rules are agreed, and it's always about the company, not a single product.</p></details>
+      <details><summary>How do you decide who's naughty or nice?</summary><p>Santa counts public records from the last 3 years: a gift for being a Certified B Corp, a warning for promising a regulator to change, and a lump of coal for anything proven, like a fine or being named for underpaying staff. Repeat offences double. One proven offence, or two warnings, makes a company Naughty. Too little evidence means "not enough evidence", never naughty. It's always about the company, not a single product. <a href="#rules">The full rules</a>.</p></details>
       <details><summary>Does my vote change the Santa Score?</summary><p>No. Santa decides from the evidence 🎅. Your vote is the elves' view, shown next to it so everyone can see what other shoppers think.</p></details>
       <details><summary>Is it watching me?</summary><p>No. It only runs on the shops on our list, and it only sends that shop's web address to look it up. No browsing history and no account. <a href="/privacy">Privacy notice</a>.</p></details>
       <details><summary>Think we've got a shop wrong?</summary><p>Email help@build40for40.com with a source and we'll check it twice.</p></details>
