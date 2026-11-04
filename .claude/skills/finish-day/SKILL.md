@@ -1,6 +1,6 @@
 ---
 name: finish-day
-description: Put a finished day's app on build40for40.com by adding it to the shipped history in src/data/days.ts and opening the PR, then set up the next day's Superthread board, Superthread page and GitHub repo. Use when a day ships, when a shipped day gets new links, or when the next day needs setting up. Triggers include "finish day 3", "day 3 shipped", "ship today", "add the recording for day 2", "here's today's app link", "set up day 4", or a link to an app under build40for40.com.
+description: Put a finished day's app on build40for40.com by adding it to the shipped history in src/data/days.ts and opening the PR, then set up the next day's Superthread board and page. Use when a day ships, when a shipped day gets new links, or when the next day needs setting up. Triggers include "finish day 3", "day 3 shipped", "ship today", "add the recording for day 2", "here's today's app link", "set up day 4", or a link to an app under build40for40.com.
 ---
 
 # Finish a day
@@ -84,7 +84,7 @@ Add the day to `history` in `src/data/days.ts`, in the same shape as the entries
 
 ## 8. Set up the next day
 
-Day N+1 needs a Superthread board, a Superthread page and a GitHub repo before 10:00. Skip this after Day 40.
+Day N+1 needs a Superthread board and a Superthread page before 10:00. Its GitHub repo gets made when the day kicks off, not here. Skip this after Day 40.
 
 ### Find the problem
 
@@ -113,8 +113,6 @@ Everything goes in the General space (id 2). Use the `superthread-cli` skill for
 
   **Form factor:** <form factor>
 
-  **Repo:** https://github.com/build40for40/day4
-
   <the problem, in full, as it is on the site>
   MD
   )"
@@ -122,25 +120,6 @@ Everything goes in the General space (id 2). Use the `superthread-cli` skill for
 
   The prep, demo and retro pages get added under it during the day, so don't create them now.
 
-### GitHub
-
-Follow "Starting a new repo" in the 40 for 40 folder's `CLAUDE.md` (the parent of the site checkout).
-
-- Create it public, named `day<N+1>`, in the 40 for 40 folder:
-
-  ```bash
-  gh repo create build40for40/day4 --public --description "<title>, built live for 40 for 40"
-  gh repo edit build40for40/day4 --enable-auto-merge --delete-branch-on-merge
-  ```
-
-  The second line copies Joyo's settings. Sidekick was set up without them.
-- Clone it next to `site/`, then commit straight to `main` with:
-  - `AGENTS.md` about this repo only: the day number and date, the problem's title and full text, the owner, the form factor, and that it's served at `build40for40.com/<app>/` once it has a name.
-  - `CLAUDE.md` as a symlink: `ln -s AGENTS.md CLAUDE.md`.
-  - A `.gitignore` that covers `.env*`, `.dev.vars*` (keeping the `.example` files), `.wrangler/`, `node_modules/` and `dist/`.
-- The pre-commit hooks run on their own. If one blocks the commit, fix the content and never bypass it.
-- CI deploys use the `CLOUDFLARE_API_TOKEN` organisation secret, so don't add one to the repo. Check the new repo can see it with `gh api repos/build40for40/day4/actions/organization-secrets --jq '.secrets[].name'`, and if it can't, tell the user. The Worker route (`build40for40.com/<app>/*`) and CI workflow go in during the build, once the app has a name. Copy them from `joyo`'s `wrangler.jsonc` and `.github/workflows/ci.yml`.
-
 ### Report
 
-Tell the user what you created, with links to the board, the page and the repo, and whether the form factor is still TBC. The ranking can still change if someone sponsors before 10:00, so tell them to check the page against the site when the box opens.
+Tell the user what you created, with links to the board and the page, and whether the form factor is still TBC. The ranking can still change if someone sponsors before 10:00, so tell them to check the page against the site when the box opens.
