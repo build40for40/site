@@ -139,8 +139,8 @@ Follow "Starting a new repo" in the 40 for 40 folder's `CLAUDE.md` (the parent o
   - `CLAUDE.md` as a symlink: `ln -s AGENTS.md CLAUDE.md`.
   - A `.gitignore` that covers `.env*`, `.dev.vars*` (keeping the `.example` files), `.wrangler/`, `node_modules/` and `dist/`.
 - The pre-commit hooks run on their own. If one blocks the commit, fix the content and never bypass it.
-- CI deploys need a `CLOUDFLARE_API_TOKEN` secret on the repo. Never enter it yourself: ask the user to run `gh secret set CLOUDFLARE_API_TOKEN -R build40for40/day4`. The Worker route (`build40for40.com/<app>/*`) and CI workflow go in during the build, once the app has a name. Copy them from `joyo`'s `wrangler.jsonc` and `.github/workflows/ci.yml`.
+- CI deploys use the `CLOUDFLARE_API_TOKEN` organisation secret, so don't add one to the repo. Check the new repo can see it with `gh api repos/build40for40/day4/actions/organization-secrets --jq '.secrets[].name'`, and if it can't, tell the user. The Worker route (`build40for40.com/<app>/*`) and CI workflow go in during the build, once the app has a name. Copy them from `joyo`'s `wrangler.jsonc` and `.github/workflows/ci.yml`.
 
 ### Report
 
-Tell the user what you created, with links to the board, the page and the repo, and what's still on them: the secret, and the form factor if it's TBC. The ranking can still change if someone sponsors before 10:00, so tell them to check the page against the site when the box opens.
+Tell the user what you created, with links to the board, the page and the repo, and whether the form factor is still TBC. The ranking can still change if someone sponsors before 10:00, so tell them to check the page against the site when the box opens.
