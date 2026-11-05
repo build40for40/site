@@ -151,6 +151,18 @@ export const history: Record<number, ShippedIdea> = {
     screenshot: "/screenshots/naughty-list.jpg",
     shorts: [],
   },
+  4: {
+    id: "d9cbe60b-9d63-4fb8-8b2e-9760323f7b5a",
+    title: "Cold outreach to founders",
+    problem: "Building a business is deeply personal, and when it comes to succession, founders don't want cold outreach from strangers: they want a trusted partner who understands their life’s work.",
+    owner: "Aqil",
+    sponsors: [{ name: "Aqil", amount: 104 }, { name: "Rohan", amount: 40 }],
+    buildTime: "4:40:00",
+    appUrl: "https://build40for40.com/synergy/",
+    recordingUrl: "https://www.twitch.tv/build40for40",
+    screenshot: "/screenshots/synergy.webp",
+    shorts: [],
+  },
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");
