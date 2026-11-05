@@ -12,8 +12,26 @@ function setup() {
     return worker.fetch(new Request(`https://build40for40.com/api/forms/${form}`, { method: "POST", body }) as never, env, ctx);
   };
   const newsletterAt = (email: string) => (sqlite.prepare("SELECT newsletter_at FROM people WHERE email = ?").get(email) as { newsletter_at: string | null }).newsletter_at;
-  return { send, newsletterAt };
+  return { send, newsletterAt, sqlite };
 }
+
+describe("access requests", () => {
+  test("saves the request against the app and sends the visitor back to its page", async () => {
+    const { send, sqlite } = setup();
+    const response = await send("access", { name: "Ada", email: "ada@example.com", firm: "Example Capital", app: "synergy" });
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("https://build40for40.com/synergy/#requested");
+    expect(sqlite.prepare("SELECT app, firm FROM access_requests WHERE email = ?").get("ada@example.com")).toEqual({ app: "synergy", firm: "Example Capital" });
+  });
+
+  test("rejects an app that isn't taking requests", async () => {
+    const { send } = setup();
+    const response = await send("access", { name: "Ada", email: "ada@example.com", app: "elsewhere" });
+
+    expect(response.status).toBe(400);
+  });
+});
 
 describe("newsletter consent", () => {
   test("is recorded only when the box is ticked", async () => {

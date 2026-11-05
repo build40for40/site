@@ -1,0 +1,553 @@
+---
+import PostHog from "../components/posthog.astro";
+const title = "Synergy: ten calling cards every morning";
+const description = "A Chrome extension for dealmakers. Every morning, a short list of VC funds sitting on profitable companies that look ready to sell, with the partner to call and why now. Day 4 of 40 for 40.";
+const url = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/synergy/icon.svg" />
+    <link rel="canonical" href={url} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="40 for 40" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={url} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="theme-color" content="#efe7d6" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,600;1,6..96,400;1,6..96,500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" />
+    <PostHog />
+    <style is:global>
+/* Layout: a printed ledger in two inks. Ultramarine on cream paper, ruled like a stationer's ledger. Calling cards are the one object; everything else is type and rules. Single light look by choice. */
+:root {
+  --paper: #efe7d6;
+  --card: #fbf7ef;
+  --ink: #2338a8;
+  --ink-60: rgba(35,56,168,.62);
+  --ink-25: rgba(35,56,168,.25);
+  --ink-12: rgba(35,56,168,.12);
+  --display: "Bodoni Moda", "Didot", "Bodoni 72", "Times New Roman", serif;
+  --mono: "Courier Prime", "Courier New", monospace;
+  --hatch: repeating-linear-gradient(135deg, var(--ink) 0 1.5px, transparent 1.5px 7px);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .4 0 0 0 0 .3 0 0 0 .32 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--display); font-size: 19px; line-height: 1.5; }
+body::after { content: ""; position: fixed; inset: 0; pointer-events: none; background-image: var(--grain); mix-blend-mode: multiply; opacity: .55; z-index: 50; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--paper); }
+.band { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.inner { max-width: 1180px; margin: 0 auto; }
+h1, h2, h3, p { margin: 0; }
+table { color: inherit; font-size: inherit; }
+.tier-s { display: none; }
+h1, h2, h3 { font-weight: 400; text-wrap: balance; }
+a { color: var(--ink); }
+:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 3px; }
+.mono { font-family: var(--mono); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+.rule2 { border: 0; height: 5px; border-top: 1.5px solid var(--ink); border-bottom: .75px solid var(--ink); margin: 0; }
+code { font-family: var(--mono); font-size: .88em; background: var(--card); border: 1px solid var(--ink-25); padding: 1px 6px; white-space: nowrap; }
+
+.btn { display: inline-flex; align-items: center; gap: 10px; font-family: var(--mono); font-weight: 700; font-size: 14px; letter-spacing: .1em; text-transform: uppercase; text-decoration: none; padding: 14px 22px; background: var(--ink); color: var(--card); border: 1.5px solid var(--ink); border-radius: 2px; transition: background .15s ease, color .15s ease; white-space: nowrap; }
+.btn:hover { background: transparent; color: var(--ink); }
+.btn.line { background: transparent; color: var(--ink); }
+.btn.line:hover { background: var(--ink); color: var(--card); }
+.btn.sm { padding: 10px 16px; font-size: 12px; }
+
+/* masthead */
+.mast { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--paper); }
+.mast .inner { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 20px; padding-block: 14px 12px; }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.brand svg { flex: none; }
+.brand b { font-weight: 600; font-size: 26px; letter-spacing: -.01em; }
+.mast .dateline { text-align: center; }
+
+/* hero */
+.hero { padding-block: 56px 72px; }
+.hero .inner { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 40px; align-items: center; }
+.hero h1 { font-size: clamp(60px, 9vw, 132px); line-height: .9; letter-spacing: -.025em; margin-top: 18px; }
+.hero h1 i { display: block; }
+.hero .lede { margin-top: 26px; font-size: 21px; line-height: 1.45; max-width: 34ch; }
+.ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; align-items: center; }
+.under { margin-top: 18px; color: var(--ink-60); }
+
+.fan { position: relative; height: 520px; min-width: 0; }
+.fan .hint { position: absolute; right: 4px; bottom: 0; color: var(--ink-60); }
+.card { position: absolute; left: 50%; bottom: 36px; width: 270px; height: 384px; margin-left: -135px; transform-origin: 50% 125%; transition: transform .7s cubic-bezier(.2,.8,.2,1); border: 0; padding: 0; background: none; cursor: pointer; perspective: 1400px; font: inherit; color: inherit; }
+.card .pull { position: absolute; inset: 0; transition: transform .45s cubic-bezier(.2,.8,.2,1); }
+.card.lift .pull { transform: translateY(-84px); }
+.card .in { position: absolute; inset: 0; transition: transform .7s cubic-bezier(.2,.8,.2,1); transform-style: preserve-3d; }
+.card.flip .in { transform: rotateY(180deg); }
+.face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; background: var(--card); border: 1.5px solid var(--ink); box-shadow: 0 22px 30px -22px rgba(35,56,168,.6); padding: 18px; display: grid; grid-template-rows: auto 1fr auto; text-align: left; }
+.face::before { content: ""; position: absolute; inset: 5px; border: .75px solid var(--ink-25); pointer-events: none; }
+.face .row { display: flex; justify-content: space-between; gap: 8px; }
+.face .plate { margin: 14px 0; background: var(--hatch); display: grid; place-items: center; }
+.face .plate span { background: var(--card); border: 1.5px solid var(--ink); width: 64px; height: 64px; display: grid; place-items: center; font-style: italic; font-size: 44px; line-height: 1; }
+.face .name { font-size: 25px; line-height: 1.05; font-weight: 600; display: block; }
+.face .meta { display: block; margin-top: 6px; font-size: 12px; letter-spacing: .04em; text-transform: none; }
+.face.back { transform: rotateY(180deg); background: var(--ink); color: var(--card); grid-template-rows: auto 1fr auto; gap: 10px; }
+.face.back::before { border-color: rgba(251,247,239,.3); }
+.face.back .why { font-style: italic; font-size: 21px; line-height: 1.28; }
+.face.back .who { font-family: var(--mono); font-size: 12px; letter-spacing: .04em; }
+
+/* sections */
+section.block { padding-block: 96px; }
+.shead { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: end; margin-bottom: 44px; }
+.shead h2 { font-size: clamp(42px, 6vw, 80px); line-height: .95; letter-spacing: -.02em; margin-top: 12px; }
+.shead h2 i { font-style: italic; }
+.shead p { max-width: 44ch; }
+
+/* anatomy */
+.anatomy { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, .9fr); gap: 28px; align-items: start; }
+.big { position: relative; background: var(--card); border: 1.5px solid var(--ink); padding: 24px; min-height: 520px; display: grid; gap: 16px; align-content: start; box-shadow: 0 26px 40px -30px rgba(35,56,168,.6); min-width: 0; }
+.big::before { content: ""; position: absolute; inset: 6px; border: .75px solid var(--ink-25); pointer-events: none; }
+.big.back { background: var(--ink); color: var(--card); }
+.big.back::before { border-color: rgba(251,247,239,.3); }
+.big .plate { height: 170px; background: var(--hatch); display: grid; place-items: center; }
+.big .plate span { background: var(--card); border: 1.5px solid var(--ink); width: 92px; height: 92px; display: grid; place-items: center; font-style: italic; font-size: 64px; }
+.big .fund { font-size: 36px; font-weight: 600; line-height: 1.02; }
+.big .why { font-style: italic; font-size: 24px; line-height: 1.25; }
+.n { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1.25px solid currentColor; font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0; text-transform: none; vertical-align: 4px; margin-right: 6px; flex: none; }
+.big > * { min-width: 0; }
+.co { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+.co th { text-align: left; font-weight: 400; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; opacity: .75; padding: 0 10px 6px 0; }
+.co td { padding: 7px 8px 7px 0; border-top: .75px solid rgba(251,247,239,.35); white-space: nowrap; }
+.co td:last-child, .co th:last-child { padding-right: 0; }
+.co .r { text-align: right; }
+.co sup { font-size: 9px; opacity: .8; margin-left: 2px; }
+.prompt { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+.prompt > span:not(.n) { border: 1.25px solid var(--card); padding: 8px 12px; }
+.prompt .n { vertical-align: 0; margin-right: 2px; }
+.keys { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.keys li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px; padding: 14px 0; border-top: .75px solid var(--ink); }
+.keys li:last-child { border-bottom: .75px solid var(--ink); }
+.keys b { font-weight: 600; display: block; line-height: 1.2; }
+.keys span { font-size: 16px; }
+
+/* ledger */
+.ledger { background: var(--card); border: 1.5px solid var(--ink); position: relative; }
+.ledger::before { content: ""; position: absolute; inset: 6px; border: .75px solid var(--ink-25); pointer-events: none; }
+.lhead { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 20px; align-items: baseline; padding: 22px 26px 16px; border-bottom: 1.5px solid var(--ink); }
+.lhead h3 { font-size: 30px; font-style: italic; }
+.squares { display: flex; gap: 5px; }
+.squares i { width: 14px; height: 14px; border: 1.25px solid var(--ink); display: block; }
+.squares i.on { background: var(--ink); }
+.ltable { width: 100%; border-collapse: collapse; }
+.ltable th { text-align: left; font-family: var(--mono); font-weight: 400; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 12px 14px; border-bottom: .75px solid var(--ink); }
+.ltable td { padding: 14px; border-bottom: .75px solid var(--ink-25); vertical-align: middle; }
+.ltable tr:last-child td { border-bottom: 0; }
+.ltable th:first-child, .ltable td:first-child { padding-left: 26px; width: 1%; white-space: nowrap; font-family: var(--mono); font-size: 13px; }
+.ltable th:last-child, .ltable td:last-child { padding-right: 26px; text-align: right; width: 1%; }
+.ltable .fund { font-size: 22px; font-weight: 500; line-height: 1.15; }
+.ltable .carry { display: inline-block; margin-left: 8px; font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--ink); padding: 2px 6px; vertical-align: 3px; }
+.ltable .m { font-family: var(--mono); font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tier { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border: 1.25px solid var(--ink); white-space: nowrap; }
+.tier.t1 { background: var(--ink); color: var(--card); }
+.tier.t3 { border-style: dashed; }
+.tick { width: 40px; height: 40px; border: 1.25px solid var(--ink); background: transparent; padding: 0; cursor: pointer; display: grid; place-items: center; border-radius: 2px; }
+.tick svg { width: 30px; height: 30px; overflow: visible; }
+.tick path { fill: none; stroke: var(--ink); stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 48; stroke-dashoffset: 48; transition: stroke-dashoffset .35s ease; }
+.tick[aria-pressed="true"] path { stroke-dashoffset: 0; }
+.tick:hover { background: var(--ink-12); }
+.lfoot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 20px; align-items: baseline; padding: 18px 26px 22px; border-top: 1.5px solid var(--ink); }
+.lfoot .total { font-size: 26px; font-style: italic; }
+
+/* steps */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1.5px solid var(--ink); }
+.steps li { padding: 30px 30px 10px 0; display: grid; gap: 12px; align-content: start; }
+.steps li + li { padding-left: 30px; border-left: .75px solid var(--ink); }
+.steps .num { font-size: 96px; line-height: .8; font-style: italic; }
+.steps h3 { font-size: 30px; line-height: 1.05; font-weight: 500; }
+.steps p { font-size: 17px; }
+
+/* install */
+.install { background: var(--ink); color: var(--card); position: relative; display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: 56px; padding: 56px; }
+.install::before { content: ""; position: absolute; inset: 8px; border: .75px solid rgba(251,247,239,.35); pointer-events: none; }
+.install > * { position: relative; }
+.install h2 { font-size: clamp(44px, 6vw, 76px); line-height: .95; letter-spacing: -.02em; }
+.install h2 i { display: block; }
+.install .get { display: grid; gap: 20px; align-content: start; }
+.install .btn { background: var(--card); color: var(--ink); border-color: var(--card); justify-self: start; }
+.install .btn:hover { background: transparent; color: var(--card); }
+.install .spec { color: rgba(251,247,239,.75); }
+.isteps { list-style: none; margin: 0; padding: 0; counter-reset: i; }
+.isteps li { counter-increment: i; display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; padding: 16px 0; border-top: .75px solid rgba(251,247,239,.35); }
+.isteps li:first-child { border-top: 0; padding-top: 0; }
+.isteps li::before { content: counter(i); font-size: 44px; line-height: .9; font-style: italic; }
+.isteps b { display: block; font-weight: 600; font-size: 20px; line-height: 1.2; }
+.isteps span { font-size: 17px; opacity: .9; }
+.install code { background: transparent; border-color: rgba(251,247,239,.5); color: var(--card); }
+.inote { margin-top: 16px; font-size: 15px; font-style: italic; opacity: .85; }
+.inote a { color: var(--card); }
+.install .isteps { margin-top: 8px; }
+.access { display: grid; gap: 18px; }
+.access .field { display: grid; gap: 6px; }
+.access .field em { font-style: normal; opacity: .65; text-transform: none; letter-spacing: .02em; }
+.access input:not([type="checkbox"]), .access textarea { font: inherit; font-size: 20px; color: var(--card); background: transparent; border: 0; border-bottom: 1.5px solid rgba(251,247,239,.6); border-radius: 0; padding: 6px 0 8px; width: 100%; resize: vertical; }
+.access input:focus, .access textarea:focus { outline: none; border-bottom-color: var(--card); }
+.access input:focus-visible, .access textarea:focus-visible { box-shadow: 0 2px 0 var(--card); }
+.access .check { display: flex; gap: 10px; align-items: flex-start; font-size: 16px; cursor: pointer; }
+.access .check input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--card); flex: none; }
+.access .btn { margin-top: 4px; }
+.access .btn[disabled] { opacity: .6; cursor: wait; }
+.form-status { font-family: var(--mono); font-size: 14px; min-height: 1.2em; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+[hidden] { display: none !important; }
+.done { border: 1px solid rgba(251,247,239,.5); padding: 28px; display: grid; gap: 12px; }
+.done-h { font-size: clamp(34px, 4vw, 48px); line-height: 1; }
+.install :focus-visible { outline-color: var(--card); }
+
+/* notes */
+.notes { columns: 2 360px; column-gap: 56px; }
+.note { break-inside: avoid; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 6px; padding: 18px 0; border-top: .75px solid var(--ink); }
+.note sup { font-family: var(--mono); font-size: 14px; font-weight: 700; line-height: 1.6; }
+.note b { display: block; font-weight: 600; font-size: 21px; line-height: 1.2; margin-bottom: 4px; }
+.note p { font-size: 17px; }
+.mail { user-select: all; font-family: var(--mono); font-size: .9em; }
+
+/* colophon */
+.colophon { padding-block: 72px 48px; }
+.colophon .huge { font-size: clamp(88px, 21vw, 300px); line-height: .8; letter-spacing: -.04em; font-weight: 500; margin-top: 24px; white-space: nowrap; overflow: hidden; }
+.colophon .huge i { font-weight: 400; }
+.colophon .meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 28px; margin-top: 28px; }
+.colophon .meta a { text-underline-offset: 3px; }
+.colophon .set { margin-top: 18px; font-size: 15px; font-style: italic; color: var(--ink-60); }
+
+@media (max-width: 980px) {
+  .hero .inner, .install { grid-template-columns: minmax(0, 1fr); }
+  .anatomy { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .anatomy .keys { grid-column: 1 / -1; }
+  .install { padding: 44px 32px; gap: 36px; }
+}
+@media (max-width: 720px) {
+  body { font-size: 17px; }
+  .mast .dateline { display: none; }
+  .mast .inner { grid-template-columns: auto auto; justify-content: space-between; }
+  .brand b { font-size: 22px; }
+  .hero { padding-block: 36px 40px; }
+  .fan { height: 440px; }
+  .card { width: 228px; height: 326px; margin-left: -114px; left: 62%; }
+  .fan { overflow: hidden; }
+  .face .name { font-size: 21px; }
+  .face.back .why { font-size: 17px; }
+  section.block { padding-block: 64px; }
+  .shead { grid-template-columns: minmax(0, 1fr); gap: 14px; margin-bottom: 30px; }
+  .anatomy { grid-template-columns: minmax(0, 1fr); }
+  .big { min-height: 0; }
+  .steps { grid-template-columns: minmax(0, 1fr); }
+  .steps li, .steps li + li { padding: 24px 0; border-left: 0; }
+  .steps li + li { border-top: .75px solid var(--ink); }
+  .ltable .hide-s { display: none; }
+  .tier-s { display: block; margin-top: 4px; font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+  .ltable th:first-child, .ltable td:first-child { padding-left: 16px; }
+  .ltable th:last-child, .ltable td:last-child { padding-right: 16px; }
+  .ltable td, .ltable th { padding-left: 8px; padding-right: 8px; }
+  .ltable .fund { font-size: 18px; }
+  .ltable .carry { display: block; width: max-content; margin: 4px 0 0; }
+  .lhead, .lfoot { padding-left: 16px; padding-right: 16px; }
+  .install { padding: 36px 22px; }
+  .isteps li { grid-template-columns: 40px minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .card, .card .in, .tick path, .btn { transition: none; }
+}
+    </style>
+  </head>
+  <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="mark" viewBox="0 0 56 40">
+      <ellipse cx="28" cy="20" rx="26.5" ry="18.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <ellipse cx="28" cy="20" rx="23" ry="15" fill="none" stroke="currentColor" stroke-width=".7"/>
+      <text x="28" y="31" text-anchor="middle" font-family="'Bodoni Moda', Didot, serif" font-style="italic" font-size="30" fill="currentColor">S</text>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="mast band">
+  <div class="inner">
+    <a class="brand" href="#top" aria-label="Synergy"><svg width="50" height="36" aria-hidden="true"><use href="#mark"/></svg><b>Synergy</b></a>
+    <span class="dateline mono">No. 004 · Thursday 5 November 2026 · London</span>
+    <a class="btn sm" href="#access">Request access</a>
+  </div>
+  <div class="inner"><hr class="rule2"></div>
+</header>
+
+<main id="top">
+  <section class="hero band" aria-labelledby="h1">
+    <div class="inner">
+      <div>
+        <span class="mono">A Chrome extension for dealmakers</span>
+        <h1 id="h1">Ten calling cards. <i>Every morning.</i></h1>
+        <p class="lede">Each card is a VC fund sitting on profitable companies that look ready to sell. Turn it over for the partner to call, the numbers, and why now.</p>
+        <div class="ctas">
+          <a class="btn" href="#access">Request access</a>
+          <a class="btn line" href="#card">Turn one over</a>
+        </div>
+        <p class="under mono">Free · Private preview · Chrome 116 or later</p>
+      </div>
+      <div class="fan" id="fan" aria-label="A fan of example calling cards. Choose a card to draw it and turn it over.">
+        <span class="hint mono">Draw a card to turn it over</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="block band" id="card" aria-labelledby="card-h">
+    <div class="inner">
+      <div class="shead">
+        <div><span class="mono">Front and back</span><h2 id="card-h">Everything you need <i>for the first call.</i></h2></div>
+        <p>No hunting through Dealroom, Companies House and LinkedIn. One card per fund, and the back has the lot.</p>
+      </div>
+      <div class="anatomy">
+        <div class="big" aria-label="Front of an example card">
+          <div class="row mono" style="display:flex;justify-content:space-between"><span><span class="n">2</span>Tier 1</span><span>No. 01</span></div>
+          <div class="plate"><span>H</span></div>
+          <div><span class="n" style="vertical-align:10px">1</span><span class="fund">Halcyon Growth III</span></div>
+          <span class="mono" style="text-transform:none;letter-spacing:.02em">2014 fund · 4 companies ready · last exit 2019</span>
+        </div>
+        <div class="big back" aria-label="Back of an example card">
+          <p class="why"><span class="n">3</span>Three holdings clear £2m EBITDA and none has raised since 2018. The fund is ten years old and needs to return cash.</p>
+          <div style="overflow-x:auto">
+            <table class="co">
+              <tr><th><span class="n">4</span>Company</th><th class="r">Revenue</th><th class="r">EBITDA</th><th class="r">Raised</th></tr>
+              <tr><td>Northgate</td><td class="r">£14.2m<sup>rep.</sup></td><td class="r">£2.6m<sup>rep.</sup></td><td class="r">2017</td></tr>
+              <tr><td>Kestrel</td><td class="r">£9.8m<sup>est.</sup></td><td class="r">£2.1m<sup>est.</sup></td><td class="r">2018</td></tr>
+              <tr><td>Lumen</td><td class="r">£6.1m<sup>rep.</sup></td><td class="r"><i>unknown</i></td><td class="r">2016</td></tr>
+            </table>
+          </div>
+          <p class="mono" style="text-transform:none;letter-spacing:.02em"><span class="n">5</span>Call the managing partner · LinkedIn · Website · News</p>
+          <div class="prompt"><span class="n">6</span><span>Copy email prompt</span><span>Sent</span><span>Not for me</span></div>
+        </div>
+        <ol class="keys">
+          <li><span class="n">1</span><span><b>The fund</b>Its vintage, how many companies match, and its last exit.</span></li>
+          <li><span class="n">2</span><span><b>The tier</b>How strong a fit it is, so you know where to start.</span></li>
+          <li><span class="n">3</span><span><b>Why now</b>The moment: a fund that needs to return cash, a founder with no successor, debt that needs refinancing.</span></li>
+          <li><span class="n">4</span><span><b>The numbers</b>Revenue, EBITDA, growth and last round, each marked reported, estimated or unknown.</span></li>
+          <li><span class="n">5</span><span><b>Who to call</b>The partner, with their LinkedIn, the fund's website and recent news.</span></li>
+          <li><span class="n">6</span><span><b>The first email</b>A prompt to paste into Claude that drafts it for you.</span></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="block band" aria-labelledby="ledger-h">
+    <div class="inner">
+      <div class="shead">
+        <div><span class="mono">The daily ledger</span><h2 id="ledger-h">Did you do <i>your ten?</i></h2></div>
+        <p>It's a numbers game: about a hundred conversations make one or two warm leads. Tick a card when you've sent it. Anything you don't get to carries over to tomorrow. Try it.</p>
+      </div>
+      <div class="ledger">
+        <div class="lhead">
+          <h3>Thursday 5 November</h3>
+          <span style="display:flex;align-items:center;gap:12px"><span class="mono">Streak · 6 days</span><span class="squares" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></span></span>
+        </div>
+        <table class="ltable">
+          <thead><tr><th>No.</th><th>Fund</th><th class="hide-s">Vintage</th><th class="hide-s">Ready</th><th class="hide-s">Tier</th><th>Sent</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <div class="lfoot"><span class="total" id="total" aria-live="polite">3 of 10 sent</span><span class="mono">Example ledger · funds invented</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block band" aria-labelledby="how-h">
+    <div class="inner">
+      <div class="shead">
+        <div><span class="mono">How it works</span><h2 id="how-h">Three minutes <i>a morning.</i></h2></div>
+        <p>It lives in Chrome's side panel, next to whatever you're already working on.</p>
+      </div>
+      <ol class="steps">
+        <li><span class="num">1</span><h3>Tell it who you're after</h3><p>Sign in once, then set the territory, sector, size and how long since the last round. Five cards a day or ten.</p></li>
+        <li><span class="num">2</span><h3>Open the side panel</h3><p>Click the Synergy icon and today's cards open on the right of the page you're on. Fresh every morning, UK time.</p></li>
+        <li><span class="num">3</span><h3>Three taps to log it</h3><p>Sent, not for me, and whether they replied. Keep a streak going, look back in History, and review the week.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="block band" id="access" aria-labelledby="access-h">
+    <div class="inner install">
+      <div class="get">
+        <span class="mono">Private preview</span>
+        <h2 id="access-h">Request <i>access.</i></h2>
+        <p>Synergy is in private preview while we finish sign-in. Leave your details and we'll send you the extension and a login.</p>
+        <ol class="isteps">
+          <li><div><b>We email you the extension.</b><span>With a login of your own.</span></div></li>
+          <li><div><b>Add it to Chrome.</b><span>Two minutes, and the email walks you through it.</span></div></li>
+          <li><div><b>Draw your first cards.</b><span>Click the Synergy icon and today's cards open on the right.</span></div></li>
+        </ol>
+      </div>
+      <div>
+        <form class="access" id="access-form" action="/api/forms/access" method="post">
+          <input type="hidden" name="app" value="synergy" />
+          <div class="hp" aria-hidden="true"><label>Website <input name="website" tabindex="-1" autocomplete="off" /></label></div>
+          <label class="field"><span class="mono">Your name</span><input id="access-name" name="name" required maxlength="200" autocomplete="name" /></label>
+          <label class="field"><span class="mono">Work email</span><input id="access-email" name="email" type="email" required maxlength="254" autocomplete="email" /></label>
+          <label class="field"><span class="mono">Firm <em>optional</em></span><input id="access-firm" name="firm" maxlength="200" autocomplete="organization" /></label>
+          <label class="field"><span class="mono">What deals do you originate? <em>optional</em></span><textarea id="access-note" name="note" rows="3" maxlength="1000"></textarea></label>
+          <label class="check"><input id="access-news" type="checkbox" name="newsletter" value="yes" /><span>Send me the 40 for 40 newsletter too.</span></label>
+          <button class="btn" type="submit">Request access</button>
+          <p class="form-status" id="access-status" role="status"></p>
+        </form>
+        <div class="done" id="access-done" hidden>
+          <span class="mono">Received</span>
+          <p class="done-h">Your card is <i>on the desk.</i></p>
+          <p>We'll email you the extension and a login as soon as sign-in is ready. Usually within a few days.</p>
+        </div>
+        <p class="inote">We only use your details to send you access. See our <a href="/privacy/">privacy policy</a>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block band" aria-labelledby="notes-h">
+    <div class="inner">
+      <div class="shead">
+        <div><span class="mono">Notes</span><h2 id="notes-h">The small print, <i>in large print.</i></h2></div>
+      </div>
+      <div class="notes">
+        <div class="note"><sup>1</sup><div><b>Where do the cards come from?</b><p>Dealroom's fund and company data, filtered by what you told it you're after, with Companies House filings where they exist.</p></div></div>
+        <div class="note"><sup>2</sup><div><b>What if a number's missing?</b><p>It says unknown instead of guessing, and a gap never counts against a fund.</p></div></div>
+        <div class="note"><sup>3</sup><div><b>Is it watching me?</b><p>No. It doesn't read your tabs, your browsing or your email. It asks Chrome for three things: storage, the side panel, and Chrome's own sign-in window.</p></div></div>
+        <div class="note"><sup>4</sup><div><b>Why sign in?</b><p>So your cards, notes and streak are yours, on any machine you use.</p></div></div>
+        <div class="note"><sup>5</sup><div><b>What does it cost?</b><p>Nothing. It was built in a day, live on Twitch, as part of 40 for 40. Nobody is selling you anything.</p></div></div>
+        <div class="note"><sup>6</sup><div><b>Can I see the code?</b><p>Yes, it's open source at <a href="https://github.com/build40for40/synergy">github.com/build40for40/synergy</a>. Spot something wrong? Write to <span class="mail">hello@40for40.app</span>.</p></div></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="colophon band">
+  <div class="inner">
+    <hr class="rule2">
+    <div class="huge" aria-hidden="true">Syn<i>ergy</i></div>
+    <div class="meta mono">
+      <span>No. 004 of 40</span>
+      <span>Made by <a href="https://build40for40.com">40 for 40</a></span>
+      <a href="https://www.twitch.tv/40for40">Watch the build</a>
+      <span class="mail">hello@40for40.app</span>
+    </div>
+    <p class="set">Set in Bodoni Moda and Courier Prime. Printed in two inks, ultramarine on cream, in London.</p>
+  </div>
+</footer>
+
+<script is:inline>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const funds = [
+    { no: 10, name: 'Larkspur Equity III', vint: 2016, ready: 1, tier: 3, why: 'One holding at £1.4m EBITDA and growing 20% a year. No round since 2019, and the founder has said he wants out.', who: 'the founding partner' },
+    { no: 9, name: 'Wexford Lane Capital', vint: 2013, ready: 1, tier: 3, why: 'A payroll business with 90% recurring revenue and a term loan due for refinancing next year.', who: 'the partner on the board' },
+    { no: 8, name: 'Corbel Partners II', vint: 2015, ready: 2, tier: 3, why: 'Two holdings profitable and self funding. The fund made its last new investment in 2018.', who: 'the managing partner' },
+    { no: 7, name: 'Tamsin Road Ventures', vint: 2012, ready: 2, tier: 2, why: 'A fourteen year old fund. Two nursery groups clear £1m EBITDA and neither has raised since 2017.', who: 'the senior partner' },
+    { no: 6, name: 'Holloway & Pike I', vint: 2014, ready: 2, tier: 2, why: 'Its two best companies grew 25% last year on no new money. The partners are raising Fund II.', who: 'the partner on both boards' },
+    { no: 5, name: 'Kingsbury Ventures I', vint: 2011, ready: 2, tier: 2, why: 'Past its ten year life with two profitable holdings left. LPs will want cash back.', who: 'the managing partner' },
+    { no: 4, name: 'Meridian Capital IV', vint: 2015, ready: 2, tier: 2, why: 'A facilities business at £3m EBITDA whose founder is 64 with no successor named.', who: 'the operating partner' },
+    { no: 3, name: 'Fenwick Square Fund', vint: 2013, ready: 3, tier: 1, why: 'Three holdings, all profitable, none raised since 2016. The fund was extended twice.', who: 'the managing partner' },
+    { no: 2, name: 'Ashby Lane Partners II', vint: 2012, ready: 3, tier: 1, carry: true, why: 'Three business services companies over £2m EBITDA. The fund wound down its team last year.', who: 'the remaining partner' },
+    { no: 1, name: 'Halcyon Growth III', vint: 2014, ready: 4, tier: 1, why: 'Three holdings clear £2m EBITDA and none has raised since 2018. The fund is ten years old and needs to return cash.', who: 'the managing partner' },
+  ];
+
+  const fan = document.getElementById('fan');
+  const shown = funds.slice(-7);
+  const n = shown.length;
+  let drawn = null;
+  const cards = shown.map((f, i) => {
+    const angle = (i - (n - 1)) * 6.5;
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'card';
+    card.dataset.angle = angle;
+    card.dataset.z = i;
+    card.style.zIndex = i;
+    card.setAttribute('aria-label', `${f.name}. Draw it to read why now.`);
+    card.innerHTML = `<span class="pull"><span class="in">
+      <span class="face"><span class="row mono"><span>No. ${String(f.no).padStart(2, '0')}</span><span>Tier ${f.tier}</span></span><span class="plate"><span>${f.name[0]}</span></span><span><span class="name">${f.name}</span><span class="meta mono">${f.vint} fund · ${f.ready} ${f.ready === 1 ? 'company' : 'companies'} ready</span></span></span>
+      <span class="face back"><span class="row mono"><span>Why now</span><span>Tier ${f.tier}</span></span><span class="why">${f.why}</span><span class="who">Call: ${f.who}</span></span>
+    </span></span>`;
+    card.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') lift(card); });
+    card.addEventListener('pointerleave', () => settle(card));
+    card.addEventListener('focus', () => lift(card));
+    card.addEventListener('blur', () => settle(card));
+    card.addEventListener('click', () => draw(card));
+    fan.append(card);
+    return card;
+  });
+
+  const place = card => {
+    const a = +card.dataset.angle;
+    if (card === drawn) { card.style.transform = 'translateY(-34px) rotate(0deg) scale(1.04)'; card.style.zIndex = 100; return; }
+    card.style.zIndex = card.classList.contains('lift') ? 60 : card.dataset.z;
+    card.style.transform = `rotate(${a}deg)`;
+  };
+  function lift(card) { if (card === drawn) return; card.classList.add('lift'); place(card); }
+  function settle(card) { card.classList.remove('lift'); place(card); }
+  function draw(card) {
+    const prev = drawn;
+    drawn = prev === card ? null : card;
+    if (prev) { prev.classList.remove('flip'); prev.setAttribute('aria-pressed', 'false'); place(prev); }
+    if (drawn) { drawn.classList.remove('lift'); drawn.classList.add('flip'); drawn.setAttribute('aria-pressed', 'true'); place(drawn); }
+  }
+  const deal = () => cards.forEach(place);
+  if (reduce) deal(); else requestAnimationFrame(() => requestAnimationFrame(deal));
+
+  const rows = document.getElementById('rows');
+  const total = document.getElementById('total');
+  const sent = new Set([1, 3, 4]);
+  const renderTotal = () => { total.textContent = sent.size === 10 ? "That's your ten." : `${sent.size} of 10 sent`; };
+  funds.slice().reverse().forEach(f => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${String(f.no).padStart(2, '0')}</td>
+      <td><span class="fund">${f.name}</span>${f.carry ? '<span class="carry">From Wed</span>' : ''}<span class="tier-s">Tier ${f.tier} · ${f.vint}</span></td>
+      <td class="m hide-s">${f.vint}</td>
+      <td class="m hide-s">${f.ready}</td>
+      <td class="hide-s"><span class="tier ${f.tier === 1 ? 't1' : f.tier === 3 ? 't3' : ''}">Tier ${f.tier}</span></td>
+      <td></td>`;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tick';
+    b.setAttribute('aria-label', `Sent: ${f.name}`);
+    b.setAttribute('aria-pressed', sent.has(f.no));
+    b.innerHTML = '<svg viewBox="0 0 30 30" aria-hidden="true"><path d="M5 16 C8 18 10 21 12 24 C15 16 20 9 27 4"/></svg>';
+    b.addEventListener('click', () => {
+      sent.has(f.no) ? sent.delete(f.no) : sent.add(f.no);
+      b.setAttribute('aria-pressed', sent.has(f.no));
+      renderTotal();
+    });
+    tr.lastElementChild.append(b);
+    rows.append(tr);
+  });
+  renderTotal();
+
+  const form = document.getElementById('access-form');
+  const done = document.getElementById('access-done');
+  const status = document.getElementById('access-status');
+  const showDone = () => { form.hidden = true; done.hidden = false; };
+  if (location.hash === '#requested') showDone();
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const button = form.querySelector('button');
+    button.disabled = true;
+    status.textContent = 'Sending…';
+    try {
+      const res = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
+      if (!res.ok) throw new Error(await res.text() || 'That didn’t send. Try again in a moment.');
+      status.textContent = '';
+      showDone();
+      done.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
+    } catch (err) {
+      status.textContent = err instanceof TypeError ? 'You look offline. Check your connection and try again.' : err.message;
+      button.disabled = false;
+    }
+  });
+})();
+</script>
+  </body>
+</html>
