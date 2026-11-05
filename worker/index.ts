@@ -52,6 +52,14 @@ const forms: Record<string, Field[]> = {
     { name: "availability", options: weeks, multiple: true },
     newsletter,
   ],
+  access: [
+    name,
+    email,
+    { name: "firm", max: 200 },
+    { name: "app", required: true, options: ["synergy"] },
+    { name: "note", max: 1000 },
+    newsletter,
+  ],
   problem: [
     name,
     email,
@@ -324,7 +332,16 @@ export default {
     const note = (value: string, field: string) => ([values.involved ?? []].flat().includes(value) && values[field] ? String(values[field]) : null);
 
     const record =
-      form === "help"
+      form === "access"
+        ? env.DB.prepare("INSERT INTO access_requests (id, email, app, firm, note, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)").bind(
+            id,
+            values.email,
+            values.app,
+            values.firm ?? null,
+            values.note ?? null,
+            now,
+          )
+        : form === "help"
         ? env.DB.prepare("INSERT INTO help_offers (id, email, company, type, note, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)").bind(
             id,
             values.email,
@@ -376,6 +393,7 @@ export default {
       const name = String(values.name ?? "").split(/\s+/)[0] || null;
       return openCheckoutResponse(env, { cents: Number(values.sponsor), problemId, email: String(values.email), name, origin: url.origin }, { problem: problemId });
     }
-    return request.headers.get("Accept")?.includes("application/json") ? Response.json({ problem: problemId ?? null }) : home;
+    if (request.headers.get("Accept")?.includes("application/json")) return Response.json({ problem: problemId ?? null });
+    return form === "access" ? Response.redirect(new URL(`/${values.app}/#requested`, url).href, 303) : home;
   },
 } satisfies ExportedHandler<Env>;
