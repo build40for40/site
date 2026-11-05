@@ -6,6 +6,7 @@ import { poolConfig } from "../pool/config";
 import { afterLoad } from "../pool/data";
 import { boxGrowth } from "../pool/effects";
 import { CURL_TURN, boxOf, curl, lob, type Box } from "../pool/flight";
+import * as motion from "../pool/motion";
 import type { Match, Ranking } from "../pool/search";
 import type { PhysicsController, Vector } from "../pool/physics";
 import type { createLift } from "../pool/effects";
@@ -153,6 +154,41 @@ async function start() {
   register(props.tiles.map((t) => t.id));
   active.value = true;
   lift.apply(scored.value);
+}
+
+// Shaking the phone throws the ideas about. It's on by default where the phone doesn't ask first, and iPhones ask from a
+// tap on the switch. Whatever the person picks is remembered.
+const shakeable = ref(false);
+const shaking = ref(false);
+let unlisten: (() => void) | undefined;
+let askOnTap: (() => void) | undefined;
+
+function listenForShakes(on: boolean) {
+  unlisten?.();
+  unlisten = on ? motion.listen((direction, strength) => controller?.shake(direction, strength)) : undefined;
+  shaking.value = on;
+}
+
+async function toggleShake() {
+  const on = !shaking.value;
+  if (on && !(await motion.ask())) return;
+  motion.save(on);
+  listenForShakes(on);
+}
+
+async function setUpShaking() {
+  if (!motion.canShake()) return;
+  shakeable.value = true;
+  const saved = motion.saved();
+  if (saved === false) return;
+  if (await motion.ask()) return listenForShakes(true);
+  if (!saved) return;
+  // iPhones ask again on every visit, and only from a tap, so the first tap anywhere asks for the person who had it on.
+  askOnTap = async () => {
+    askOnTap = undefined;
+    if (!shaking.value && (await motion.ask())) listenForShakes(true);
+  };
+  addEventListener("click", askOnTap, { once: true, capture: true });
 }
 
 function stop() {
@@ -464,6 +500,7 @@ onMounted(() => {
 
   addEventListener("pointerdown", onPointerDown, true);
   addEventListener("keydown", onKeyDown, true);
+  setUpShaking();
   afterLoad().then(() => {
     loaded = true;
     start();
@@ -478,6 +515,8 @@ onBeforeUnmount(() => {
   removeEventListener("pointerdown", onPointerDown, true);
   removeEventListener("keydown", onKeyDown, true);
   if (press) clearTimeout(press.timer);
+  unlisten?.();
+  if (askOnTap) removeEventListener("click", askOnTap, true);
   stop();
 });
 </script>
@@ -510,6 +549,16 @@ onBeforeUnmount(() => {
           :style="b"
         ></span>
       </div>
+
+      <button
+        v-if="shakeable && active"
+        type="button"
+        :aria-pressed="shaking"
+        class="absolute top-2 right-3 z-30 cursor-pointer rounded-full border-0 bg-night/70 px-2.5 py-1 font-mono text-[11px] text-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime"
+        @click="toggleShake"
+      >
+        {{ shaking ? "Shake your phone · on" : "Shake to stir · off" }}
+      </button>
 
       <div
         v-if="openTile"

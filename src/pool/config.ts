@@ -21,6 +21,10 @@ export const poolConfig = {
     // per second, spin in radians per second.
     boil: { everyMs: [600, 1800], speed: [4.5, 8.5], spin: 10 },
     nudge: { speed: 3, gapMs: 80 },
+    // Shaking a phone throws every idea about. Readings are in metres per second squared: under threshold is just
+    // walking around, and hardest or more throws them at the top of speed. lift is how much of each throw goes upwards,
+    // so they leave the floor whichever way the phone moves.
+    shake: { threshold: 14, hardest: 35, gapMs: 150, speed: [4, 12], lift: 0.6, spin: 12 },
     // Pressing an idea for holdMs, or moving more than movePx while pressed, picks it up. A held idea moves towards the
     // pointer at follow times the gap per second, and keeps spinKeep of its spin each step.
     drag: { holdMs: 180, movePx: 6, follow: 18, spinKeep: 0.9 },

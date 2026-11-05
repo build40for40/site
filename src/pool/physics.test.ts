@@ -156,6 +156,16 @@ describe("lively", () => {
     expect(rising()).toBe(1);
   });
 
+  test("a shake throws every idea in the pool, except one being held", () => {
+    const { add, controller } = setup();
+    const rising = pile(controller, add);
+    expect(controller.grab("p0", { x: 50, y: 200 })).toBe(true);
+    controller.shake({ x: 1, y: 0 }, 1);
+    expect(rising()).toBe(7);
+    const moving = Array.from({ length: 7 }, (_, i) => controller.bodyState(`p${i + 1}`)!);
+    expect(moving.every((b) => b.vx > 0)).toBe(true);
+  });
+
   test("a held idea waits until it's dropped in, then splashes the ones it lands near", () => {
     const { container, add, controller } = setup();
     const rising = pile(controller, add);
