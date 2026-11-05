@@ -49,7 +49,7 @@ interface Tracked {
   pickSpawn: boolean;
   shown: boolean;
   drawn?: string;
-  hover?: number;
+  hover?: { x?: number; y: number };
   falling?: number;
   solidAt?: number;
 }
@@ -148,19 +148,22 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
     return { x: p.x, y: p.y, a: t.body.rotation() };
   }
 
-  // Hovering ideas ride a vertical spring to their height, turning upright on the way. They still bump into the
-  // rest, so they shoulder their way out of the pile.
+  // Hovering ideas ride a vertical spring to their height, turning upright on the way. Docked ones ride a sideways
+  // spring too, to a spot. They still bump into the rest, so they shoulder their way out of the pile.
   function hover() {
     const { stiffness, damping } = config.hover;
     for (const t of bodies.values()) {
       if (t.hover === undefined || !t.shown || t === held?.t) continue;
       const p = t.body.translation();
       const v = t.body.linvel();
-      const y = Math.min(Math.max(t.hover, t.height / 2), size.height - t.height / 2);
+      const y = Math.min(Math.max(t.hover.y, t.height / 2), size.height - t.height / 2);
+      const x = t.hover.x === undefined ? undefined : Math.min(Math.max(t.hover.x, t.width / 2), size.width - t.width / 2);
+      const fx = x === undefined ? 0 : t.mass * (stiffness * (toM(x) - p.x) - damping * v.x);
       t.body.resetForces(false);
-      t.body.addForce({ x: 0, y: t.mass * (stiffness * (toM(y) - p.y) - damping * v.y) }, true);
+      t.body.addForce({ x: fx, y: t.mass * (stiffness * (toM(y) - p.y) - damping * v.y) }, true);
       t.body.setAngvel(-t.body.rotation() * config.upright, true);
-      if (Math.abs(toPx(p.y) - y) < t.height / 2) t.element.dataset.arrived = "";
+      const near = Math.abs(toPx(p.y) - y) < t.height / 2 && (x === undefined || Math.abs(toPx(p.x) - x) < t.width / 2);
+      if (near) t.element.dataset.arrived = "";
       else delete t.element.dataset.arrived;
     }
   }
@@ -455,8 +458,9 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
       delete t.element.dataset.arrived;
     },
 
-    // The height is where the idea's centre settles, in pixels from the top. Null drops it back into the pile.
-    setBodyHover(id: string, y: number | null) {
+    // The height is where the idea's centre settles, in pixels from the top. A point docks it there instead, in pixels
+    // from the top left. Null drops it back into the pile.
+    setBodyHover(id: string, y: number | Vector | null) {
       const t = bodies.get(id);
       if (!t) return;
       if (y === null) {
@@ -467,8 +471,9 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
         delete t.element.dataset.arrived;
         return;
       }
-      t.hover = y;
+      t.hover = typeof y === "number" ? { y } : { x: y.x, y: y.y };
       t.body.setGravityScale(0, true);
+      t.body.wakeUp();
     },
 
     // A small twitch from somewhere in the pile. Back to back calls are spaced out so a burst can't add up to a throw.

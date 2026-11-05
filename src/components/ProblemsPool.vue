@@ -25,7 +25,13 @@ export interface PoolTile {
   disco?: boolean;
 }
 
-const props = defineProps<{ tiles: PoolTile[]; matches?: Match[] | null; ranking?: Ranking; quiet?: boolean; tall?: boolean }>();
+// Each dock floats the ball with that id over the element marked data-pool-dock with that slot.
+export interface Dock {
+  id: string;
+  slot: string;
+}
+
+const props = defineProps<{ tiles: PoolTile[]; matches?: Match[] | null; ranking?: Ranking; docks?: Dock[] | null; tall?: boolean }>();
 const emit = defineEmits<{ pick: [key: string] }>();
 
 const list = ref<HTMLElement>();
@@ -76,7 +82,7 @@ const glints = [
 const scored = computed(() => (props.matches ?? []).filter((m) => m.score >= poolConfig.search.minRelevance));
 const percents = computed(() => new Map(scored.value.map((m) => [m.id, Math.round(m.score * 100)])));
 const announcement = computed(() => {
-  if (!props.matches || props.quiet) return "";
+  if (!props.matches) return "";
   const count = scored.value.length;
   if (!count) return "Nothing in the pool looks like yours yet";
   if (props.ranking === "lexical") return `${count} unfunded ${count === 1 ? "problem shares" : "problems share"} words with yours`;
@@ -152,7 +158,7 @@ async function start() {
   );
   register(props.tiles.map((t) => t.id));
   active.value = true;
-  lift.apply(scored.value);
+  sync();
 }
 
 function stop() {
@@ -169,6 +175,26 @@ function register(ids: string[]) {
     const shape = days.has(id) ? "box" : "circle";
     if (element) controller?.registerBody(id, element, { shape, delayMs: held.value.has(id) ? Infinity : i * poolConfig.physics.rainStaggerMs });
   });
+}
+
+// Browsing docks a page of ideas beside the rows that describe them, each over the middle of its slot. A docked idea
+// isn't lifted, and one that leaves its dock drops back into the pile, or to its lift if it has one.
+const docked = computed(() => new Set((props.docks ?? []).map((d) => d.id)));
+let wasDocked = new Set<string>();
+
+function sync() {
+  if (!controller || !list.value) return;
+  const box = list.value.getBoundingClientRect();
+  const slots = new Map([...document.querySelectorAll<HTMLElement>("[data-pool-dock]")].map((e) => [e.dataset.poolDock, e]));
+  const spots = new Map<string, Vector>();
+  for (const { id, slot } of props.docks ?? []) {
+    const rect = slots.get(slot)?.getBoundingClientRect();
+    if (rect) spots.set(id, { x: rect.left + rect.width / 2 - box.left, y: rect.top + rect.height / 2 - box.top });
+  }
+  for (const id of wasDocked) if (!spots.has(id)) controller.setBodyHover(id, null);
+  lift?.apply(scored.value.filter((m) => !spots.has(m.id)));
+  for (const [id, spot] of spots) controller.setBodyHover(id, spot);
+  wasDocked = new Set(spots.keys());
 }
 
 // Anything bigger than a plain ball floats a little lower, so it doesn't poke out of the top of the pool.
@@ -289,7 +315,7 @@ watch(
     for (const id of before) if (!now.has(id)) controller.unregisterBody(id);
     const old = new Set(before);
     register(ids.filter((id) => !old.has(id)));
-    lift?.apply(scored.value);
+    sync();
   },
 );
 
@@ -301,8 +327,9 @@ watch(
     controller?.refit();
   },
 );
-watch(scored, (matches) => lift?.apply(matches));
-watch(() => size.value.height, () => lift?.apply(scored.value));
+watch(scored, sync);
+watch(() => size.value.height, sync);
+watch(() => props.docks, sync, { flush: "post" });
 watch(physical, (on) => (on ? start() : stop()));
 
 const open = ref<string | null>(null);
@@ -349,8 +376,9 @@ const close = () => (open.value = null);
 // isn't a tap.
 let touch = false;
 
+// A docked idea's row already says what it is.
 function hovered(id: string, event: PointerEvent) {
-  if (event.pointerType !== "mouse" || press?.holding) return;
+  if (event.pointerType !== "mouse" || press?.holding || docked.value.has(id)) return;
   touch = false;
   open.value = id;
 }
@@ -364,7 +392,7 @@ function clicked(id: string, event: MouseEvent) {
     thrown = false;
     return;
   }
-  if (touch && event.detail !== 0 && open.value !== id) {
+  if (touch && event.detail !== 0 && open.value !== id && !docked.value.has(id)) {
     open.value = id;
     return;
   }
@@ -417,7 +445,7 @@ function lifted(event: PointerEvent) {
 
 function focused(id: string, event: FocusEvent) {
   try {
-    if (!(event.target as Element).matches(":focus-visible")) return;
+    if (docked.value.has(id) || !(event.target as Element).matches(":focus-visible")) return;
     touch = false;
     open.value = id;
   } catch {}
@@ -442,9 +470,14 @@ function onKeyDown(event: KeyboardEvent) {
   close();
 }
 
-defineExpose({ nudge: () => controller?.nudge(), hold, receive, burst, boxes });
+// Whether balls can dock at all. Without physics they sit still in a row at the bottom.
+const docking = computed(() => active.value && physical.value);
+
+defineExpose({ nudge: () => controller?.nudge(), hold, receive, burst, boxes, docking });
 
 let sizer: ResizeObserver | undefined;
+// Docks move whenever the page around them reflows.
+let page: ResizeObserver | undefined;
 const media: [MediaQueryList, () => void][] = [];
 
 onMounted(() => {
@@ -461,6 +494,8 @@ onMounted(() => {
   if (list.value) size.value = { width: list.value.clientWidth, height: list.value.clientHeight };
   sizer = new ResizeObserver(([entry]) => (size.value = { width: entry.contentRect.width, height: entry.contentRect.height }));
   if (list.value) sizer.observe(list.value);
+  page = new ResizeObserver(() => props.docks && sync());
+  page.observe(document.documentElement);
 
   addEventListener("pointerdown", onPointerDown, true);
   addEventListener("keydown", onKeyDown, true);
@@ -474,6 +509,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   cancelAnimationFrame(placing);
   sizer?.disconnect();
+  page?.disconnect();
   for (const [list, update] of media) list.removeEventListener("change", update);
   removeEventListener("pointerdown", onPointerDown, true);
   removeEventListener("keydown", onKeyDown, true);

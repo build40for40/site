@@ -2,14 +2,14 @@
 import { flushPromises, mount, type VueWrapper } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-const bodies = { registered: [] as string[], unregistered: [] as string[], dropped: [] as string[], hovers: new Map<string, number | null>() };
+const bodies = { registered: [] as string[], unregistered: [] as string[], dropped: [] as string[], hovers: new Map<string, number | { x: number; y: number } | null>() };
 
 const physics = () => ({
   initializePhysics: () => ({
     registerBody: (id: string) => bodies.registered.push(id),
     unregisterBody: (id: string) => bodies.unregistered.push(id),
     drop: (id: string) => bodies.dropped.push(id),
-    setBodyHover: (id: string, y: number | null) => bodies.hovers.set(id, y),
+    setBodyHover: (id: string, y: number | { x: number; y: number } | null) => bodies.hovers.set(id, y),
     bodyState: (id: string) => ({ shown: bodies.dropped.includes(id), angle: 0 }),
     nudge() {},
     refit() {},
@@ -260,7 +260,7 @@ describe("writing a problem in the join form", () => {
   });
 });
 
-test("Browse throws the days with problems into the pool, floats matching problems and days, and picking one puts them back", async () => {
+test("Browse throws the days into the pool, docks a page of problems beside the list, opens one from its ball, and picking it puts them back", async () => {
   document.body.insertAdjacentHTML("beforeend", `<a href="#browse">Browse</a>`);
   const w = await board();
   await vi.waitFor(() => expect(bodies.registered).toHaveLength(6));
@@ -269,12 +269,20 @@ test("Browse throws the days with problems into the pool, floats matching proble
   expect(bodies.dropped).not.toContain("day-10");
   expect(w.find("ul[aria-label='The 40 days']").isVisible()).toBe(false);
 
+  const docked = () => [...bodies.hovers].flatMap(([id, at]) => (at && typeof at === "object" ? [id] : []));
+  await vi.waitFor(() => expect(docked()).toHaveLength(8));
+  expect(w.find("#browse").text()).toContain("44 problems, newest first");
+
   await w.find("#browse-search").setValue("nails chipping");
-  await vi.waitFor(() => expect(bodies.hovers.size).toBe(3), { timeout: 2000 });
-  expect([...bodies.hovers.keys()].filter((id) => id.startsWith("day-"))).toHaveLength(1);
-  expect(w.find("#browse").text()).toContain("3 problems float up");
+  await vi.waitFor(() => expect(w.findAll("#browse [data-row]")).toHaveLength(3), { timeout: 2000 });
+  await vi.waitFor(() => expect(docked().toSorted()).toEqual(["day-4", "idea-40", "idea-41"]));
 
   w.find("[data-pool-ball='idea-41']").element.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+  await vi.waitFor(() => expect(w.find("#browse h3").text()).toBe("Idea 41"));
+  await vi.waitFor(() => expect(docked()).toEqual(["idea-41"]));
+  expect(bodies.hovers.get("idea-40")).toBeNull();
+
+  await w.findAll("#browse button").find((b) => b.text() === "Sponsor it")!.trigger("click");
   await vi.waitFor(() => expect(w.find("#browse").exists()).toBe(false));
   await vi.waitFor(() => expect(w.find("#day-box").text()).toContain("Idea 41"));
   expect(bodies.unregistered.filter((id) => id.startsWith("day-"))).toHaveLength(39);
