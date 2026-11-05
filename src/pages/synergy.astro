@@ -83,8 +83,7 @@ code { font-family: var(--mono); font-size: .88em; background: var(--card); bord
 .fan { position: relative; height: 520px; min-width: 0; }
 .fan .hint { position: absolute; right: 4px; bottom: 0; color: var(--ink-60); }
 .card { position: absolute; left: 50%; bottom: 36px; width: 270px; height: 384px; margin-left: -135px; transform-origin: 50% 125%; transition: transform .7s cubic-bezier(.2,.8,.2,1); border: 0; padding: 0; background: none; cursor: pointer; perspective: 1400px; font: inherit; color: inherit; }
-.card .pull { position: absolute; inset: 0; transition: transform .45s cubic-bezier(.2,.8,.2,1); }
-.card.lift .pull { transform: translateY(-84px); }
+.card .pull { position: absolute; inset: 0; }
 .card .in { position: absolute; inset: 0; transition: transform .7s cubic-bezier(.2,.8,.2,1); transform-style: preserve-3d; }
 .card.flip .in { transform: rotateY(180deg); }
 .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; background: var(--card); border: 1.5px solid var(--ink); box-shadow: 0 22px 30px -22px rgba(35,56,168,.6); padding: 18px; display: grid; grid-template-rows: auto 1fr auto; text-align: left; }
@@ -472,30 +471,37 @@ section.block { padding-block: 96px; }
       <span class="face"><span class="row mono"><span>No. ${String(f.no).padStart(2, '0')}</span><span>Tier ${f.tier}</span></span><span class="plate"><span>${f.name[0]}</span></span><span><span class="name">${f.name}</span><span class="meta mono">${f.vint} fund · ${f.ready} ${f.ready === 1 ? 'company' : 'companies'} ready</span></span></span>
       <span class="face back"><span class="row mono"><span>Why now</span><span>Tier ${f.tier}</span></span><span class="why">${f.why}</span><span class="who">Call: ${f.who}</span></span>
     </span></span>`;
-    card.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') lift(card); });
-    card.addEventListener('pointerleave', () => settle(card));
-    card.addEventListener('focus', () => lift(card));
-    card.addEventListener('blur', () => settle(card));
+    card.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') open(i); });
+    card.addEventListener('focus', () => open(i));
     card.addEventListener('click', () => draw(card));
     fan.append(card);
     return card;
   });
 
-  const place = card => {
-    const a = +card.dataset.angle;
+  let opened = null;
+  const place = (card, k) => {
     if (card === drawn) { card.style.transform = 'translateY(-34px) rotate(0deg) scale(1.04)'; card.style.zIndex = 100; return; }
-    card.style.zIndex = card.classList.contains('lift') ? 60 : card.dataset.z;
-    card.style.transform = `rotate(${a}deg)`;
+    card.style.zIndex = k;
+    const a = +card.dataset.angle;
+    if (opened === null || opened === n - 1) { card.style.transform = `rotate(${a}deg)`; return; }
+    const w = card.offsetWidth;
+    const base = +cards[opened].dataset.angle;
+    card.style.transform = k <= opened
+      ? `translateX(${-.2 * w}px) rotate(${a}deg)`
+      : `translateX(${.48 * w}px) rotate(${base + (k - opened) * 2.2}deg)`;
   };
-  function lift(card) { if (card === drawn) return; card.classList.add('lift'); place(card); }
-  function settle(card) { card.classList.remove('lift'); place(card); }
+  const layout = () => cards.forEach(place);
+  function open(k) { if (opened === k) return; opened = k; layout(); }
+  fan.addEventListener('pointerleave', () => { opened = null; layout(); });
+  fan.addEventListener('focusout', e => { if (!fan.contains(e.relatedTarget)) { opened = null; layout(); } });
   function draw(card) {
     const prev = drawn;
     drawn = prev === card ? null : card;
-    if (prev) { prev.classList.remove('flip'); prev.setAttribute('aria-pressed', 'false'); place(prev); }
-    if (drawn) { drawn.classList.remove('lift'); drawn.classList.add('flip'); drawn.setAttribute('aria-pressed', 'true'); place(drawn); }
+    if (prev) { prev.classList.remove('flip'); prev.setAttribute('aria-pressed', 'false'); }
+    if (drawn) { drawn.classList.add('flip'); drawn.setAttribute('aria-pressed', 'true'); }
+    layout();
   }
-  const deal = () => cards.forEach(place);
+  const deal = layout;
   if (reduce) deal(); else requestAnimationFrame(() => requestAnimationFrame(deal));
 
   const rows = document.getElementById('rows');
