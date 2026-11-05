@@ -166,6 +166,20 @@ describe("lively", () => {
     expect(moving.every((b) => b.vx > 0)).toBe(true);
   });
 
+  test("tipping the phone rolls resting ideas downhill, and a sway rocks them", () => {
+    const { add, controller } = setup();
+    add("a", { x: 200, y: H - 30 });
+    controller.advance(2);
+    const x = controller.bodyState("a")!.x;
+    controller.tilt(0.6);
+    controller.advance(1);
+    expect(controller.bodyState("a")!.x).toBeGreaterThan(x + 20);
+    controller.tilt(0);
+    controller.advance(2);
+    controller.sway({ x: -2, y: 0 });
+    expect(controller.bodyState("a")!.vx).toBeLessThan(-50);
+  });
+
   test("a held idea waits until it's dropped in, then splashes the ones it lands near", () => {
     const { container, add, controller } = setup();
     const rising = pile(controller, add);

@@ -156,7 +156,7 @@ async function start() {
   lift.apply(scored.value);
 }
 
-// Shaking the phone throws the ideas about. It's on by default where the phone doesn't ask first, and iPhones ask from a
+// Shaking the phone throws the ideas about, swaying it rocks them and tipping it rolls them downhill. It's on by default where the phone doesn't ask first, and iPhones ask from a
 // tap on the switch. Whatever the person picks is remembered.
 const shakeable = ref(false);
 const shaking = ref(false);
@@ -165,7 +165,13 @@ let askOnTap: (() => void) | undefined;
 
 function listenForShakes(on: boolean) {
   unlisten?.();
-  unlisten = on ? motion.listen((direction, strength) => controller?.shake(direction, strength)) : undefined;
+  unlisten = on
+    ? motion.listen({
+        onShake: (direction, strength) => controller?.shake(direction, strength),
+        onSway: (change) => controller?.sway(change),
+        onTilt: (angle) => controller?.tilt(angle),
+      })
+    : undefined;
   shaking.value = on;
 }
 

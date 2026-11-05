@@ -25,6 +25,13 @@ export const poolConfig = {
     // walking around, and hardest or more throws them at the top of speed. lift is how much of each throw goes upwards,
     // so they leave the floor whichever way the phone moves.
     shake: { threshold: 14, hardest: 35, gapMs: 150, speed: [4, 12], lift: 0.6, spin: 12 },
+    // Gentler moves than a shake nudge the ideas the other way, gain times harder than real life since the pool is tiny.
+    // Readings under deadzone are the sensor's own noise, and no gap between readings counts as longer than maxStepMs.
+    sway: { deadzone: 0.3, gain: 4, maxStepMs: 50 },
+    // Tipping the phone tips the pool's gravity with it, gain times as far so small tips show, up to most radians. Lying flat there's no tilt to read, so it
+    // fades out between the two flat values, which are how much of gravity is along the screen. smoothing is how much
+    // of each new reading counts.
+    tilt: { gain: 1.5, most: 0.9, flat: [0.15, 0.35], smoothing: 0.15 },
     // Pressing an idea for holdMs, or moving more than movePx while pressed, picks it up. A held idea moves towards the
     // pointer at follow times the gap per second, and keeps spinKeep of its spin each step.
     drag: { holdMs: 180, movePx: 6, follow: 18, spinKeep: 0.9 },

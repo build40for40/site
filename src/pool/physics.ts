@@ -492,6 +492,25 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
       }
     },
 
+    // Every idea feels the phone sway: a change in speed in metres per second on screen.
+    sway(change: Vector) {
+      for (const t of bodies.values()) {
+        if (!t.shown || t.hover !== undefined || t === held?.t) continue;
+        const v = t.body.linvel();
+        t.body.setLinvel({ x: v.x + change.x, y: v.y + change.y }, true);
+      }
+    },
+
+    // Tips gravity by an angle in radians, so the ideas roll downhill when the phone tips. Positive rolls them right.
+    tilt(angle: number) {
+      const { x, y } = config.gravity;
+      const next = { x: x * Math.cos(angle) + y * Math.sin(angle), y: -x * Math.sin(angle) + y * Math.cos(angle) };
+      if (Math.abs(next.x - world.gravity.x) + Math.abs(next.y - world.gravity.y) < 0.05) return;
+      world.gravity = next;
+      // Resting ideas are asleep and wouldn't notice gravity changing.
+      for (const t of bodies.values()) if (t.shown) t.body.wakeUp();
+    },
+
     pause() {
       paused = true;
       stopLoop();
