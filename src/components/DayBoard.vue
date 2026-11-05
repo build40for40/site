@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
-import BrowsePanel, { type Floated } from "./BrowsePanel.vue";
+import BrowsePanel from "./BrowsePanel.vue";
 import DayBox from "./DayBox.vue";
 import DayTile from "./DayTile.vue";
-import ProblemsPool, { type PoolTile } from "./ProblemsPool.vue";
+import ProblemsPool, { type Dock, type PoolTile } from "./ProblemsPool.vue";
 import {
   BUILD_MS,
   DEFAULT_AMOUNT,
@@ -187,6 +187,19 @@ onBeforeUnmount(() => {
   search.cancel();
 });
 
+// Clicking a ball while browsing opens its problem in Browse. The disco ball isn't a problem, so it opens in the day box.
+function pickBall(key: string) {
+  if (!browsing.value) return select(key);
+  const id = [...board.value.days, ...pool.value].find((e) => e.key === key)?.idea?.id;
+  if (id) browseOpen.value = id;
+  else closeBrowse(key);
+}
+
+// Sponsoring or opening a problem from Browse puts the board back and shows it in the day box.
+function pickBrowsed(id: string) {
+  closeBrowse(dayOf.value.get(id) ?? pool.value.find((p) => p.idea?.id === id)?.key);
+}
+
 // The Browse link sits in the page's static markup, so the board picks up its clicks and keeps its state in sync.
 // Browsing folds the day box away, throws the days with a problem out of the grid into the pool, and leaves the pool filling the
 // screen under the title. Phones have no grid, so the days fly out of the progress bar and it folds away too. Closing
@@ -199,7 +212,9 @@ const counter = ref<HTMLElement>();
 const gridless = ref(false);
 const gridQuery = () => matchMedia("(width < 64rem)");
 const onGridChange = (e: MediaQueryListEvent) => (gridless.value = e.matches);
-const browsed = ref<Floated | null>(null);
+// The problem open in full in Browse, by idea id, and the ideas whose balls dock beside Browse's list.
+const browseOpen = ref<string | null>(null);
+const docked = ref<string[] | null>(null);
 const browseLinks = () => document.querySelectorAll<HTMLAnchorElement>('a[href="#browse"]');
 const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 let moving = false;
@@ -219,6 +234,17 @@ const browseStatuses = computed<Record<string, EntryStatus>>((last) => {
   return last && ids.length === Object.keys(last).length && ids.every((id) => statuses[id] === last[id]) ? last : statuses;
 });
 const dayOf = computed(() => new Map(board.value.days.flatMap((d) => (d.idea ? [[d.idea.id, d.key] as const] : []))));
+const browseDays = computed<Record<string, number>>((last) => {
+  const days = Object.fromEntries(board.value.days.flatMap((d) => (d.idea ? [[d.idea.id, d.day!]] : [])));
+  const ids = Object.keys(days);
+  return last && ids.length === Object.keys(last).length && ids.every((id) => days[id] === last[id]) ? last : days;
+});
+// A day's idea docks its day's box rather than a ball.
+const docks = computed<Dock[] | null>((last) => {
+  const next = docked.value?.map((id) => ({ id: dayOf.value.get(id) ?? id, slot: id })) ?? null;
+  const same = last && next && last.length === next.length && next.every((d, i) => d.id === last[i].id && d.slot === last[i].slot);
+  return same || last === next ? last : next;
+});
 
 async function openBrowse() {
   if (browsing.value || moving) return;
@@ -258,7 +284,8 @@ async function closeBrowse(key?: string) {
   if (tucked.value) await tuck(true);
   const from = problems.value?.boxes(thrown.value.map((d) => d.key)) ?? new Map();
   browsing.value = false;
-  browsed.value = null;
+  browseOpen.value = null;
+  docked.value = null;
   if (key) {
     backed.value = null;
     amount.value = DEFAULT_AMOUNT;
@@ -536,11 +563,6 @@ const poolTiles = computed<PoolTile[]>(() =>
 // how alike two problems are. When it's down, word matches only rank, so just the best few float up, without a
 // percentage.
 const similar = ref<{ ranking: Ranking; matches: Match[] } | null>(null);
-// While someone's writing a problem, its matches float up rather than Browse's. A match on a day's idea floats the day.
-const lifted = computed(() => {
-  if (similar.value || !browsed.value) return similar.value;
-  return { ...browsed.value, matches: browsed.value.matches.map((m) => ({ ...m, id: dayOf.value.get(m.id) ?? m.id })) };
-});
 const search = createSearch({ ideas: () => poolTiles.value });
 let typing: ReturnType<typeof setTimeout> | undefined;
 
@@ -702,7 +724,17 @@ const tileSub = (e: Entry) => {
           />
         </ul>
 
-        <BrowsePanel v-if="browsing" :ideas="browsable" :statuses="browseStatuses" @float="browsed = $event" @close="closeBrowse()" />
+        <BrowsePanel
+          v-if="browsing"
+          v-model:open="browseOpen"
+          :ideas="browsable"
+          :statuses="browseStatuses"
+          :days="browseDays"
+          :docking="problems?.docking"
+          @dock="docked = $event"
+          @pick="pickBrowsed"
+          @close="closeBrowse()"
+        />
 
       </div>
     </div>
@@ -712,11 +744,11 @@ const tileSub = (e: Entry) => {
     <ProblemsPool
       ref="problems"
       :tiles="tiles"
-      :matches="lifted?.matches ?? null"
-      :ranking="lifted?.ranking"
-      :quiet="!similar && !!browsed"
+      :matches="similar?.matches ?? null"
+      :ranking="similar?.ranking"
+      :docks="browsing ? docks : null"
       :tall="browsing"
-      @pick="(key) => (browsing ? closeBrowse(key) : select(key))"
+      @pick="pickBall"
     />
 
     <div

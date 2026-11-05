@@ -1,8 +1,9 @@
 import { poolConfig } from "./config";
-import type { PhysicsController } from "./physics";
 import type { Match } from "./search";
 
-type Controller = Pick<PhysicsController, "setBodyHover">;
+interface Controller {
+  setBodyHover(id: string, y: number | null): void;
+}
 
 interface Band {
   height: number;

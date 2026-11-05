@@ -60,6 +60,10 @@ export const poolConfig = {
   artwork: {
     version: 2,
   },
+  browse: {
+    // Problems on each page of Browse's list. Each one's ball docks beside it.
+    pageSize: 8,
+  },
 };
 
 export type PoolConfig = typeof poolConfig;

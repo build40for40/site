@@ -107,6 +107,21 @@ describe("bodies", () => {
     expect(element.dataset.arrived).toBeUndefined();
   });
 
+  test("dock at a spot, sideways as well as up, and fall back to the floor when let go", () => {
+    const { add, controller } = setup();
+    const element = add("a", { x: 330, y: H - 30 });
+    controller.advance(1);
+    controller.setBodyHover("a", { x: 80, y: 90 });
+    controller.advance(3);
+    const docked = controller.bodyState("a")!;
+    expect(docked.x).toBeCloseTo(80, -1);
+    expect(docked.y).toBeCloseTo(90, -1);
+    expect(element.dataset.arrived).toBe("");
+    controller.setBodyHover("a", null);
+    controller.advance(3);
+    expect(controller.bodyState("a")!.y).toBeGreaterThan(H - TILE.height);
+  });
+
   test("stay inside when the pool shrinks, hovering or not", () => {
     const { add, size, controller } = setup();
     add("a", { x: 350, y: H - 30 });
