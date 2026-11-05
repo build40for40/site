@@ -83,6 +83,16 @@ describe("sway", () => {
     expect(change.x).toBeCloseTo(-2 * 0.02 * poolConfig.physics.sway.gain);
   });
 
+  test("moving the phone down bounces the ideas up the screen, harder than a sideways move", () => {
+    const onSway = vi.fn();
+    const detect = createShakeDetector({ onShake: vi.fn(), onSway });
+    // The phone's y points up the screen, so moving it down is negative y.
+    detect({ acceleration: { x: 0, y: -2, z: 0 }, angle: 0, time: 0 });
+    detect({ acceleration: { x: 0, y: -2, z: 0 }, angle: 0, time: 20 });
+    const [change] = onSway.mock.calls[0];
+    expect(change.y).toBeCloseTo(-2 * 0.02 * poolConfig.physics.sway.gain * poolConfig.physics.sway.lift);
+  });
+
   test("ignores the sensor's own jitter", () => {
     const onSway = vi.fn();
     const detect = createShakeDetector({ onShake: vi.fn(), onSway });

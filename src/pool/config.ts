@@ -27,7 +27,9 @@ export const poolConfig = {
     shake: { threshold: 14, hardest: 35, gapMs: 150, speed: [4, 12], lift: 0.6, spin: 12 },
     // Gentler moves than a shake nudge the ideas the other way, gain times harder than real life since the pool is tiny.
     // Readings under deadzone are the sensor's own noise, and no gap between readings counts as longer than maxStepMs.
-    sway: { deadzone: 0.3, gain: 4, maxStepMs: 50 },
+    // Up and down moves get lift times more again, since gravity would swallow them otherwise: dropping the phone a
+    // little bounces the ideas up the screen.
+    sway: { deadzone: 0.3, gain: 4, lift: 3, maxStepMs: 50 },
     // Tipping the phone tips the pool's gravity with it, gain times as far so small tips show, up to most radians. Lying flat there's no tilt to read, so it
     // fades out between the two flat values, which are how much of gravity is along the screen. smoothing is how much
     // of each new reading counts.

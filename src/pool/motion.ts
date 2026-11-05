@@ -39,7 +39,7 @@ export interface MotionHandlers {
 
 export function createShakeDetector({ onShake, onSway }: MotionHandlers) {
   const { threshold, hardest, gapMs } = poolConfig.physics.shake;
-  const { deadzone, gain, maxStepMs } = poolConfig.physics.sway;
+  const { deadzone, gain, lift, maxStepMs } = poolConfig.physics.sway;
   let gravity: Full | undefined;
   let last = -Infinity;
   let previous: number | undefined;
@@ -59,7 +59,7 @@ export function createShakeDetector({ onShake, onSway }: MotionHandlers) {
     const flat = toScreen(a, angle);
     if (size < threshold) {
       // The ideas lag behind the phone, so they drift the opposite way to it.
-      if (size >= deadzone && dt) onSway?.({ x: -flat.x * dt * gain, y: -flat.y * dt * gain });
+      if (size >= deadzone && dt) onSway?.({ x: -flat.x * dt * gain, y: -flat.y * dt * gain * lift });
       return;
     }
     if (time - last < gapMs) return;
