@@ -484,6 +484,38 @@ export function initializePhysics(container: HTMLElement, overrides: Partial<Con
       if (pile.length) hop(pile[Math.floor(Math.random() * pile.length)], config.nudge.speed);
     },
 
+    // Throws every idea in the pool the way of a unit vector on screen, as hard as strength from 0 to 1 says. Ideas held
+    // or floating up for a search stay put.
+    shake(direction: Vector, strength: number) {
+      const { speed, lift, spin } = config.shake;
+      const s = speed[0] + (speed[1] - speed[0]) * Math.min(Math.max(strength, 0), 1);
+      for (const t of bodies.values()) {
+        if (!t.shown || t.hover !== undefined || t === held?.t) continue;
+        const m = t.body.mass() * (0.7 + Math.random() * 0.6);
+        t.body.applyImpulse({ x: direction.x * s * m, y: (direction.y - lift) * s * m }, true);
+        t.body.setAngvel(t.body.angvel() + (Math.random() - 0.5) * spin, true);
+      }
+    },
+
+    // Every idea feels the phone sway: a change in speed in metres per second on screen.
+    sway(change: Vector) {
+      for (const t of bodies.values()) {
+        if (!t.shown || t.hover !== undefined || t === held?.t) continue;
+        const v = t.body.linvel();
+        t.body.setLinvel({ x: v.x + change.x, y: v.y + change.y }, true);
+      }
+    },
+
+    // Tips gravity by an angle in radians, so the ideas roll downhill when the phone tips. Positive rolls them right.
+    tilt(angle: number) {
+      const { x, y } = config.gravity;
+      const next = { x: x * Math.cos(angle) + y * Math.sin(angle), y: -x * Math.sin(angle) + y * Math.cos(angle) };
+      if (Math.abs(next.x - world.gravity.x) + Math.abs(next.y - world.gravity.y) < 0.05) return;
+      world.gravity = next;
+      // Resting ideas are asleep and wouldn't notice gravity changing.
+      for (const t of bodies.values()) if (t.shown) t.body.wakeUp();
+    },
+
     pause() {
       paused = true;
       stopLoop();
