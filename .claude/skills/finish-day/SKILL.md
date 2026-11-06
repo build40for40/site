@@ -5,7 +5,7 @@ description: Put a finished day's app on build40for40.com by adding it to the sh
 
 # Finish a day
 
-From 14:40 UK a day counts as shipped. Until it has an entry in `history` in `src/data/days.ts`, its box links the full build to the Twitch channel and hides "Try this idea". This skill adds that entry and gets it to production through a PR (steps 1 to 7), then sets up the next day (step 8). If the user only asks to set up a day, go straight to step 8.
+From 16:40 UK a day counts as shipped. Until it has an entry in `history` in `src/data/days.ts`, its box links the full build to the Twitch channel and hides "Try this idea". This skill adds that entry and gets it to production through a PR (steps 1 to 7), then sets up the next day (step 8). If the user only asks to set up a day, go straight to step 8.
 
 ## 1. Get the inputs
 
