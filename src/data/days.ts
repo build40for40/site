@@ -163,6 +163,18 @@ export const history: Record<number, ShippedIdea> = {
     screenshot: "/screenshots/synergy.webp",
     shorts: [],
   },
+  5: {
+    id: "6fab6179-d296-4b82-8b62-9d007728fc0f",
+    title: "Recipes stuck on Instagram",
+    problem: "I have thousands of recipes saved on Instagram that I always want to try, but I forget because I don’t want to be on Instagram all the time, especially when cooking.",
+    owner: "Mac",
+    sponsors: [{ name: "Anonymous", amount: 80 }, { name: "Rohan", amount: 8 }],
+    buildTime: "4:40:00",
+    appUrl: "https://build40for40.com/sous/",
+    recordingUrl: "https://www.twitch.tv/build40for40",
+    screenshot: "/screenshots/sous.webp",
+    shorts: [],
+  },
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");
