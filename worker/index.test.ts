@@ -25,6 +25,14 @@ describe("access requests", () => {
     expect(sqlite.prepare("SELECT app, firm FROM access_requests WHERE email = ?").get("ada@example.com")).toEqual({ app: "synergy", firm: "Example Capital" });
   });
 
+  test("takes Sous beta requests with the cook's phone as the note", async () => {
+    const { send, sqlite } = setup();
+    const response = await send("access", { name: "Mac", email: "mac@example.com", app: "sous", note: "iPhone" });
+
+    expect(response.headers.get("Location")).toBe("https://build40for40.com/sous/#requested");
+    expect(sqlite.prepare("SELECT app, note FROM access_requests WHERE email = ?").get("mac@example.com")).toEqual({ app: "sous", note: "iPhone" });
+  });
+
   test("rejects an app that isn't taking requests", async () => {
     const { send } = setup();
     const response = await send("access", { name: "Ada", email: "ada@example.com", app: "elsewhere" });

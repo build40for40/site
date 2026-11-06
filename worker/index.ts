@@ -56,7 +56,7 @@ const forms: Record<string, Field[]> = {
     name,
     email,
     { name: "firm", max: 200 },
-    { name: "app", required: true, options: ["synergy"] },
+    { name: "app", required: true, options: ["synergy", "sous"] },
     { name: "note", max: 1000 },
     newsletter,
   ],

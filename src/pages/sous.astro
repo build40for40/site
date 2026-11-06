@@ -1,0 +1,563 @@
+---
+import PostHog from "../components/posthog.astro";
+const title = "Sue: your sous chef, reading out your saved recipes";
+const description = "Sue is a screen-free sous chef for your phone. Share a recipe from Instagram, say \"Hey Sue\" and cook with messy hands and your eyes on the food. Day 5 of 40 for 40.";
+const url = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/sous/icon.svg" />
+    <link rel="canonical" href={url} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="40 for 40" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={url} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="theme-color" content="#000000" />
+    <PostHog />
+    <style is:global>
+/* Layout: the app's own look. A blue gas burner on black, Apple system type, nothing else lit.
+   The flame is the one bright thing on the page, so everything else stays grey and quiet. Single dark look by choice. */
+:root {
+  color-scheme: dark;
+  --black: #000;
+  --panel: #0c0c0e;
+  --line: #1f1f21;
+  --text: #f5f5f7;
+  --grey: #98989d;
+  --blue: #6fa8ff;
+  --gas: #2f6bff;
+  --red: #ff5a4e;
+  --amber: #ffb340;
+  --sf: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--black); color: var(--text); font-family: var(--sf); font-size: 18px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+h1, h2, h3, p { margin: 0; }
+h1, h2, h3 { font-weight: 700; letter-spacing: -.025em; text-wrap: balance; }
+a { color: var(--blue); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; border-radius: 6px; }
+[hidden] { display: none !important; }
+.band { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.inner { max-width: 1120px; margin: 0 auto; }
+.label { font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--grey); }
+.blue { color: var(--blue); }
+.dim { color: var(--grey); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 24px; border-radius: 999px; background: var(--text); color: #000; border: 0; cursor: pointer; transition: background .2s, transform .2s; white-space: nowrap; }
+.btn:hover { background: #fff; transform: translateY(-1px); }
+.btn.ghost { background: transparent; color: var(--text); box-shadow: inset 0 0 0 1px #3a3a3c; }
+.btn.ghost:hover { box-shadow: inset 0 0 0 1px var(--grey); }
+.btn.sm { padding: 9px 16px; font-size: 14px; }
+
+/* masthead */
+.mast { position: sticky; top: 0; z-index: 20; background: rgba(0,0,0,.82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding-top: env(safe-area-inset-top, 0px); }
+.mast .inner { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-block: 14px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); font-weight: 700; font-size: 22px; letter-spacing: -.02em; }
+.ring { width: 26px; height: 26px; border-radius: 50%; background: #0b0b0d; box-shadow: 0 0 0 3px var(--blue), 0 0 14px 3px var(--gas); flex: none; }
+.mast .when { font-size: 14px; }
+
+/* hero */
+.hero { padding-block: 48px 88px; }
+.hero .inner { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 48px; align-items: center; }
+.hero h1 { font-size: clamp(52px, 8vw, 104px); line-height: .94; letter-spacing: -.045em; margin-top: 16px; }
+.hero h1 span { display: block; color: var(--grey); }
+.lede { margin-top: 24px; font-size: 21px; line-height: 1.45; max-width: 32ch; color: #d1d1d6; }
+.ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+.under { margin-top: 18px; font-size: 14px; }
+
+/* the phone, with the real flame */
+.phone { position: relative; width: min(100%, 340px); aspect-ratio: 9 / 17.5; margin: 0 auto; border-radius: 48px; background: #000; box-shadow: 0 0 0 1px #2c2c2e, 0 0 0 9px #0d0d0f, 0 0 0 10px #2c2c2e, 0 40px 90px -30px rgba(47,107,255,.45); overflow: hidden; }
+.phone canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.phone .fallback { position: absolute; left: 50%; top: 40%; width: 56%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; border: 8px solid var(--gas); box-shadow: 0 0 34px var(--gas), inset 0 0 22px var(--gas); background: #0b0b0d; transition: border-color .4s, box-shadow .4s; }
+.phone.alert .fallback { border-color: var(--red); box-shadow: 0 0 34px var(--red), inset 0 0 22px var(--red); }
+.phone .tap { position: absolute; left: 50%; top: 40%; width: 64%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; background: none; border: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.phone .where { position: absolute; top: 34px; left: 0; right: 0; text-align: center; font-size: 12px; }
+.phone .caption { position: absolute; left: 22px; right: 22px; top: 63%; display: grid; gap: 8px; justify-items: center; text-align: center; }
+.phone .you { font-size: 14px; color: var(--grey); min-height: 1.3em; transition: opacity .35s; }
+.phone .said { font-size: 19px; font-weight: 600; letter-spacing: -.015em; line-height: 1.3; min-height: 2.6em; text-wrap: balance; transition: opacity .35s; }
+.phone .hint { font-size: 12px; color: var(--grey); line-height: 1.4; transition: opacity .35s; }
+.phone .timers { position: absolute; left: 22px; right: 22px; bottom: 26px; display: flex; justify-content: center; gap: 8px; }
+.timer { flex: none; white-space: nowrap; display: flex; gap: 8px; align-items: baseline; padding: 7px 12px; border-radius: 999px; background: #121214; box-shadow: inset 0 0 0 1px #2a2a2c; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; transition: background .4s, box-shadow .4s; }
+.timer b { font-weight: 600; color: var(--grey); }
+.timer.soon { box-shadow: inset 0 0 0 1px var(--amber); }
+.timer.soon b { color: var(--amber); }
+.timer.over { background: #3a0d0a; box-shadow: inset 0 0 0 1px var(--red); }
+.timer.over b { color: var(--red); }
+.fade { opacity: 0; }
+
+/* sections */
+section.block { padding-block: 88px; border-top: 1px solid var(--line); }
+.shead { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: end; margin-bottom: 48px; }
+.shead h2 { font-size: clamp(38px, 5.4vw, 64px); line-height: 1; margin-top: 12px; }
+.shead h2 span { color: var(--grey); }
+.shead p { max-width: 44ch; color: #d1d1d6; }
+
+/* the problem */
+.quote { font-size: clamp(26px, 3.4vw, 40px); line-height: 1.25; font-weight: 600; letter-spacing: -.02em; max-width: 30ch; text-wrap: pretty; }
+.quote::before { content: "\201C"; color: var(--blue); }
+.quote::after { content: "\201D"; color: var(--blue); }
+.who { margin-top: 20px; }
+
+/* steps */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.steps li { background: var(--panel); border: 1px solid var(--line); border-radius: 28px; padding: 28px; display: grid; gap: 12px; align-content: start; }
+.steps .num { font-size: 15px; font-weight: 700; color: var(--blue); font-variant-numeric: tabular-nums; }
+.steps h3 { font-size: 26px; line-height: 1.1; }
+.steps p { font-size: 16px; color: var(--grey); }
+.card { margin-top: 8px; border-radius: 18px; background: #000; border: 1px solid var(--line); padding: 16px; font-size: 15px; }
+.card .t { font-weight: 700; font-size: 18px; letter-spacing: -.01em; }
+.ing { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); }
+.ing:first-of-type { margin-top: 10px; }
+.ing span:last-child { color: var(--grey); font-variant-numeric: tabular-nums; }
+.share { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+.share span { display: grid; place-items: center; gap: 6px; font-size: 12px; color: var(--grey); width: 64px; text-align: center; }
+.share i { width: 52px; height: 52px; border-radius: 14px; background: #1c1c1e; display: block; }
+.share .me i { background: #000; box-shadow: inset 0 0 0 1px #2a2a2c; position: relative; }
+.share .me i::after { content: ""; position: absolute; inset: 14px; border-radius: 50%; box-shadow: 0 0 0 3px var(--blue), 0 0 10px 2px var(--gas); }
+.share .me { color: var(--text); }
+.heard { margin-top: 8px; display: grid; gap: 8px; font-size: 15px; }
+.heard p { padding: 10px 14px; border-radius: 18px; max-width: 88%; }
+.heard .c { background: #1c1c1e; justify-self: end; }
+.heard .s { background: #0d1a33; color: #cfe0ff; }
+
+/* kitchen rules */
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 56px; }
+.rule { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 24px 0; border-top: 1px solid var(--line); }
+.rule b { font-size: 21px; letter-spacing: -.01em; }
+.rule p { color: var(--grey); font-size: 17px; }
+.rule q { color: var(--text); quotes: "\201C" "\201D"; }
+
+/* beta */
+.beta { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 56px; background: var(--panel); border: 1px solid var(--line); border-radius: 36px; padding: 56px; }
+.beta h2 { font-size: clamp(40px, 5.4vw, 64px); line-height: 1; }
+.beta .intro { display: grid; gap: 18px; align-content: start; }
+.beta .intro p { color: #d1d1d6; }
+.access { display: grid; gap: 20px; }
+.field { display: grid; gap: 6px; }
+.field em { font-style: normal; text-transform: none; letter-spacing: 0; font-weight: 400; }
+.access input[type="text"], .access input[type="email"] { font: inherit; font-size: 19px; color: var(--text); background: #000; border: 1px solid #2c2c2e; border-radius: 14px; padding: 13px 14px; width: 100%; }
+.access input:focus { outline: none; border-color: var(--blue); }
+.access input:focus-visible { box-shadow: 0 0 0 3px rgba(111,168,255,.3); }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; }
+legend { padding: 0; margin-bottom: 8px; }
+.pick { display: flex; gap: 10px; flex-wrap: wrap; }
+.pick label { cursor: pointer; }
+.pick input { position: absolute; opacity: 0; pointer-events: none; }
+.pick span { display: inline-block; padding: 10px 18px; border-radius: 999px; box-shadow: inset 0 0 0 1px #3a3a3c; font-size: 16px; font-weight: 600; transition: box-shadow .2s, background .2s; }
+.pick input:checked + span { background: var(--text); color: #000; box-shadow: none; }
+.pick input:focus-visible + span { outline: 2px solid var(--blue); outline-offset: 3px; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 16px; cursor: pointer; color: #d1d1d6; }
+.check input { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--blue); flex: none; }
+.access .btn { justify-self: start; }
+.access .btn[disabled] { opacity: .6; cursor: wait; }
+.form-status { font-size: 15px; min-height: 1.2em; color: var(--amber); }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.done { border: 1px solid #2c2c2e; border-radius: 24px; padding: 28px; display: grid; gap: 12px; align-content: start; }
+.done-h { font-size: clamp(32px, 4vw, 44px); line-height: 1.05; font-weight: 700; letter-spacing: -.025em; }
+.small { margin-top: 16px; font-size: 14px; color: var(--grey); }
+
+/* notes */
+.notes { columns: 2 340px; column-gap: 56px; }
+.note { break-inside: avoid; padding: 20px 0; border-top: 1px solid var(--line); }
+.note b { display: block; font-size: 19px; margin-bottom: 4px; letter-spacing: -.01em; }
+.note p { font-size: 16px; color: var(--grey); }
+
+/* footer */
+.foot { padding-block: 72px 48px; border-top: 1px solid var(--line); }
+.foot .huge { font-size: clamp(96px, 22vw, 300px); line-height: .8; letter-spacing: -.06em; font-weight: 800; color: #111113; overflow: hidden; white-space: nowrap; }
+.foot .meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 28px; margin-top: 28px; font-size: 14px; color: var(--grey); }
+.foot .meta a { color: var(--grey); text-underline-offset: 3px; }
+
+@media (max-width: 960px) {
+  .hero .inner, .beta { grid-template-columns: minmax(0, 1fr); }
+  .steps { grid-template-columns: minmax(0, 1fr); }
+  .beta { padding: 40px 28px; gap: 36px; }
+}
+@media (max-width: 720px) {
+  body { font-size: 17px; }
+  .mast .when { display: none; }
+  .hero { padding-block: 28px 56px; }
+  .lede { font-size: 19px; }
+  section.block { padding-block: 64px; }
+  .shead { grid-template-columns: minmax(0, 1fr); gap: 14px; margin-bottom: 32px; }
+  .rules { grid-template-columns: minmax(0, 1fr); }
+  .beta { padding: 32px 20px; border-radius: 28px; }
+  .steps li { padding: 24px 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .btn, .phone .you, .phone .said, .phone .hint, .timer { transition: none; }
+}
+    </style>
+  </head>
+  <body>
+
+<header class="mast band">
+  <div class="inner">
+    <a class="brand" href="#top"><span class="ring" aria-hidden="true"></span>Sue</a>
+    <span class="when label">Day 5 of 40 · Friday 6 November 2026</span>
+    <a class="btn sm" href="#beta">Join the beta</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero band" aria-labelledby="h1">
+    <div class="inner">
+      <div>
+        <span class="label">Sue is your sous chef</span>
+        <h1 id="h1">Messy hands. <span>Eyes on the food.</span></h1>
+        <p class="lede">Share a recipe from Instagram and Sue writes it down. Then say <q class="blue">Hey Sue</q> and it talks you through the cook, one step at a time, and calls you Chef.</p>
+        <div class="ctas">
+          <a class="btn" href="#beta">Join the beta</a>
+          <a class="btn ghost" href="#how">How it works</a>
+        </div>
+        <p class="under dim">Free · iPhone and Android · Built live in a day</p>
+      </div>
+      <div>
+        <div class="phone" id="phone">
+          <canvas id="flame" aria-hidden="true"></canvas>
+          <div class="fallback" id="fallback" hidden aria-hidden="true"></div>
+          <span class="where label" id="where">Friday night</span>
+          <button class="tap" id="tap" type="button" aria-label="Tap the flame to hear Sue"></button>
+          <div class="caption" aria-live="polite">
+            <span class="you" id="you"></span>
+            <span class="said" id="said"></span>
+            <span class="hint" id="hint">Waiting for instructions. Say “Hey Sue” or tap the flame.</span>
+          </div>
+          <div class="timers" id="timers" aria-label="Timers"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block band" aria-labelledby="problem-h">
+    <div class="inner">
+      <span class="label" id="problem-h">The problem</span>
+      <p class="quote" style="margin-top:20px">I have thousands of recipes saved on Instagram that I always want to try, but I forget because I don’t want to be on Instagram all the time, especially when cooking.</p>
+      <p class="who dim">Day 5 sponsor · <a href="https://build40for40.com">build40for40.com</a></p>
+    </div>
+  </section>
+
+  <section class="block band" id="how" aria-labelledby="how-h">
+    <div class="inner">
+      <div class="shead">
+        <div><span class="label">How it works</span><h2 id="how-h">Save it. Say it. <span>Cook it.</span></h2></div>
+        <p>No scrolling with floury thumbs, no rewinding a reel for the fourth time to catch how much garlic. Three steps, and the phone can sit face up on the counter.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <span class="num">01</span>
+          <h3>Share it to Sue</h3>
+          <p>From any post in Instagram, tap Share, then Sue. Recipe sites and screenshots work too.</p>
+          <div class="share" aria-hidden="true"><span><i></i>Messages</span><span><i></i>Copy link</span><span class="me"><i></i>Sue</span></div>
+        </li>
+        <li>
+          <span class="num">02</span>
+          <h3>Sue writes it down</h3>
+          <p>Ingredients with amounts, the steps in order, and what done looks like. Words, not video.</p>
+          <div class="card" aria-hidden="true">
+            <span class="t">Tadka dahl</span><br><span class="dim" style="font-size:13px">35 min · one pot · serves 2</span>
+            <div class="ing"><span>Red lentils</span><span>200 g</span></div>
+            <div class="ing"><span>Garlic</span><span>5 cloves</span></div>
+            <div class="ing"><span>Ghee</span><span>2 tbsp</span></div>
+          </div>
+        </li>
+        <li>
+          <span class="num">03</span>
+          <h3>Say “Hey Sue”</h3>
+          <p>Sue offers the next step, sets the timers and waits for you. Like a real kitchen, every instruction gets a “Heard”.</p>
+          <div class="heard" aria-hidden="true">
+            <p class="s">Chef, rice on. Twelve minutes. Set it?</p>
+            <p class="c">Yes, Chef.</p>
+            <p class="s">Heard. Rice, twelve minutes.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="block band" aria-labelledby="rules-h">
+    <div class="inner">
+      <div class="shead">
+        <div><span class="label">Kitchen rules</span><h2 id="rules-h">You’re the head chef. <span>Sue is your sous.</span></h2></div>
+        <p>Sue talks like a professional kitchen, because a professional kitchen already solved talking while cooking.</p>
+      </div>
+      <div class="rules">
+        <div class="rule"><b>Sue never speaks first</b><p>When a timer’s up the flame turns red and a soft chime plays. Say <q>Hey Sue</q> or tap the flame and it tells you what it needs. The TV and the kids can’t set it off.</p></div>
+        <div class="rule"><b>Everything gets a “Heard”</b><p>Say <q>Heard</q>, <q>Yes, Chef</q> or just <q>Yep</q>. Miss one and Sue asks again, shorter each time, like a polite alarm clock.</p></div>
+        <div class="rule"><b>“Hold” means hold</b><p><q>Hold</q>, <q>Wait</q> or <q>Stop</q> shuts Sue up instantly. Your timers keep running and you don’t lose your place.</p></div>
+        <div class="rule"><b>Timers named after food</b><p>Rice, dahl, tadka. Run as many as you like. They stack under the flame, glow amber when they’re close and show on your lock screen.</p></div>
+        <div class="rule"><b>It offers, never orders</b><p><q>Chef, the recipe says twelve minutes. Set it?</q> You’ll never hear <q>you should</q>. Go off script whenever you like.</p></div>
+        <div class="rule"><b>It remembers how it went</b><p>Tell it <q>a bit salty</q> after dinner, or tomorrow from the sofa, and next time it suggests less salt.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block band" id="beta" aria-labelledby="beta-h">
+    <div class="inner beta">
+      <div class="intro">
+        <span class="label">Beta</span>
+        <h2 id="beta-h">Get Sue <span class="dim">first.</span></h2>
+        <p>Sue is on its way to the App Store and Google Play. Tell us which phone you cook with and we’ll send you the test build as soon as it’s ready.</p>
+        <p class="dim" style="font-size:16px">Bring one recipe you’ve saved and never made. That’s the whole homework.</p>
+      </div>
+      <div>
+        <form class="access" id="access-form" action="/api/forms/access" method="post">
+          <input type="hidden" name="app" value="sous" />
+          <div class="hp" aria-hidden="true"><label>Website <input name="website" tabindex="-1" autocomplete="off" /></label></div>
+          <label class="field"><span class="label">Your name</span><input type="text" name="name" required maxlength="200" autocomplete="name" /></label>
+          <label class="field"><span class="label">Email</span><input type="email" name="email" required maxlength="254" autocomplete="email" /></label>
+          <fieldset>
+            <legend class="label">Your phone</legend>
+            <div class="pick">
+              <label><input type="radio" name="note" value="iPhone" required /><span>iPhone</span></label>
+              <label><input type="radio" name="note" value="Android" /><span>Android</span></label>
+            </div>
+          </fieldset>
+          <label class="check"><input type="checkbox" name="newsletter" value="yes" /><span>Send me the 40 for 40 newsletter too.</span></label>
+          <button class="btn" type="submit">Join the beta</button>
+          <p class="form-status" id="access-status" role="status"></p>
+        </form>
+        <div class="done" id="access-done" hidden>
+          <span class="label blue">Heard, Chef</span>
+          <p class="done-h">You’re on the list.</p>
+          <p class="dim">We’ll email you the test build as soon as it’s ready. Go and save some recipes in the meantime.</p>
+        </div>
+        <p class="small">We only use your details to send you the beta. See our <a href="/privacy/">privacy policy</a>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block band" aria-labelledby="notes-h">
+    <div class="inner">
+      <div class="shead">
+        <div><span class="label">Questions</span><h2 id="notes-h">Before you <span>tie your apron.</span></h2></div>
+      </div>
+      <div class="notes">
+        <div class="note"><b>Does it scrape my Instagram?</b><p>No. Sue never logs in to Instagram. You share a post, and it reads that post’s caption and the creator’s own recipe page if they link one.</p></div>
+        <div class="note"><b>What if the recipe is only in the video?</b><p>Sue doesn’t watch videos yet. If the recipe is only spoken or shown on screen, share a screenshot of it instead.</p></div>
+        <div class="note"><b>Is it listening all the time?</b><p>Your phone turns speech into text on the phone itself. Sue only takes a turn when you say <q>Hey Sue</q> or tap the flame.</p></div>
+        <div class="note"><b>Why is it all black?</b><p>It saves battery, and the phone sits quietly on the counter. The screen stays awake while you cook and goes back to normal after.</p></div>
+        <div class="note"><b>Why Sue?</b><p>Say <q>sous chef</q> out loud. Sue is your sous chef, and a name you can shout across a kitchen.</p></div>
+        <div class="note"><b>What does it cost?</b><p>Nothing. It was built in a day, live on Twitch, as part of 40 for 40. The code is at <a href="https://github.com/build40for40/sous">github.com/build40for40/sous</a>.</p></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot band">
+  <div class="inner">
+    <div class="huge" aria-hidden="true">Sue</div>
+    <div class="meta">
+      <span>Day 5 of 40</span>
+      <span>Made by <a href="/">40 for 40</a></span>
+      <a href="https://www.twitch.tv/build40for40">Watch the build</a>
+      <span>hello@40for40.app</span>
+    </div>
+  </div>
+</footer>
+
+<script is:inline>
+(() => {
+  const $ = s => document.getElementById(s);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- The demo cook: tap the flame to step through it ---------- */
+  // [what the chef says, what Sue says, where we are, timer change, alert]
+  const SCRIPT = [
+    ['Hey Sue, what’s for dinner?', 'Chef, tadka dahl tonight? Thirty five minutes, one pot.', 'Friday night'],
+    ['Dahl.', 'Heard, Chef. Dahl. Rinse the lentils first.', 'Tadka dahl · step 1 of 8'],
+    ['Done.', 'Rice on next. The recipe says twelve minutes. Set it?', 'Tadka dahl · step 2 of 8'],
+    ['Yes, Chef.', 'Heard. Rice, twelve minutes.', 'Tadka dahl · step 2 of 8', { rice: 12 * 60 }],
+    ['Hold.', '', 'Tadka dahl · step 3 of 8', { soon: true }],
+    ['', '', 'Tadka dahl · step 3 of 8', { done: true }, true],
+    ['Hey Sue.', 'Chef, rice is done. Off the heat?', 'Tadka dahl · step 3 of 8'],
+    ['Heard.', 'Good. Onion in the ghee next. Low and slow.', 'Tadka dahl · step 3 of 8', { clear: true }],
+  ];
+  const IDLE = 'Waiting for instructions. Say “Hey Sue” or tap the flame.';
+  const RED = 'Sue needs you. Say “Hey Sue” or tap the flame.';
+  let line = -1, busy = false, state = 'idle', alert = false, timer = null;
+
+  const set = (el, txt) => {
+    if (el.textContent === txt) return;
+    if (reduce) { el.textContent = txt; return; }
+    el.classList.add('fade');
+    setTimeout(() => { el.textContent = txt; el.classList.remove('fade'); }, 300);
+  };
+  const fmt = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  function renderTimer() {
+    const box = $('timers');
+    if (!timer) { box.innerHTML = ''; return; }
+    box.innerHTML = `<span class="timer ${timer.left === 0 ? 'over' : timer.left < 120 ? 'soon' : ''}"><b>Rice</b>${fmt(timer.left)}</span>`;
+  }
+  setInterval(() => { if (timer && timer.left > 0 && !timer.paused) { timer.left--; renderTimer(); } }, 1000);
+
+  function step() {
+    if (busy) return;
+    busy = true;
+    line = (line + 1) % SCRIPT.length;
+    const [you, sous, where, change = {}, needs] = SCRIPT[line];
+    if (line === 0) { timer = null; renderTimer(); }
+    const apply = () => {
+      if (change.rice) timer = { left: change.rice };
+      if (change.soon && timer) timer.left = 95;
+      if (change.done && timer) timer.left = 0;
+      if (change.clear) timer = null;
+      renderTimer();
+    };
+    const talkFor = 900 + sous.length * 40;
+    set($('where'), where);
+    if (needs) {
+      // Sue never speaks first: the flame goes red and waits to be asked.
+      apply();
+      alert = true; $('phone').classList.add('alert');
+      set($('you'), ''); set($('said'), ''); set($('hint'), RED);
+      busy = false;
+      return;
+    }
+    const wasAlert = alert;
+    alert = false; $('phone').classList.remove('alert');
+    set($('hint'), '');
+    state = 'listening';
+    set($('you'), you ? `“${you}”` : '');
+    set($('said'), '');
+    const heard = wasAlert ? 600 : 1300;
+    setTimeout(() => { state = 'thinking'; }, heard);
+    setTimeout(() => {
+      apply();
+      if (!sous) return finish();
+      state = 'talking';
+      set($('said'), sous);
+    }, heard + 700);
+    if (sous) setTimeout(finish, heard + 700 + talkFor);
+  }
+  function finish() {
+    state = 'idle'; busy = false; set($('hint'), IDLE);
+    // the flame goes red on its own when the rice finishes
+    if (SCRIPT[(line + 1) % SCRIPT.length][4]) setTimeout(() => { if (!busy) step(); }, 2500);
+  }
+  $('tap').addEventListener('click', step);
+
+  /* ---------- The flame: the app's burner shader ---------- */
+  const canvas = $('flame');
+  const gl = canvas.getContext('webgl', { antialias: true, premultipliedAlpha: false });
+  const fallback = () => { $('fallback').hidden = false; canvas.hidden = true; };
+  if (!gl) return fallback();
+  const VS = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+  const FS = `
+precision highp float;
+uniform vec2 r; uniform float t, amp, listen, urgent;
+float h(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
+float n(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);
+ return mix(mix(mix(h(i),h(i+vec3(1,0,0)),f.x),mix(h(i+vec3(0,1,0)),h(i+vec3(1,1,0)),f.x),f.y),
+            mix(mix(h(i+vec3(0,0,1)),h(i+vec3(1,0,1)),f.x),mix(h(i+vec3(0,1,1)),h(i+vec3(1,1,1)),f.x),f.y),f.z);}
+float fbm(vec3 p){float s=0.,a=.5;for(int i=0;i<5;i++){s+=a*n(p);p*=2.03;a*=.5;}return s;}
+void main(){
+  vec2 uv=(gl_FragCoord.xy-.5*r)/min(r.x,r.y);
+  uv.y-=.1*r.y/min(r.x,r.y);
+  float rr=length(uv), a=atan(uv.y,uv.x);
+  float R=.25;
+  vec2 dA=vec2(cos(a+t*.02),sin(a+t*.02));
+  float d=rr-R;
+  float len=.075+.05*amp+.015*listen;
+  float tb=fbm(vec3(dA*2.2,d*8.-t*.45));
+  float tb2=fbm(vec3(dA*4.5,d*13.-t*.8)+1.5*tb);
+  float jets=.84+.16*pow(abs(cos(a*18.)),3.);
+  float fall=exp(-max(d,0.)/(len*(.45+1.1*tb2)))*smoothstep(-.012,.003,d);
+  float I=fall*jets*(.55+.75*tb2)*(1.+.2*listen+.45*amp);
+  float rimLine=exp(-abs(d+.002)*170.)*(.75+.4*amp+.3*listen);
+  I+=rimLine*.7;
+  vec3 cD=vec3(.02,.035,.17), cM=vec3(.09,.28,.85), cH=vec3(.62,.84,1.);
+  cD=mix(cD,vec3(.2,.01,.01),urgent); cM=mix(cM,vec3(.95,.08,.05),urgent); cH=mix(cH,vec3(1.,.55,.48),urgent);
+  vec3 col=cD*smoothstep(0.,.25,I)+cM*smoothstep(.12,.75,I)+cH*smoothstep(.65,1.4,I);
+  float core=smoothstep(R-.006,R-.016,rr);
+  float grain=.82+.36*n(vec3(dA*38.,rr*4.));
+  vec3 metal=vec3(.016,.018,.024)*grain;
+  metal+=cM*.45*exp(-(R-rr)*28.)*(.35+.25*amp);
+  vec3 Lg=normalize(vec3(-.4,.55,.75));
+  vec3 cn=normalize(vec3(uv/R*.35,1.));
+  metal+=pow(max(dot(reflect(-Lg,cn),vec3(0,0,1)),0.),60.)*.05;
+  col=mix(col,metal,core)+cH*rimLine*.25*core;
+  col+=cM*.48*exp(-max(d,0.)*5.5)*(.10+.14*amp+.08*listen)*(1.-core);
+  col=1.-exp(-col*1.5);
+  gl_FragColor=vec4(col,1.);
+}`;
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+  const pr = gl.createProgram();
+  gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS));
+  gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(pr);
+  if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return fallback();
+  gl.useProgram(pr);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(pr, 'p');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const U = k => gl.getUniformLocation(pr, k);
+  const uR = U('r'), uT = U('t'), uA = U('amp'), uL = U('listen'), uU = U('urgent');
+
+  // Only burn while the phone is on screen.
+  let visible = true, running = false;
+  const start = () => { if (!running && visible) { running = true; last = performance.now(); requestAnimationFrame(frame); } };
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; start(); }).observe(canvas);
+
+  let urgent = 0, amp = 0, listen = 0, clock = 0, last = performance.now();
+  function frame(now) {
+    const dt = Math.min((now - last) / 1000, .05); last = now;
+    clock += dt * (reduce ? .25 : 1);
+    let tA = .04, tL = 0;
+    if (state === 'listening') { tA = .12 + .22 * (.5 + .5 * Math.sin(now / 280)); tL = 1; }
+    if (state === 'thinking') tA = .1 + .12 * (.5 + .5 * Math.sin(now / 420));
+    if (state === 'talking') tA = .18 + .2 * (.5 + .5 * Math.sin(now / 240));
+    if (alert) tA = Math.max(tA, .2 + .06 * Math.sin(now / 500));
+    const k = 1 - Math.pow(.001, dt);
+    urgent += ((alert ? 1 : 0) - urgent) * k * 1.6;
+    amp += (tA - amp) * k * .6; listen += (tL - listen) * k;
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const w = Math.round(canvas.clientWidth * dpr), h = Math.round(canvas.clientHeight * dpr);
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; gl.viewport(0, 0, w, h); }
+    gl.uniform2f(uR, w, h);
+    gl.uniform1f(uT, clock); gl.uniform1f(uA, Math.max(0, amp)); gl.uniform1f(uL, listen); gl.uniform1f(uU, urgent);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    if (visible) requestAnimationFrame(frame); else running = false;
+  }
+  start();
+})();
+
+(() => {
+  const form = document.getElementById('access-form');
+  const done = document.getElementById('access-done');
+  const status = document.getElementById('access-status');
+  const showDone = () => { form.hidden = true; done.hidden = false; };
+  if (location.hash === '#requested') showDone();
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const button = form.querySelector('button');
+    button.disabled = true;
+    status.textContent = 'Sending…';
+    try {
+      const res = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
+      if (!res.ok) throw new Error(await res.text() || 'That didn’t send. Try again in a moment.');
+      status.textContent = '';
+      showDone();
+      done.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    } catch (err) {
+      status.textContent = err instanceof TypeError ? 'You look offline. Check your connection and try again.' : err.message;
+      button.disabled = false;
+    }
+  });
+})();
+</script>
+  </body>
+</html>
