@@ -141,7 +141,7 @@ export const history: Record<number, ShippedIdea> = {
     appUrl: "https://build40for40.com/sidekick/",
     recordingUrl: "https://www.twitch.tv/build40for40",
     still: "/stills/day-02.webp",
-    shorts: [],
+    shorts: [{ title: "Twitch challenged us to build a tool to make gaming more accessible for women", platform: "youtube", url: "https://www.youtube.com/shorts/nLoslaN7rog" }],
   },
   3: {
     id: "061c4947-8b2e-4a55-a628-12b3e843fdef",
@@ -153,7 +153,8 @@ export const history: Record<number, ShippedIdea> = {
     appUrl: "https://build40for40.com/naughty-list/",
     recordingUrl: "https://www.twitch.tv/build40for40",
     screenshot: "/screenshots/naughty-list.jpg",
-    shorts: [],
+    still: "/stills/day-03.webp",
+    shorts: [{ title: "Santa paid us $105 to find out which brands were on the naughty list", platform: "youtube", url: "https://www.youtube.com/shorts/Whn0ejL9Rfs" }],
   },
   4: {
     id: "d9cbe60b-9d63-4fb8-8b2e-9760323f7b5a",
@@ -165,7 +166,8 @@ export const history: Record<number, ShippedIdea> = {
     appUrl: "https://build40for40.com/synergy/",
     recordingUrl: "https://www.twitch.tv/build40for40",
     screenshot: "/screenshots/synergy.webp",
-    shorts: [],
+    still: "/stills/day-04.webp",
+    shorts: [{ title: "How to get acquired by Private Equity", platform: "youtube", url: "https://www.youtube.com/shorts/e5QekR32v0w" }],
   },
 };
 
