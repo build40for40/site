@@ -21,7 +21,7 @@ Carry on with whatever they answer. If they skip it, the sources below have to f
 
 ## 2. Read what actually went out
 
-For each past day's page under "Linkedin Posts", read its "Posted" section: that's the post as published, after the human's rewrite. Copy its shape, voice and length, not the draft's. A page without a "Posted" section has only a draft, so trust it less. Read the most recent posted ones first, because the style moves day to day.
+For each past day's page under "Linkedin Posts", read its "Posted" section: that's the post as published, after the human's rewrite. Copy its voice and length, not the draft's. Don't copy its shape: that changes with each day's story. A page without a "Posted" section has only a draft, so trust it less. Read the most recent posted ones first, because the style moves day to day.
 
 Note the running jokes and repeats while you're there: a form factor we've had before, a sponsor who's back, a problem that echoes an earlier day. They make good callbacks ("Browser extension. Yes, again.").
 
@@ -63,20 +63,25 @@ Say in a line which angle and hook you'd pick and why. Then ask the user to pick
 
 ## 5. Write the post
 
-Text only: no links, no URLs, no "build40for40.com". LinkedIn shows posts with links in the body to fewer people, so every link goes in the comments (step 6). The shape the posted versions settled on:
+Text only: no links, no URLs, no "build40for40.com". LinkedIn shows posts with links in the body to fewer people, so every link goes in the comments (step 6).
 
-1. **Title line:** `Day N/40 - <App name> <emoji>`, plain text. The emoji can be an in-joke from the day.
-2. **Series line:** `We're building 40 apps in 40 days 🚀`, for anyone new.
-3. **Hook:** the hook the user picked in step 4, one line, with an emoji.
-4. **The story:** two or three short paragraphs. Give the stakes (the 4h40 clock, how many sponsors and what they put in), then what happened and what we did about it.
-5. **Setup, as questions:** `Problem? <one line>` and `Form factor? <one line>`, with a callback if it's a repeat.
-6. **What it does:** three or four sentences on what it's like to use, not the stack. Name the problem owner or sponsor and the companies or tools that matter.
-7. **The payoff:** what the app's name means, or the one line that makes it click.
-8. **Close:** `That's <App name> 👉 link in comments`.
+Only two parts are fixed:
 
-Optional, only when they earn their place: an insight for other builders, `N apps live. M to go`, a sponsor ask, and hashtags (`#40for40 #BuildInPublic #VibeCoding`). Skip Unicode bold, since screen readers struggle with it.
+- **The hook comes first.** LinkedIn cuts a post after two or three lines, so those lines have to earn the tap on "see more". Open with the hook the user picked in step 4.
+- **The end is a call to action** pointing at the links in the comments, such as `That's <App name> 👉 link in comments`, `Join the beta 👉 link in comments` or a sponsor ask.
 
-**Voice:** "we" for the team, unless the story is about one person. Informal and funny, British spelling. Short lines with a blank line between paragraphs, between 150 and 250 words. No corporate words (leverage, excited to announce, game-changer). No dashes mid-sentence: use a colon, a comma or a new sentence. Every claim, number and quote must come from the user or the sources.
+Everything in between follows the angle, so the shape changes from day to day. These pieces have worked before. Use the ones that fit the story, in whatever order it needs:
+
+- `Day N/40 - <App name> <emoji>` and `We're building 40 apps in 40 days 🚀`, for anyone new.
+- The stakes: the 4h40 clock, the sponsors and what they put in.
+- `Problem? <one line>` and `Form factor? <one line>`, with a callback if it's a repeat.
+- What the app is like to use, not the stack, naming the problem owner, sponsors and companies that matter.
+- What the app's name means, or the one line that makes it click.
+- An insight for other builders, `N apps live. M to go`, hashtags (`#40for40 #BuildInPublic #VibeCoding`).
+
+Write two or three versions in different shapes, such as a short punchy one, a story-led one and one that mixes angles, and let the user pick or combine them. Skip Unicode bold, since screen readers struggle with it.
+
+**Voice:** "we" for the team, unless the story is about one person. Informal and funny, British spelling. Short lines with a blank line between paragraphs, usually 100 to 250 words. No corporate words (leverage, excited to announce, game-changer). No dashes mid-sentence: use a colon, a comma or a new sentence. Every claim, number and quote must come from the user or the sources.
 
 **Tags:** write people and companies by their full names in the text (`Samira Sohail`, `Dealroom.co`), so the user can turn each into a tag with one click.
 
@@ -96,7 +101,7 @@ After the post, add these sections.
 
 ## 7. Save it
 
-Put the draft, the chosen theme, the hook options, the angles that weren't picked, the comments, the tags and the media list on a "Day N - <App name>" page under "Linkedin Posts" (id 4), with the draft first so it can be copied as it is. If the page already has content, show the user what's there and ask before replacing it. Then show the draft in the chat as well.
+Once the user has picked a version, put that draft, the chosen theme, the other versions, the hook options, the angles that weren't picked, the comments, the tags and the media list on a "Day N - <App name>" page under "Linkedin Posts" (id 4), with the draft first so it can be copied as it is. If the page already has content, show the user what's there and ask before replacing it. Then show the draft in the chat as well.
 
 ## 8. Save what went out
 
