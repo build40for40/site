@@ -139,7 +139,7 @@ const line = computed(() => {
       : `Sponsor it and it takes day ${last.day} from ${last.idea.title}.`;
   }
   if (status !== "queued") return "";
-  if (isUpFirst.value) return "We build it live from 10:00 until the stream stops at 16:40 UK.";
+  if (isUpFirst.value) return "Once the clock starts we get 4 hours 40 minutes to ship it.";
   if (!total.value) return `#${rank} in the queue, pencilled in for ${date}. If it’s still at $0 by 10:00 that day, the day stays locked.`;
   if (rank === 1) return `Top of the queue. If nothing outfunds it by 10:00 on ${date}, we build it.`;
   return `#${rank} in the queue. Outfund the ones above it to move up.`;
@@ -286,7 +286,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
               <div class="flex gap-[.35em] font-mono text-[clamp(28px,4.4vw,52px)] leading-none font-medium tabular-nums" role="timer">
                 <span v-for="[value, unit] in countdownParts(start - now)" :key="unit">{{ pad(value) }}<small class="text-[.4em] text-night-muted">{{ unit }}</small></span>
               </div>
-              <p class="m-0 font-mono text-xs leading-normal text-night-muted">10:00 {{ entry.date }} UK. The stream stops at 16:40 UK.</p>
+              <p class="m-0 font-mono text-xs leading-normal text-night-muted">10:00 {{ entry.date }} UK. Then the clock starts: 4:40:00.</p>
             </template>
             <span
               class="absolute top-2.5 left-2.5 z-1 flex items-center gap-1.5 rounded-[3px] px-2 py-0.5 font-mono text-[10px] font-medium tracking-wider text-night"
