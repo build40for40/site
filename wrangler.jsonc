@@ -25,6 +25,8 @@
     { "pattern": "build40for40.com", "custom_domain": true },
     { "pattern": "www.build40for40.com", "custom_domain": true }
   ],
+  // 08:00 UTC: 08:00 UK in winter, 09:00 in summer. Picks up the previous build's YouTube short (worker/shorts.ts).
+  "triggers": { "crons": ["0 8 * * *"] },
   "workers_dev": true,
   "preview_urls": true
 }

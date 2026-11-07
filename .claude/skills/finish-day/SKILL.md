@@ -16,7 +16,7 @@ Ask for everything below in one message, and go ahead with whatever the user has
 | App link | `appUrl` | Stop. A day can't ship without one |
 | Full build recording (YouTube, or a Twitch VOD) | `recordingUrl` | Use `links.twitch` from `src/data/site.ts` |
 | Build time, if it wasn't the full 4:40:00 | `buildTime` | `"4:40:00"` |
-| Shorts: title, platform and link for each | `shorts` | `[]` |
+| Shorts: title, platform and link for each | `shorts` | `[]`. YouTube shorts are picked up by the 08:00 cron, so only add one here to override it or for TikTok and Instagram |
 | A screenshot or GIF that shows what the app does | `screenshot` | Offer to take one of the live app |
 | A still from the day's stream | `still` | Pick a frame from the Twitch recording's thumbnails, save as `public/stills/day-NN.webp` |
 | Substack write-up | `postUrl` | Leave it out |

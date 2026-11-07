@@ -19,6 +19,7 @@ import {
   type EntryStatus,
   type Idea,
   type ShippedIdea,
+  type Short,
   type Sponsor,
 } from "../data/days";
 import { TOTAL_DAYS, money, sponsorUs } from "../data/site";
@@ -135,8 +136,14 @@ onMounted(() => {
     .then(load);
   fetch("/api/days")
     .then((response) => (response.ok ? response.json() : null))
-    .then((days: { sponsors: Record<number, Sponsor[]> } | null) => {
-      if (days) guestSponsors.value = days.sponsors;
+    .then((days: { sponsors: Record<number, Sponsor[]>; shorts?: Record<number, Short[]> } | null) => {
+      if (!days) return;
+      guestSponsors.value = days.sponsors;
+      // Shorts the morning cron found, for shipped days that don't list their own in days.ts.
+      for (const [day, shorts] of Object.entries(days.shorts ?? {})) {
+        const shipped = history.value[Number(day)];
+        if (shipped && !shipped.shorts.length) shipped.shorts = shorts;
+      }
     })
     .catch(() => {});
 });
