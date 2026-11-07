@@ -60,7 +60,8 @@ export const GUEST_DAYS = new Set([10]);
 export const DEFAULT_AMOUNT = 40;
 
 const DAY_MS = 86_400_000;
-export const BUILD_MS = (4 * 60 + 40) * 60_000;
+// The stream runs from 10:00 to a fixed 16:40 UK (6:40 after the start), not a timer, so lunch and breaks come out of the same window.
+export const BUILD_MS = (6 * 60 + 40) * 60_000;
 const startMs = Date.parse(START);
 
 export const dayStart = (day: number) => startMs + (Math.floor((day - 1) / 5) * 7 + ((day - 1) % 5)) * DAY_MS;
