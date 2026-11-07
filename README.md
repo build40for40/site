@@ -135,7 +135,8 @@ Day box Sponsor button ───────▶ POST /api/checkout ───┐ 
 ```
 
 - **Join form:** with Sponsor picked, Submit saves the problem hidden and opens checkout for that amount, with the email prefilled and the form's first name as the credit. Once it's paid, the form folds up and lands on a day or in the pool by the amount paid. Closing checkout keeps the form as it was and says nothing was sent. A problem whose payment never comes stays hidden for good, and trying again sends a new one.
-- **Day box:** the Sponsor button opens checkout for the idea, or for the guest day on guest days. Checkout asks for an optional name to show on the site, unless they ticked anonymous. `GET /api/days` returns each guest day's sponsors.
+- **Day box:** the Sponsor button opens checkout for the idea, or for the guest day on guest days. Checkout asks for an optional name to show on the site, unless they ticked anonymous. `GET /api/days` returns each guest day's sponsors, and the YouTube shorts the morning cron found.
+- **Shorts:** at 08:00 UTC a cron trigger reads the channel's public YouTube feed (`worker/shorts.ts`) and saves each short to `youtube_shorts`, under the last day whose build started before it went up. Shorts listed in `days.ts` win. To fix a short filed under the wrong day, update its `day` in D1. To run it locally: `npm run wrangler -- dev --local --test-scheduled`, then open `/__scheduled`.
 - **Leaving the page:** payment methods that redirect come back to `/?checkout=<id>`, which saves the payment and opens what was paid for.
 - **Still processing:** bank-style payments that clear later stay hidden until Stripe sends `checkout.session.async_payment_succeeded`.
 

@@ -5,6 +5,7 @@ import { StripeError, openCheckout, readCheckout, recordPayment, statusOf, summa
 import { jevClassifier } from "./classifier";
 import { listProblems } from "./problems";
 import { searchIdeas } from "./search";
+import { fetchFeed, listShorts, syncShorts } from "./shorts";
 import { publicSponsors, sponsorGroup, type SponsorPayment } from "./sponsors";
 import { anthropicTitler, titleProblem } from "./titles";
 
@@ -233,7 +234,7 @@ async function guestDays(_request: Request, env: Env) {
   const payments: Record<number, SponsorPayment[]> = {};
   for (const payment of results) (payments[payment.day] ??= []).push(payment);
   const sponsors = Object.fromEntries(await Promise.all(Object.entries(payments).map(async ([day, rows]) => [day, await publicSponsors(rows, env.STRIPE_SECRET_KEY)])));
-  return json({ sponsors });
+  return json({ sponsors, shorts: await listShorts(env.DB) });
 }
 
 const CATEGORISE_TIMEOUT_MS = 8000;
@@ -395,5 +396,10 @@ export default {
     }
     if (request.headers.get("Accept")?.includes("application/json")) return Response.json({ problem: problemId ?? null });
     return form === "access" ? Response.redirect(new URL(`/${values.app}/#requested`, url).href, 303) : home;
+  },
+
+  // Every morning, pick up the short posted after the last build and file it under its day.
+  async scheduled(_controller, env, ctx) {
+    ctx.waitUntil(syncShorts(env.DB, fetchFeed));
   },
 } satisfies ExportedHandler<Env>;
