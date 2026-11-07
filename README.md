@@ -81,6 +81,7 @@ Everything lives in the `40for40` D1 database, with the schema in `worker/migrat
 - **`problem_categories`:** how well each problem fits each category, from 0 to 1. `problems` records who sorted it (`categorised_by`), against which list (`categories_version`) and how likely it is to be meant sincerely (`sincere`).
 - **`payments`:** one row per paid Stripe Checkout Session, written by whichever comes first of the webhook and the page asking. It backs a problem or a guest `day`, with the `name` to credit (null is Anonymous).
 - **`help_offers`** and **`guest_applications`:** one row per submission of the hidden help and guest forms.
+- **`social_*`:** social media and Substack stats, written every day by the admin dashboard (`build40for40/admin`). The site never reads or writes them.
 
 To change the schema, add a numbered `.sql` file to `worker/migrations/`. `npm run db:migrate` applies it to the local database, and deploys (`npm run deploy` and CI) apply it to production first.
 
