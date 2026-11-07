@@ -180,7 +180,7 @@ export const history: Record<number, ShippedIdea> = {
     appUrl: "https://build40for40.com/sous/",
     recordingUrl: "https://www.twitch.tv/build40for40",
     screenshot: "/screenshots/sous.webp",
-    shorts: [],
+    shorts: [{ title: "Did we create the world's greatest recipe app?", platform: "youtube", url: "https://www.youtube.com/shorts/qwL6EUNxmhc" }],
   },
 };
 
