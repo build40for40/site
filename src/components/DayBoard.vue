@@ -82,7 +82,7 @@ const nextDay = computed(() => {
 const us = ref<Idea>({ id: "us", title: sponsorUs.title, problem: sponsorUs.tagline, sponsors: [] });
 const usEntry = computed<Entry>(() => ({ key: "us", status: "us", idea: us.value }));
 const selected = computed<Entry>(
-  () => [...board.value.days, ...pool.value, usEntry.value].find((e) => e.key === picked.value) ?? board.value.days[(nextDay.value ?? board.value.today) - 1],
+  () => [...board.value.days, ...pool.value, usEntry.value].find((e) => e.key === picked.value) ?? board.value.days[board.value.today - 1],
 );
 
 const shippedCount = computed(() => board.value.days.filter((d) => d.status === "shipped").length);

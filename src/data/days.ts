@@ -32,6 +32,8 @@ export interface ShippedIdea extends Idea {
   recordingUrl: string;
   postUrl?: string;
   screenshot?: string;
+  // A frame from the day's stream, behind "Watch the full build".
+  still?: string;
   shorts: Short[];
 }
 
@@ -126,6 +128,7 @@ export const history: Record<number, ShippedIdea> = {
     recordingUrl: "https://www.youtube.com/watch?v=KA8ltrIe1Lk",
     postUrl: "https://build40for40.substack.com/p/we-spent-104-to-find-out-what-time",
     screenshot: "/screenshots/joyo.webp",
+    still: "/stills/day-01.webp",
     shorts: [{ title: "Can you find what time you were born using astrology?", platform: "youtube", url: "https://www.youtube.com/shorts/F3FZkOdvFHc" }],
   },
   2: {
@@ -137,7 +140,8 @@ export const history: Record<number, ShippedIdea> = {
     buildTime: "4:40:00",
     appUrl: "https://build40for40.com/sidekick/",
     recordingUrl: "https://www.twitch.tv/build40for40",
-    shorts: [],
+    still: "/stills/day-02.webp",
+    shorts: [{ title: "Twitch challenged us to build a tool to make gaming more accessible for women", platform: "youtube", url: "https://www.youtube.com/shorts/nLoslaN7rog" }],
   },
   3: {
     id: "061c4947-8b2e-4a55-a628-12b3e843fdef",
@@ -149,7 +153,8 @@ export const history: Record<number, ShippedIdea> = {
     appUrl: "https://build40for40.com/naughty-list/",
     recordingUrl: "https://www.twitch.tv/build40for40",
     screenshot: "/screenshots/naughty-list.jpg",
-    shorts: [],
+    still: "/stills/day-03.webp",
+    shorts: [{ title: "Santa paid us $105 to find out which brands were on the naughty list", platform: "youtube", url: "https://www.youtube.com/shorts/Whn0ejL9Rfs" }],
   },
   4: {
     id: "d9cbe60b-9d63-4fb8-8b2e-9760323f7b5a",
@@ -161,7 +166,8 @@ export const history: Record<number, ShippedIdea> = {
     appUrl: "https://build40for40.com/synergy/",
     recordingUrl: "https://www.twitch.tv/build40for40",
     screenshot: "/screenshots/synergy.webp",
-    shorts: [],
+    still: "/stills/day-04.webp",
+    shorts: [{ title: "How to get acquired by Private Equity", platform: "youtube", url: "https://www.youtube.com/shorts/e5QekR32v0w" }],
   },
   5: {
     id: "6fab6179-d296-4b82-8b62-9d007728fc0f",
