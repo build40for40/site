@@ -182,6 +182,18 @@ export const history: Record<number, ShippedIdea> = {
     screenshot: "/screenshots/sous.webp",
     shorts: [{ title: "Did we create the world's greatest recipe app?", platform: "youtube", url: "https://www.youtube.com/shorts/qwL6EUNxmhc" }],
   },
+  6: {
+    id: "160bacac-038f-45fc-acbe-52b000cf46a4",
+    title: "Repurposing writing into content",
+    problem: "I want to turn my Substack posts and a book that I have written into a content engine for marketing. Breaking it up into social media scripts and content that I can use - no hallucination.",
+    owner: "Kate",
+    sponsors: [{ name: "Kate", amount: 80 }],
+    buildTime: "4:40:00",
+    appUrl: "https://build40for40.com/hookr/",
+    recordingUrl: "https://www.twitch.tv/build40for40",
+    screenshot: "/screenshots/hookr.webp",
+    shorts: [],
+  },
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");
