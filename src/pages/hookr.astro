@@ -1,0 +1,348 @@
+---
+import PostHog from "../components/posthog.astro";
+import "../styles/global.css";
+
+const title = "Hookr: your best lines are working tonight";
+const description = "Turn the page you wrote into posts, threads, captions, scripts and long reads. Your words, your voice, nothing invented. Day 6 of 40 for 40.";
+const url = new URL(Astro.url.pathname, Astro.site);
+const repo = "https://github.com/build40for40/hookr";
+
+const ticker = ["NO FILLERS", "NO FAKES", "YOUR WORDS, YOUR VOICE", "X · LINKEDIN · SUBSTACK · SHORTS · INSTAGRAM · THREADS", "OPEN 24/7"];
+
+const xPost = "Writer’s block isn’t a shortage of ideas. It’s a surplus of judgement, arriving before the words have had a chance to be wrong.";
+const page = [
+  ["I used to think I had nothing to say. ", xPost, " The cure is not inspiration but permission."],
+  ["So I gave myself a rule: the first draft is allowed to be terrible, and nobody is allowed to read it, including me."],
+];
+
+const formats = [
+  {
+    name: "Post for X",
+    where: "One post, one hook",
+    meta: "127 / 280 on X",
+    tilt: "-rotate-2 lg:translate-y-6",
+    lines: [xPost],
+  },
+  {
+    name: "Long read",
+    where: "For Substack and LinkedIn",
+    meta: "62 words",
+    tilt: "rotate-1 lg:-translate-y-2",
+    heading: "The cure is not inspiration but permission.",
+    lines: [
+      "I used to think I had nothing to say.",
+      xPost,
+      "So I gave myself a rule: the first draft is allowed to be terrible, and nobody is allowed to read it, including me.",
+    ],
+  },
+  {
+    name: "Shorts script",
+    where: "For YouTube Shorts",
+    meta: "about 30 seconds",
+    tilt: "-rotate-1 lg:translate-y-10",
+    script: [
+      ["0:00", "I used to think I had nothing to say."],
+      ["0:03", "Writer’s block isn’t a shortage of ideas."],
+      ["0:06", "It’s a surplus of judgement, arriving before the words have had a chance to be wrong."],
+      ["0:13", "The cure is not inspiration but permission."],
+      ["0:17", "So I gave myself a rule: the first draft is allowed to be terrible, and nobody is allowed to read it, including me."],
+    ],
+  },
+  {
+    name: "Instagram caption",
+    where: "Ready for your grid",
+    meta: "44 words",
+    tilt: "rotate-2",
+    lines: [
+      "Writer’s block isn’t a shortage of ideas. It’s a surplus of judgement.",
+      "The cure is not inspiration but permission.",
+      "So I gave myself a rule: the first draft is allowed to be terrible, and nobody is allowed to read it, including me.",
+      "#writersblock #firstdraft",
+    ],
+  },
+  {
+    name: "Thread",
+    where: "For X and Threads",
+    meta: "4 posts",
+    tilt: "-rotate-1 lg:translate-y-4",
+    thread: [
+      "I used to think I had nothing to say.",
+      xPost,
+      "The cure is not inspiration but permission.",
+      "So I gave myself a rule: the first draft is allowed to be terrible, and nobody is allowed to read it, including me.",
+    ],
+  },
+];
+
+const heroTabs = ["X", "LinkedIn", "Substack", "Shorts", "Instagram", "Threads"];
+const panelTabs = ["X", "Long read", "Shorts", "Instagram", "Thread"];
+const panelMoods = ["Elegant", "Calm", "Dramatic"];
+
+const steps = [
+  ["Open something you wrote in Chrome.", "A Substack post, a blog, a chapter online. Up to 3,000 words, so a chapter rather than the whole book."],
+  ["Click the hook in your toolbar.", "Hookr opens in the side panel, right beside your page, and reads it."],
+  ["Pick where it’s going, check where every line came from, and copy it.", "Not feeling it? Try another angle."],
+];
+
+const label = "font-hookr-display text-[11px] font-semibold uppercase tracking-[0.2em] text-hookr-muted";
+const heading = "font-hookr-display text-[32px] font-extrabold leading-[1.08] tracking-[-0.02em] text-balance sm:text-5xl";
+const glass = "rounded-[22px] border border-white/16 bg-white/7 shadow-hookr-glass backdrop-blur-[14px]";
+const wrap = "mx-auto max-w-[1280px] px-4 sm:px-8 lg:px-14";
+const tick = "h-3.5 w-3.5 shrink-0";
+---
+
+<!doctype html>
+<html lang="en-GB" class="scroll-smooth scheme-dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/hookr/icon.svg" />
+    <link rel="canonical" href={url} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="40 for 40" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={url} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="theme-color" content="#0b0710" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yellowtail&family=Unbounded:wght@600;800&family=Inter:wght@400;500;600&display=swap" />
+    <PostHog />
+  </head>
+  <body class="bg-hookr-midnight bg-[linear-gradient(rgb(255_255_255/0.03)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.03)_1px,transparent_1px)] bg-size-[48px_48px] font-hookr-body text-hookr-smoke antialiased [&_:focus-visible]:outline-2 [&_:focus-visible]:outline-offset-4 [&_:focus-visible]:outline-hookr-pink">
+    <header class="relative overflow-hidden">
+      <div aria-hidden="true" class="absolute -right-60 top-72 h-[620px] w-[760px] bg-radial-[closest-side] from-hookr-cherry/32 via-hookr-violet/14 via-55% to-transparent lg:-right-30 lg:top-15"></div>
+
+      <nav class={`${wrap} relative flex items-center justify-between gap-4 py-5 lg:py-7`} aria-label="Hookr">
+        <a href="#top" class="font-hookr-script text-[40px] leading-none text-hookr-pink no-underline text-shadow-hookr-neon-sm">hookr</a>
+        <div class="flex items-center gap-9 text-[15px] font-medium">
+          <a href="#how" class="hidden text-hookr-link no-underline hover:text-white md:inline">How it works</a>
+          <a href="#fakes" class="hidden text-hookr-link no-underline hover:text-white md:inline">No fakes policy</a>
+          <a href="#install" class="hidden text-hookr-link no-underline hover:text-white md:inline">Install</a>
+          <a href="#install" class="rounded-full border-[1.5px] border-hookr-cherry px-5 py-3 text-white no-underline shadow-hookr-outline">Add to Chrome</a>
+        </div>
+      </nav>
+
+      <div id="top" class={`${wrap} relative grid grid-cols-[minmax(0,1fr)] gap-14 pt-8 pb-20 lg:grid-cols-[minmax(0,600px)_minmax(0,1fr)] lg:gap-10 lg:pt-12 lg:pb-24`}>
+        <div class="flex flex-col gap-7">
+          <p class="inline-flex items-center gap-2.5 self-start rounded-md border-[1.5px] border-hookr-violet px-4 py-2 font-hookr-display text-[11px] font-semibold tracking-[0.18em] text-hookr-violet-text shadow-hookr-sign sm:text-xs">
+            <span aria-hidden="true" class="h-2 w-2 rounded-full bg-hookr-cherry shadow-hookr-dot"></span>
+            OPEN LATE · FREE FOR AUTHORS
+          </p>
+          <h1 class="font-hookr-display text-[36px] font-extrabold leading-[1.02] tracking-[-0.02em] sm:text-[52px] lg:text-[66px]">
+            Your best lines are
+            <span class="block font-hookr-script text-[clamp(48px,12.5vw,104px)] font-normal leading-[1.1] tracking-normal text-hookr-pink text-shadow-hookr-neon">working tonight.</span>
+          </h1>
+          <p class="max-w-[500px] text-lg leading-[1.55] text-hookr-body sm:text-[19px]">Hookr reads the page you wrote and gets it working everywhere: X, LinkedIn, Substack, Shorts, Instagram and Threads. Your words, your voice. Nothing invented.</p>
+          <div class="flex flex-wrap items-center gap-4">
+            <a href="#install" class="rounded-full bg-hookr-cherry px-7 py-4 text-[17px] font-semibold text-hookr-cherry-ink no-underline shadow-hookr-button hover:bg-hookr-pink">Add to Chrome, it’s free</a>
+            <a href="#how" class="rounded-full border border-hookr-smoke/25 px-6 py-4 text-[17px] font-medium text-hookr-smoke no-underline hover:border-hookr-smoke/60">Watch it pick one up</a>
+          </div>
+        </div>
+
+        <div class="relative pt-24 lg:h-[560px] lg:pt-0">
+          <svg aria-hidden="true" viewBox="0 0 128 128" class="absolute -top-4 right-4 h-32 w-32 filter-[drop-shadow(0_0_6px_var(--color-hookr-cherry))_drop-shadow(0_0_22px_var(--color-hookr-cherry))] sm:right-10 lg:-top-2.5 lg:h-[230px] lg:w-[230px]">
+            <line x1="70" y1="0" x2="70" y2="14" class="stroke-hookr-wire" stroke-width="2"></line>
+            <path d="M70 22 V82 a20 20 0 0 1 -40 0 V72" fill="none" class="stroke-hookr-halo" stroke-width="7" stroke-linecap="round"></path>
+            <path d="M30 72 l-9 13" fill="none" class="stroke-hookr-halo" stroke-width="6" stroke-linecap="round"></path>
+            <circle cx="70" cy="20" r="6" fill="none" class="stroke-hookr-halo" stroke-width="4"></circle>
+          </svg>
+
+          <figure class={`${glass} relative max-w-[460px] px-5 py-6 sm:px-7 lg:absolute lg:top-[200px] lg:left-2.5 lg:w-[460px]`}>
+            <div class="mb-4.5 flex gap-4 overflow-hidden text-[13px] font-medium text-hookr-muted shadow-[inset_0_-1px_0_rgb(255_255_255/0.12)] mask-r-from-75% sm:gap-4.5 sm:mask-none" aria-hidden="true">
+              {heroTabs.map((tab, i) => (
+                <span class:list={["shrink-0 border-b-2 pb-3", i === 0 ? "border-hookr-cherry text-white shadow-hookr-tab" : "border-transparent"]}>{tab}</span>
+              ))}
+            </div>
+            <blockquote class="mb-4.5 text-xl leading-[1.42] text-white sm:text-[22px]">{xPost}</blockquote>
+            <figcaption class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[13px] text-hookr-meta">
+              <span>127 / 280 on X</span>
+              <span class="inline-flex items-center gap-1.5 text-hookr-traced">
+                <svg aria-hidden="true" class={tick} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 6"></path></svg>
+                Traced to your page
+              </span>
+            </figcaption>
+          </figure>
+
+          <p aria-hidden="true" class="absolute -bottom-10 right-2 -rotate-6 rounded-xl border-2 border-hookr-violet px-4 py-2.5 font-hookr-display text-lg font-extrabold tracking-[0.08em] text-hookr-violet-sign shadow-hookr-sign-lg text-shadow-hookr-violet motion-safe:animate-hookr-flicker sm:right-10 lg:top-[480px] lg:right-[30px] lg:bottom-auto lg:px-5.5 lg:py-3.5 lg:text-[26px]">NO FAKES</p>
+        </div>
+      </div>
+
+      <div aria-hidden="true" class="relative flex h-16 items-center overflow-hidden border-t border-hookr-cherry/35 bg-hookr-night">
+        <div class="flex w-max motion-safe:animate-hookr-ticker">
+          {[0, 1].map(() => (
+            <div class="flex shrink-0 gap-12 pl-12 font-hookr-display text-[15px] font-semibold tracking-[0.14em] whitespace-nowrap text-hookr-ticker">
+              {ticker.map((item) => (<><span>{item}</span><span>✦</span></>))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="formats" class="py-20 lg:py-28" aria-labelledby="formats-title">
+        <div class={wrap}>
+          <p class={label}>Five ways out</p>
+          <h2 id="formats-title" class={`${heading} mt-4`}>One page. Five ways out.</h2>
+          <p class="mt-5 max-w-[560px] text-lg leading-relaxed text-hookr-body">The same page, dressed five ways for five rooms. Every line on every card is already on the page. Hookr just finds its best angle.</p>
+
+          <div class="-mx-4 mt-8 flex items-start snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pt-6 pb-10 sm:-mx-8 sm:scroll-px-8 sm:px-8 lg:mx-0 lg:mt-12 lg:grid lg:grid-cols-5 lg:items-start lg:gap-5 lg:overflow-visible lg:px-0" tabindex="0" aria-label="The same page in five formats">
+            {formats.map((format) => (
+              <article class={`${glass} ${format.tilt} flex w-[80%] max-w-80 shrink-0 snap-center flex-col gap-4 p-5 transition-transform duration-300 motion-safe:hover:rotate-0 sm:w-72 lg:w-auto lg:max-w-none`}>
+                <header>
+                  <h3 class="font-hookr-display text-[13px] font-semibold uppercase tracking-[0.14em] text-white">{format.name}</h3>
+                  <p class="mt-1 text-xs text-hookr-muted">{format.where}</p>
+                </header>
+
+                <div class="flex flex-col gap-3 border-t border-white/12 pt-4 text-[15px] leading-normal text-white lg:text-sm">
+                  {format.heading && <p class="font-semibold">{format.heading}</p>}
+                  {format.lines?.map((line) => (
+                    <p class:list={[line.startsWith("#") && "text-hookr-link"]}>{line}</p>
+                  ))}
+                  {format.script?.map(([cue, line]) => (
+                    <p><span class="block text-xs text-hookr-muted tabular-nums">{cue}</span>{line}</p>
+                  ))}
+                  {format.thread && (
+                    <ol class="flex flex-col gap-2">
+                      {format.thread.map((post, i) => (
+                        <li class="rounded-xl border border-white/12 bg-white/4 px-3 py-2.5 text-sm"><span class="mr-1.5 text-xs text-hookr-muted tabular-nums">{i + 1}/</span>{post}</li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+
+                <footer class="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-hookr-meta">
+                  <span>{format.meta}</span>
+                  <span class="inline-flex items-center gap-1 text-hookr-traced">
+                    <svg aria-hidden="true" class={tick} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 6"></path></svg>
+                    Traced to your page
+                  </span>
+                </footer>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="how" class="scroll-mt-4 border-t border-hookr-bruise bg-hookr-night/60 py-20 lg:py-28" aria-labelledby="how-title">
+        <div class={`${wrap} grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-20`}>
+          <div>
+            <p class={label}>How it works</p>
+            <h2 id="how-title" class={`${heading} mt-4`}>Three clicks from page to posted.</h2>
+            <ol class="mt-10 flex flex-col gap-8">
+              {steps.map(([step, detail], i) => (
+                <li class="grid grid-cols-[3rem_1fr] gap-4">
+                  <span aria-hidden="true" class="font-hookr-display text-[32px] font-extrabold leading-none text-hookr-pink">{i + 1}</span>
+                  <div>
+                    <p class="text-xl font-semibold leading-snug text-white">{step}</p>
+                    <p class="mt-1.5 text-base leading-relaxed text-hookr-body">{detail}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <figure class="mx-auto flex w-full max-w-[340px] flex-col gap-4 rounded-[18px] border border-hookr-bruise-hi bg-hookr-panel px-4.5 py-5 shadow-hookr-panel">
+            <figcaption class="sr-only">The Hookr side panel with a post for X</figcaption>
+            <div class="flex items-center justify-between gap-3">
+              <span class="font-hookr-script text-[32px] leading-none text-hookr-pink text-shadow-[0_0_10px_var(--color-hookr-cherry)]">hookr</span>
+              <span class="text-xs text-hookr-muted">Your page · 62 words</span>
+            </div>
+            <div class="flex flex-col gap-2">
+              <span class="text-xs text-hookr-muted">Where’s it going tonight?</span>
+              <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs font-medium text-hookr-muted shadow-[inset_0_-1px_0_var(--color-hookr-bruise)]">
+                {panelTabs.map((tab, i) => (
+                  <span class:list={["border-b-2 pb-2", i === 0 ? "border-hookr-cherry text-white" : "border-transparent"]}>{tab}</span>
+                ))}
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              {panelMoods.map((mood, i) => (
+                <span class:list={["rounded-full px-3 py-1.5 text-xs", i === 0 ? "bg-hookr-cherry font-semibold text-hookr-cherry-ink" : "border border-hookr-bruise-hi text-hookr-body"]}>{mood}</span>
+              ))}
+            </div>
+            <div class="rounded-[14px] border border-white/14 bg-white/6 px-4 py-4.5">
+              <p class="mb-3.5 text-base leading-[1.45] text-white">{xPost}</p>
+              <div class="flex justify-between gap-3 text-xs text-hookr-meta"><span>127 / 280</span><span class="text-hookr-traced">Traced to your page</span></div>
+            </div>
+            <span class="rounded-full bg-hookr-cherry p-3.5 text-center text-[15px] font-semibold text-hookr-cherry-ink shadow-[0_0_18px_rgb(255_45_122/0.6)]">Copy for X</span>
+            <span class="rounded-full border border-hookr-bruise-hi p-3 text-center text-sm font-medium">Try another angle</span>
+            <span class="mt-2 text-xs text-hookr-muted">Everything here comes from this page. No fakes.</span>
+          </figure>
+        </div>
+      </section>
+
+      <section id="fakes" class="scroll-mt-4 py-20 lg:py-28" aria-labelledby="fakes-title">
+        <div class={`${wrap} grid gap-14 lg:grid-cols-2 lg:gap-20`}>
+          <div>
+            <p class={label}>No fakes policy</p>
+            <h2 id="fakes-title" class={`${heading} mt-4`}>
+              Your words, and
+              <span class="mt-1 block font-hookr-script text-[56px] font-normal leading-[1.15] tracking-normal text-hookr-pink text-shadow-hookr-neon sm:text-7xl">only yours.</span>
+            </h2>
+            <p class="mt-6 max-w-[520px] text-lg leading-relaxed text-hookr-body">Hookr works only from what you wrote. It never adds a thought, fact or quote you didn’t have, and it shows which part of your page each line came from.</p>
+            <ul class="mt-8 flex max-w-[520px] flex-col gap-4 text-base leading-relaxed">
+              <li class="flex gap-3"><span aria-hidden="true" class="text-hookr-pink">✦</span><span><strong class="font-semibold text-white">It sticks to your page.</strong> <span class="text-hookr-body">No padding, no made-up stats, no sounding like a brochure.</span></span></li>
+              <li class="flex gap-3"><span aria-hidden="true" class="text-hookr-pink">✦</span><span><strong class="font-semibold text-white">Every line has a source.</strong> <span class="text-hookr-body">You see where it lives on your page before you copy a thing.</span></span></li>
+              <li class="flex gap-3"><span aria-hidden="true" class="text-hookr-pink">✦</span><span><strong class="font-semibold text-white">Anything it can’t trace gets flagged.</strong> <span class="text-hookr-body">“Some of this isn’t on your page. Check it before you post.”</span></span></li>
+            </ul>
+          </div>
+
+          <div class="flex flex-col items-stretch gap-5 self-center">
+            <figure class="rounded-[18px] border border-hookr-bruise bg-hookr-night p-6 sm:p-8">
+              <figcaption class={label}>Your page</figcaption>
+              <div class="mt-4 flex flex-col gap-4 text-[17px] leading-relaxed text-hookr-body">
+                {page.map((paragraph) => (
+                  <p>{paragraph.map((part) => part === xPost ? <mark class="rounded-sm bg-hookr-cherry/18 text-white underline decoration-hookr-pink decoration-2 underline-offset-4 box-decoration-clone">{part}</mark> : part)}</p>
+                ))}
+              </div>
+              <p class="mt-5 text-center text-sm text-hookr-muted tabular-nums">41</p>
+            </figure>
+            <svg aria-hidden="true" class="mx-auto h-6 w-6 text-hookr-pink" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16m-6-6 6 6 6-6"></path></svg>
+            <figure class={`${glass} p-6`}>
+              <figcaption class={label}>Your post for X</figcaption>
+              <blockquote class="mt-3 text-xl leading-[1.42] text-white">{xPost}</blockquote>
+              <div class="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[13px] text-hookr-meta">
+                <span>127 / 280 on X · from page 41</span>
+                <span class="inline-flex items-center gap-1.5 text-hookr-traced">
+                  <svg aria-hidden="true" class={tick} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 6"></path></svg>
+                  Traced to your page
+                </span>
+              </div>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section id="install" class="scroll-mt-4 border-t border-hookr-bruise bg-hookr-night/60 py-20 lg:py-28" aria-labelledby="install-title">
+        <div class={`${wrap} grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-20`}>
+          <div>
+            <p class={label}>Install</p>
+            <h2 id="install-title" class={`${heading} mt-4`}>Get it in your toolbar.</h2>
+            <p class="mt-6 max-w-[520px] text-lg leading-relaxed text-hookr-body">Hookr is on its way to the Chrome Web Store. Until it lands, you can load it yourself in a minute. Firefox next.</p>
+            <a href={repo} class="mt-8 inline-block rounded-full bg-hookr-cherry px-7 py-4 text-[17px] font-semibold text-hookr-cherry-ink no-underline shadow-hookr-button hover:bg-hookr-pink">Get Hookr from GitHub</a>
+          </div>
+          <ol class="flex flex-col self-center">
+            <li class="grid grid-cols-[2.5rem_1fr] border-t border-hookr-bruise py-5 text-lg leading-relaxed"><span aria-hidden="true" class="font-hookr-display font-extrabold text-hookr-pink">1</span><span>Download Hookr from <a href={repo} class="text-hookr-link underline decoration-hookr-pink/60 underline-offset-4 hover:text-white">GitHub</a> (Code, then Download ZIP) and unzip it.</span></li>
+            <li class="grid grid-cols-[2.5rem_1fr] border-t border-hookr-bruise py-5 text-lg leading-relaxed"><span aria-hidden="true" class="font-hookr-display font-extrabold text-hookr-pink">2</span><span>Open <code class="rounded-md border border-hookr-bruise-hi bg-hookr-midnight px-1.5 py-0.5 text-[0.88em] break-all">chrome://extensions</code> and turn on Developer mode.</span></li>
+            <li class="grid grid-cols-[2.5rem_1fr] border-y border-hookr-bruise py-5 text-lg leading-relaxed"><span aria-hidden="true" class="font-hookr-display font-extrabold text-hookr-pink">3</span><span>Click Load unpacked and choose the <code class="rounded-md border border-hookr-bruise-hi bg-hookr-midnight px-1.5 py-0.5 text-[0.88em]">extension</code> folder.</span></li>
+          </ol>
+        </div>
+      </section>
+    </main>
+
+    <footer class={`${wrap} flex flex-col gap-4 py-12 text-[15px] text-hookr-muted sm:flex-row sm:items-center sm:justify-between`}>
+      <p class="flex items-center gap-4">
+        <span class="font-hookr-script text-[32px] leading-none text-hookr-pink">hookr</span>
+        <span>Made in a day for Kate, on <a href="/" class="text-hookr-link underline decoration-hookr-pink/60 underline-offset-4 hover:text-white">40 for 40</a>. Day 6 of 40.</span>
+      </p>
+      <p class="flex gap-6">
+        <a href="https://www.twitch.tv/40for40" class="text-hookr-link no-underline hover:text-white">Twitch</a>
+        <a href={repo} class="text-hookr-link no-underline hover:text-white">GitHub</a>
+      </p>
+    </footer>
+  </body>
+</html>
