@@ -47,6 +47,71 @@
   --color-lava-deep: oklch(0.26 0.08 30);
   --color-lava: oklch(0.44 0.17 31);
 
+  /* Hookr (/hookr): After Hours, a neon sign on a late street. */
+  --color-hookr-midnight: #0b0710;
+  --color-hookr-night: #12091a;
+  --color-hookr-panel: #110a17;
+  --color-hookr-bruise: #2a1d31;
+  --color-hookr-bruise-hi: #3a2742;
+  --color-hookr-wire: #5a4660;
+  --color-hookr-cherry: #ff2d7a;
+  --color-hookr-cherry-ink: #16040c;
+  --color-hookr-pink: #ff5c9a;
+  --color-hookr-ticker: #ff8ab7;
+  --color-hookr-link: #ffd1e1;
+  --color-hookr-halo: #ffd6e6;
+  --color-hookr-violet: #9b5cff;
+  --color-hookr-violet-text: #d9c4ff;
+  --color-hookr-violet-sign: #e8dbff;
+  --color-hookr-smoke: #f4eaf2;
+  --color-hookr-body: #cbbfd0;
+  --color-hookr-muted: #a99bb0;
+  --color-hookr-meta: #b9abc0;
+  --color-hookr-traced: #b8f5d4;
+
+  --font-hookr-script: "Yellowtail", cursive;
+  --font-hookr-display: "Unbounded", system-ui, sans-serif;
+  --font-hookr-body: "Inter", system-ui, sans-serif;
+
+  --text-shadow-hookr-neon: 0 0 4px #fff0f6, 0 0 12px #ff2d7a, 0 0 32px #ff2d7a, 0 0 64px rgb(255 0 80 / 0.6);
+  --text-shadow-hookr-neon-sm: 0 0 6px #ff2d7a, 0 0 18px #ff2d7a;
+  --text-shadow-hookr-violet: 0 0 8px #9b5cff, 0 0 20px #9b5cff;
+
+  --shadow-hookr-glass: 0 30px 80px rgb(0 0 0 / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.18);
+  --shadow-hookr-button: 0 0 24px rgb(255 45 122 / 0.7);
+  --shadow-hookr-outline: 0 0 14px rgb(255 45 122 / 0.55), inset 0 0 10px rgb(255 45 122 / 0.35);
+  --shadow-hookr-sign: 0 0 12px rgb(155 92 255 / 0.6), inset 0 0 8px rgb(155 92 255 / 0.4);
+  --shadow-hookr-sign-lg: 0 0 18px rgb(155 92 255 / 0.7), inset 0 0 14px rgb(155 92 255 / 0.5);
+  --shadow-hookr-tab: 0 6px 10px -6px rgb(255 45 122 / 0.9);
+  --shadow-hookr-dot: 0 0 8px #ff2d7a;
+  --shadow-hookr-panel: 0 0 40px rgb(255 45 122 / 0.12);
+
+  --animate-hookr-flicker: hookr-flicker 5s infinite;
+  --animate-hookr-ticker: hookr-ticker 28s linear infinite;
+
+  @keyframes hookr-flicker {
+    0%,
+    19%,
+    21%,
+    23%,
+    55%,
+    57%,
+    100% {
+      opacity: 1;
+    }
+    20%,
+    22%,
+    56% {
+      opacity: 0.35;
+    }
+  }
+
+  @keyframes hookr-ticker {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
   --animate-pop: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 
   @keyframes pop {
