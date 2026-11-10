@@ -473,6 +473,7 @@ function credit({ key, day, status, idea: entryIdea }: Entry, sponsor: Sponsor) 
   if (!idea) return;
   swap(() => {
     idea.sponsors.push(sponsor);
+    idea.paid?.push({ at: new Date().toISOString(), amount: sponsor.amount });
     picked.value = [...board.value.days, ...pool.value].find((e) => e.idea?.id === id)?.key ?? null;
     backed.value = selected.value.key;
   }, "day-box");

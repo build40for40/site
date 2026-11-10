@@ -14,6 +14,7 @@ describe("listProblems", () => {
     expect(ideas.map((i) => i.id)).toEqual([high, low, none]);
     expect(ideas[0]).toMatchObject({ owner: "Grace", sponsors: [{ name: "Ada", amount: 40 }, { name: "Ada", amount: 10 }] });
     expect(ideas[1].sponsors).toEqual([{ name: "Anonymous", amount: 5 }]);
+    expect(ideas[0].paid).toEqual([{ at: expect.any(String), amount: 40 }, { at: expect.any(String), amount: 10 }]);
     expect(ideas[2].owner).toBeUndefined();
     expect(JSON.stringify(ideas)).not.toContain("@");
     expect(next).toBeNull();
