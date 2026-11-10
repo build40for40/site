@@ -31,6 +31,8 @@
   /* Day states are signals only: dots, strips, badges, never buttons. */
   --color-shipped: oklch(0.68 0.12 170);
   --color-live: oklch(0.69 0.19 38);
+  /* Crimson, well clear of live's orange, for the days that sank. */
+  --color-wrecked: oklch(0.63 0.22 12);
   --color-queued: oklch(0.66 0.06 265);
   --color-guest: oklch(0.7 0.15 285);
 

@@ -24,6 +24,7 @@ const stageList: { key: string; label: string; keep: (idea: Idea, status: EntryS
   { key: "sponsored", label: "Sponsored", keep: (idea) => raised(idea) > 0 },
   { key: "scheduled", label: "Scheduled", keep: (_, status) => status === "queued" || status === "live" },
   { key: "shipped", label: "Shipped", keep: (_, status) => status === "shipped" },
+  { key: "wrecked", label: "Shipwrecked", keep: (_, status) => status === "wrecked" },
 ];
 const inStage = (key: string | null) => (idea: Idea) => !key || stageList.find((s) => s.key === key)!.keep(idea, props.statuses[idea.id]);
 
@@ -155,7 +156,7 @@ const ukDay = (ms: number, year = false) =>
 function stageOf(idea: Idea) {
   const day = props.days?.[idea.id];
   const sum = raised(idea);
-  const label: string | undefined = ({ shipped: "Shipped", live: "Live now", queued: "Scheduled" } as Record<string, string>)[props.statuses[idea.id]];
+  const label: string | undefined = ({ shipped: "Shipped", wrecked: "Shipwrecked", live: "Live now", queued: "Scheduled" } as Record<string, string>)[props.statuses[idea.id]];
   const parts = day ? [`Day ${pad(day)}`, label] : [sum ? "Sponsored" : "Needs a sponsor"];
   if (sum) parts.push(`${money(sum)} raised`);
   return parts.filter(Boolean).join(" · ");

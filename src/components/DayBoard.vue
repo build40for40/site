@@ -87,6 +87,7 @@ const selected = computed<Entry>(
 );
 
 const shippedCount = computed(() => board.value.days.filter((d) => d.status === "shipped").length);
+const wreckedCount = computed(() => board.value.days.filter((d) => d.status === "wrecked").length);
 const upcoming = computed(() => board.value.days.filter((d) => d.status === "queued").length);
 
 const kicker = computed(() => {
@@ -99,13 +100,15 @@ const kicker = computed(() => {
     return { tone: "text-night-muted", dot: "bg-queued", text: `Up next · 10:00 UK${isToday ? "" : `, ${dayDate(today)}`}` };
   }
   if (today < TOTAL_DAYS) {
-    return { tone: "text-night-muted", dot: "bg-shipped", text: `Day ${today} shipped · Up next 10:00 UK, ${dayDate(today + 1)}` };
+    const sank = board.value.days[today - 1].status === "wrecked";
+    return { tone: "text-night-muted", dot: sank ? "bg-wrecked" : "bg-shipped", text: `Day ${today} ${sank ? "shipwrecked" : "shipped"} · Up next 10:00 UK, ${dayDate(today + 1)}` };
   }
   return { tone: "text-night-muted", dot: "bg-shipped", text: "That’s 40. What a ride." };
 });
 
 const legend = [
   { label: "shipped", dot: tones.shipped.dot },
+  { label: "shipwrecked", dot: tones.wrecked.dot },
   { label: "live", dot: tones.live.dot },
   { label: "upcoming", dot: tones.queued.dot },
   { label: "guest day", dot: tones.guest.dot },
@@ -638,7 +641,7 @@ const tileSub = (e: Entry) => {
         </div>
         <div v-show="!tucked" ref="counter" aria-label="Progress" class="flex w-full min-w-0 flex-col gap-2 lg:w-auto lg:max-w-[40rem] lg:flex-1">
           <div class="flex flex-wrap justify-between gap-x-3 gap-y-1 font-mono text-xs font-medium">
-            <span>{{ String(shippedCount).padStart(2, "0") }} / 40 SHIPPED</span>
+            <span>{{ String(shippedCount).padStart(2, "0") }} / 40 SHIPPED<span v-if="wreckedCount" class="text-wrecked"> · {{ wreckedCount }} SHIPWRECKED</span></span>
             <span class="text-night-muted">{{ upcoming }} upcoming<template v-if="pool.length"> · {{ pool.length }} {{ pool.length === 1 ? "problem" : "problems" }} simmering</template></span>
           </div>
           <div
