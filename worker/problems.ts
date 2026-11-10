@@ -12,6 +12,7 @@ interface Row {
   email: string;
   created_at: string;
   sponsors: string;
+  paid: string;
   categorised_by: string | null;
   scores: string;
 }
@@ -55,6 +56,7 @@ export async function listProblems(db: D1Database, { offset, limit, seedSecret, 
     .prepare(
       `SELECT p.id, p.title, p.problem, people.name, p.email, p.created_at, p.categorised_by,
          coalesce(json_group_array(json_object('name', pay.name, 'email', pay.email, 'amount', pay.amount)) FILTER (WHERE pay.id IS NOT NULL), '[]') AS sponsors,
+         coalesce(json_group_array(json_object('at', pay.paid_at, 'amount', pay.amount)) FILTER (WHERE pay.id IS NOT NULL), '[]') AS paid,
          (SELECT json_group_object(c.category, c.score) FROM problem_categories c WHERE c.problem_id = p.id) AS scores
        FROM problems p
        LEFT JOIN people ON people.email = p.email
@@ -75,6 +77,7 @@ export async function listProblems(db: D1Database, { offset, limit, seedSecret, 
       owner: firstName(row.name),
       submittedAt: row.created_at,
       sponsors: await publicSponsors(JSON.parse(row.sponsors) as SponsorPayment[], sponsorSecret),
+      paid: (JSON.parse(row.paid) as { at: string; amount: number }[]).map(({ at, amount }) => ({ at, amount: amount / 100 })),
       ...(row.categorised_by ? { categories: categoriesOf(JSON.parse(row.scores)) } : {}),
       ...(seedSecret ? { seed: await submitterSeed(row.email, row.id, seedSecret) } : {}),
     })),

@@ -41,3 +41,15 @@ test("a shipped idea keeps its day with live sponsors and doesn't take another o
   expect(board.days[0].idea).toMatchObject({ id: "joyo", appUrl: "/joyo/", sponsors: [{ amount: 50 }] });
   expect(board.days.filter((d) => d.idea).map((d) => d.idea!.id)).toEqual(["joyo", "next"]);
 });
+
+test("a day locks at 10:00, so a sponsor arriving mid-build only reshuffles the days still to come", () => {
+  const paid = (id: string, ...payments: [string, number][]): Idea => ({
+    ...idea(id, payments.reduce((sum, [, amount]) => sum + amount, 0)),
+    paid: payments.map(([at, amount]) => ({ at, amount })),
+  });
+  const ideas = [paid("ours", ["2026-11-01T09:00:00Z", 50]), paid("late", ["2026-11-01T09:00:00Z", 20], ["2026-11-02T10:30:00Z", 100]), paid("third", ["2026-11-01T09:00:00Z", 30])];
+  const live = buildBoard(ideas, {}, Date.parse("2026-11-02T11:00:00Z"));
+  expect(live.days.filter((d) => d.idea).map((d) => [d.status, d.idea!.id])).toEqual([["live", "ours"], ["queued", "late"], ["queued", "third"]]);
+  const before = buildBoard(ideas, {}, Date.parse("2026-11-02T09:00:00Z"));
+  expect(before.days.find((d) => d.idea)!.idea!.id).toBe("late");
+});

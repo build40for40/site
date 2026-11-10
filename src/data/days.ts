@@ -18,6 +18,8 @@ export interface Idea {
   seed?: string;
   submittedAt?: string;
   categories?: string[];
+  // Every payment with when it landed, so a day's pick can be frozen at its 10:00 start.
+  paid?: { at: string; amount: number }[];
 }
 
 export interface Short {
@@ -71,6 +73,10 @@ export const dayDate = (day: number) => ukDate(dayStart(day), { weekday: "short"
 const calendarDay = (ms: number) => ukDate(ms, { year: "numeric", month: "2-digit", day: "2-digit" });
 
 export const raised = (idea: Idea) => idea.sponsors.reduce((sum, s) => sum + s.amount, 0);
+// What an idea had raised by a moment. Without payment times every sponsor counts.
+export const raisedBy = (idea: Idea, ms: number) =>
+  idea.paid ? idea.paid.reduce((sum, p) => sum + (Date.parse(p.at) < ms ? p.amount : 0), 0) : raised(idea);
+const byFunding = (money: (idea: Idea) => number) => (a: Idea, b: Idea) => money(b) - money(a) || (a.submittedAt ?? "").localeCompare(b.submittedAt ?? "");
 
 export function clock(now: number): { today: number; phase: Phase; isToday: boolean } {
   const days = Array.from({ length: TOTAL_DAYS }, (_, i) => i + 1);
@@ -92,8 +98,19 @@ export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, 
   const loaded = new Map(ideas.map((idea) => [idea.id, idea]));
   const shipped = new Set(Object.values(history).map((idea) => idea.id));
   const waiting = ideas.filter((idea) => !shipped.has(idea.id));
-  const ranked = waiting.filter((idea) => raised(idea) > 0).toSorted((a, b) => raised(b) - raised(a) || (a.submittedAt ?? "").localeCompare(b.submittedAt ?? ""));
-  const unfunded = waiting.filter((idea) => raised(idea) === 0);
+  // A day locks at 10:00: a started day without history takes the top idea by what was paid before its start, so a
+  // sponsor arriving mid-build only reshuffles the days still to come.
+  const locked = new Map<number, Idea>();
+  for (let day = 1; day <= TOTAL_DAYS; day++) {
+    if (GUEST_DAYS.has(day) || !started(day) || history[day]) continue;
+    const taken = new Set([...locked.values()].map((idea) => idea.id));
+    const start = dayStart(day);
+    const pick = waiting.filter((idea) => !taken.has(idea.id) && raisedBy(idea, start) > 0).toSorted(byFunding((idea) => raisedBy(idea, start)))[0];
+    if (pick) locked.set(day, pick);
+  }
+  const lockedIds = new Set([...locked.values()].map((idea) => idea.id));
+  const ranked = waiting.filter((idea) => !lockedIds.has(idea.id) && raised(idea) > 0).toSorted(byFunding(raised));
+  const unfunded = waiting.filter((idea) => !lockedIds.has(idea.id) && raised(idea) === 0);
   const days: Day[] = [];
   let next = 0;
   let rank = 0;
@@ -103,7 +120,7 @@ export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, 
     if (GUEST_DAYS.has(day)) {
       days.push({ ...base, status: "guest", sponsors: guestSponsors[day] ?? [] });
     } else if (started(day)) {
-      const idea = history[day] ? { ...history[day], ...loaded.get(history[day].id) } : ranked[next++];
+      const idea = history[day] ? { ...history[day], ...loaded.get(history[day].id) } : locked.get(day);
       const status = day === today && phase === "live" ? "live" : "shipped";
       days.push(idea ? { ...base, status, idea } : { ...base, status: "open" });
     } else if (next < ranked.length) {
