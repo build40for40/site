@@ -37,9 +37,11 @@ export interface ShippedIdea extends Idea {
   // A frame from the day's stream, behind "Watch the full build".
   still?: string;
   shorts: Short[];
+  // True for a day that ran out of clock without shipping. It keeps its box, recording and write-up, but shows as Shipwrecked.
+  wrecked?: boolean;
 }
 
-export type DayStatus = "shipped" | "live" | "queued" | "guest" | "open";
+export type DayStatus = "shipped" | "wrecked" | "live" | "queued" | "guest" | "open";
 
 export interface Day {
   key: string;
@@ -121,7 +123,7 @@ export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, 
       days.push({ ...base, status: "guest", sponsors: guestSponsors[day] ?? [] });
     } else if (started(day)) {
       const idea = history[day] ? { ...history[day], ...loaded.get(history[day].id) } : locked.get(day);
-      const status = day === today && phase === "live" ? "live" : "shipped";
+      const status = day === today && phase === "live" ? "live" : history[day]?.wrecked ? "wrecked" : "shipped";
       days.push(idea ? { ...base, status, idea } : { ...base, status: "open" });
     } else if (next < ranked.length) {
       days.push({ ...base, status: "queued", idea: ranked[next++], rank: ++rank });
@@ -194,6 +196,7 @@ export const history: Record<number, ShippedIdea> = {
     owner: "Mac",
     sponsors: [{ name: "Anonymous", amount: 80 }, { name: "Rohan", amount: 8 }],
     buildTime: "4:40:00",
+    wrecked: true,
     appUrl: "https://build40for40.com/sous/",
     recordingUrl: "https://www.twitch.tv/build40for40",
     screenshot: "/screenshots/sous.webp",
@@ -257,11 +260,12 @@ export interface Entry {
 
 export function statusLabel(entry: Entry, today: number) {
   if (entry.status === "queued") return entry.day === today ? "Up first" : raised(entry.idea!) ? "In the queue" : "Needs a sponsor";
-  return { shipped: "Shipped", live: "Live now", guest: "Guest day", open: "Up for grabs", pool: "In the pool", us: "Sponsor us" }[entry.status];
+  return { shipped: "Shipped", wrecked: "Shipwrecked", live: "Live now", guest: "Guest day", open: "Up for grabs", pool: "In the pool", us: "Sponsor us" }[entry.status];
 }
 
 export const tones: Record<EntryStatus, { dot: string; text: string; border: string; ring: string }> = {
   shipped: { dot: "bg-shipped", text: "text-shipped", border: "border-shipped", ring: "ring-shipped" },
+  wrecked: { dot: "bg-wrecked", text: "text-wrecked", border: "border-wrecked", ring: "ring-wrecked" },
   live: { dot: "bg-live", text: "text-live", border: "border-live", ring: "ring-live" },
   queued: { dot: "bg-queued", text: "text-queued", border: "border-queued", ring: "ring-queued" },
   guest: { dot: "bg-guest", text: "text-guest", border: "border-guest", ring: "ring-guest" },

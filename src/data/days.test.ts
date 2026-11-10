@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { buildBoard, mergedSponsors, sponsorCount, type Idea } from "./days";
+import { buildBoard, mergedSponsors, sponsorCount, statusLabel, type Idea } from "./days";
 
 const idea = (id: string, amount: number): Idea => ({ id, title: id, problem: id, sponsors: amount ? [{ name: "Anonymous", amount }] : [] });
 const beforeDayOne = Date.parse("2026-10-29T12:00:00Z");
@@ -33,6 +33,15 @@ test("on a tie, the idea sent in first gets the earlier day", () => {
   const sent = (id: string, submittedAt: string) => ({ ...idea(id, 10), submittedAt });
   const board = buildBoard([sent("later", "2026-10-02T09:00:00.000Z"), sent("first", "2026-10-01T09:00:00.000Z")], {}, beforeDayOne);
   expect(board.days.filter((d) => d.idea).map((d) => d.idea!.id)).toEqual(["first", "later"]);
+});
+
+test("a day that sank shows as shipwrecked, keeps its idea and isn't counted as shipped", () => {
+  const sunk = { ...idea("sous", 10), buildTime: "4:40:00", appUrl: "/sous/", recordingUrl: "#", shorts: [], wrecked: true };
+  const board = buildBoard([idea("sous", 50), idea("next", 20)], { 1: sunk }, Date.parse("2026-11-03T08:00:00Z"));
+  expect(board.days[0]).toMatchObject({ status: "wrecked", idea: { id: "sous" } });
+  expect(board.days.filter((d) => d.status === "shipped")).toHaveLength(0);
+  expect(board.days[1]).toMatchObject({ status: "queued", idea: { id: "next" } });
+  expect(statusLabel(board.days[0], board.today)).toBe("Shipwrecked");
 });
 
 test("a shipped idea keeps its day with live sponsors and doesn't take another one", () => {

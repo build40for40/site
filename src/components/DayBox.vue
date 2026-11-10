@@ -82,12 +82,14 @@ const sponsors = computed(() => idea.value?.sponsors ?? props.entry.sponsors ?? 
 const total = computed(() => sponsors.value.reduce((sum, s) => sum + s.amount, 0));
 const isTodayEntry = computed(() => props.entry.day === props.today);
 const label = computed(() => statusLabel(props.entry, props.today));
-const glyph = computed(() => ({ live: "● ", shipped: "✓ " })[props.entry.status as "live" | "shipped"] ?? "");
+const glyph = computed(() => ({ live: "● ", shipped: "✓ ", wrecked: "✕ " })[props.entry.status as "live" | "shipped" | "wrecked"] ?? "");
 const start = computed(() => dayStart(props.entry.day ?? 1));
 const dayPrefix = computed(() => (props.entry.day ? `Day ${props.entry.day}: ` : ""));
 const isLive = computed(() => props.entry.status === "live");
 const isNext = computed(() => props.entry.day === props.nextDay && (props.entry.status === "queued" || props.entry.status === "guest"));
-const isShipped = computed(() => props.entry.status === "shipped");
+const isWrecked = computed(() => props.entry.status === "wrecked");
+// A shipwrecked day lays out like a shipped one: it still has a recording, shorts and a write-up.
+const isShipped = computed(() => props.entry.status === "shipped" || isWrecked.value);
 const liveStyle = computed(() => isLive.value || isNext.value || isShipped.value);
 const watch = computed(() => (isLive.value ? links.twitch : isShipped.value ? shippedIdea.value.recordingUrl : null));
 const watchBrand = computed(() => (watch.value?.includes("youtube.com") ? "youtube" : "twitch"));
@@ -119,7 +121,7 @@ const count = computed(() => sponsorCount(sponsors.value));
 
 
 const upNext = computed(() => {
-  if (props.entry.status !== "shipped" || !isTodayEntry.value) return null;
+  if (!isShipped.value || !isTodayEntry.value) return null;
   const next = props.days[props.today];
   if (!next) return null;
   const title = next.idea?.title ?? (next.status === "guest" ? "Guest day" : "Up for grabs");
@@ -150,13 +152,14 @@ const sponsorNote = computed(
     ({
       guest: "The problem’s a secret, but you can back the day now.",
       shipped: "Already shipped. Back it anyway and get your name in the production credits.",
-    })[props.entry.status as "guest" | "shipped"] ?? "",
+      wrecked: "This one sank. Back it anyway and help us raise the wreck.",
+    })[props.entry.status as "guest" | "shipped" | "wrecked"] ?? "",
 );
 
 // Days that are fixed link by day; ideas still moving through the queue link by idea.
 const shareUrl = computed(() => {
   const { status, day } = props.entry;
-  const param = status === "shipped" || status === "live" || status === "guest" ? `day=${day}` : `idea=${idea.value?.id}`;
+  const param = status === "shipped" || status === "wrecked" || status === "live" || status === "guest" ? `day=${day}` : `idea=${idea.value?.id}`;
   return `${import.meta.env.SITE}/?${param}`;
 });
 
@@ -171,6 +174,8 @@ const share = computed(() => {
       return { label: "Share the stream", text: `We’re building “${title}” live right now on 40 for 40.`, url };
     case "shipped":
       return { label: "Share the app", text: `“${title}” got built live in ${shippedIdea.value.buildTime} on 40 for 40. Try it.`, url };
+    case "wrecked":
+      return { label: "Share the wreck", text: `We tried to build “${title}” live on 40 for 40 and it sank. Watch it go down.`, url };
     case "guest":
       return { label: "Share the guest day", text: `Secret guest day on 40 for 40, ${props.entry.date}. Who could it be?`, url };
     case "us":
@@ -184,7 +189,7 @@ const thanks = computed(() => {
   const { status } = props.entry;
   const what = { guest: "a secret guest day", us: "40 for 40" }[status as "guest" | "us"] ?? `“${idea.value?.title}”`;
   const line =
-    { guest: "Share it and get people guessing.", shipped: "Share it so more people try it.", us: `${sponsorUs.share}.` }[status as "guest" | "shipped" | "us"] ??
+    { guest: "Share it and get people guessing.", shipped: "Share it so more people try it.", wrecked: "Share it so more people watch it sink.", us: `${sponsorUs.share}.` }[status as "guest" | "shipped" | "wrecked" | "us"] ??
     "Share it to get it over the line.";
   const ask = status === "queued" || status === "pool" ? " Help get it built." : "";
   return { line, text: `I just backed ${what} on 40 for 40.${ask}` };
@@ -446,9 +451,10 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
         <p v-if="entry.status === 'us'" class="m-0 text-[15px] leading-snug text-pretty">{{ sponsorUs.pitch }}</p>
         <ShareButton v-if="share && !liveStyle" class="max-lg:hidden" v-bind="share" />
         <p v-if="line" class="m-0 text-[15px] leading-snug text-pretty">{{ line }}</p>
+        <p v-if="isWrecked" class="m-0 text-[15px] leading-snug text-pretty">Ran out of clock. This one never left the harbour.</p>
         <p v-if="upNext" class="m-0 text-[15px] leading-snug text-pretty">Up next on Day {{ upNext.day }}: {{ upNext.title }}.</p>
         <div v-if="isShipped && (shippedIdea.appUrl || shippedIdea.postUrl)" class="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <a v-if="shippedIdea.appUrl" :href="shippedIdea.appUrl" target="_blank" rel="noopener" class="min-w-56" :class="mainButton">Try this idea ↗</a>
+          <a v-if="shippedIdea.appUrl" :href="shippedIdea.appUrl" target="_blank" rel="noopener" class="min-w-56" :class="mainButton">{{ isWrecked ? "See how far we got" : "Try this idea" }} ↗</a>
           <a v-if="shippedIdea.postUrl" :href="shippedIdea.postUrl" target="_blank" rel="noopener" :class="smallLink">Read how it went ↗</a>
         </div>
         <a v-if="entry.status === 'guest'" href="#join" class="self-start" :class="smallLink">Suggest a guest</a>
