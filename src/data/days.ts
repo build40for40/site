@@ -215,6 +215,18 @@ export const history: Record<number, ShippedIdea> = {
     screenshot: "/screenshots/hookr.webp",
     shorts: [],
   },
+  8: {
+    id: "e5d2dfc8-5b99-45d3-889d-2c9808116dd7",
+    title: "Sudden mass layoffs",
+    problem: "Yesterday, while we were building Poppy, my wife called me unexpectedly. The entire company of Fortis Games shut down and the reports say 440 people will lose their jobs. How can we help?",
+    owner: "Lawrence",
+    sponsors: [{ name: "Lawrence", amount: 45 }],
+    buildTime: "4:40:00",
+    appUrl: "https://build40for40.com/handup/",
+    recordingUrl: "https://www.twitch.tv/build40for40",
+    screenshot: "/screenshots/handup.webp",
+    shorts: [],
+  },
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");
