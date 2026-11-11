@@ -120,7 +120,9 @@
   .head svg { width: 40px; height: 40px; flex: none; }
   .head .name { font-weight: 600; font-size: 17px; line-height: 1.2; }
   .head .status { font-size: 13px; opacity: 0.85; }
-  .log { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding-block: 14px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
+  .log { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-start; padding-block: 14px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
+  /* Bottom-aligned while the chat is short. Once it overflows, the script scrolls it, so a message taller than the screen can be read from its top. */
+  #log > :first-child { margin-top: auto; }
   .msg { max-width: 84%; padding: 6px 9px 4px; border-radius: 8px; overflow-wrap: anywhere; box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13); }
   .msg.them { align-self: flex-start; background: var(--wa-them); border-top-left-radius: 0; }
   .msg.me { align-self: flex-end; background: var(--wa-me); border-top-right-radius: 0; }
@@ -128,7 +130,7 @@
   .row.on { grid-template-rows: 1fr; opacity: 1; transform: none; }
   .row > .in { min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
   .row > .in > * { margin-bottom: 4px; }
-  .row.turn > .in { padding-top: 8px; }
+  .row.turn > .in > :first-child { margin-top: 8px; }
   .still .row { transition: none; }
   @media (prefers-reduced-motion: reduce) { .row { transition: none; transform: none; } }
   .msg strong { font-weight: 700; }
@@ -231,7 +233,7 @@
 
   A LIST (several lines, one message from Handup). Start with list: and put the rest straight under it.
 
-    list: text           the line above the list, such as "Here's your list. It's yours now."
+    list: text           the line above the list, such as "Here's your list. It's yours now." With no items under it, it is a plain message, and last: becomes its second paragraph
     1. text              an open item. Numbers never move
     +3. text | Sam       a ticked item, crossed through, with who sorted it in brackets
     last: text           the line under the list
@@ -252,23 +254,14 @@ time: 10:30
 big: When the job goes, let your people *reach back*.
 handup: This is Jess. Her whole studio closed this morning, no warning. Scroll to see what happened.
 
-# 1. The list. A word of care first, then ten favours, with no questions, then what to do next: three bubbles. Nothing on it is bought
+# 1. The list. A word of care first, then the link to the list of ten favours, with no questions, then what to do next: three bubbles. Nothing on it is bought
 time: 10:41
 me: I've just been laid off. The whole company. Everyone keeps saying "let me know if I can help" and I don't know what to tell them.
 
-handup: Hi, I'm Handup. You must be going through a lot. Feeling shocked is normal, and none of this needs doing today. Rest first if you need to.
+handup: You must be going through a lot. Feeling shocked is normal, and none of this needs doing today. Rest first if you need to.
 
 list: When you're ready, here's a short list of things your friends and family can do for you. They might have a spare laptop, a free desk at their office, or be glad to cook you a warm meal. Most people want to help but don't know how, so letting them is a gift to them too.
-1. A laptop to borrow, if the work one has to go back
-2. A desk or a quiet spot with good Wi-Fi, a few days a week
-3. Someone who hires to look over my CV
-4. A practice interview
-5. A written recommendation from someone I've worked with
-6. Childcare for a few hours on interview days
-7. A lift to an interview
-8. A home-cooked meal dropped round
-9. An hour with someone good with money, going through outgoings
-10. A walk and a chat, to get out of the house
+last: https://build40for40.com/handup/l/4c1d9a07e2b85f36
 
 handup: Change, swap or drop any of them by number, like "change 7 to a lift to the station", or add your own. When it looks right, I'll write you a message to send on. Or leave it for now. I'll be here when you come back.
 
@@ -276,44 +269,24 @@ handup: Change, swap or drop any of them by number, like "change 7 to a lift to 
 time: 10:44
 me: The laptop goes back Friday. And 6 is really just the kids on Thursday afternoon.
 
-list: Done. Here it is as it stands.
-1. A laptop to borrow, the work one goes back Friday
-2. A desk or a quiet spot with good Wi-Fi, a few days a week
-3. Someone who hires to look over my CV
-4. A practice interview
-5. A written recommendation from someone I've worked with
-6. Someone to have the kids on Thursday afternoon
-7. A lift to an interview
-8. A home-cooked meal dropped round
-9. An hour with someone good with money, going through outgoings
-10. A walk and a chat, to get out of the house
-last: Say when it looks right and I'll write the message to send.
+handup: Done. Say when it looks right and I'll write the message to send.
 
 # 3. The share. Written as Jess, set apart so she can copy it in one go. She pastes it, Handup never posts
 time: 10:46
 me: Looks right. What do I send?
-handup: Here you go. Paste it into the family group as it is.
+handup: Here you go. Paste it into the family group as it is. When someone offers, tell me or just forward me their message, and I'll tick it off.
 
 paste: For the family group
 > Hi all. The studio closed this morning, all of us at once, so I'm out of work as of today. Lots of you have asked what you can do, so here's what would genuinely help.
-1. A laptop to borrow, mine goes back Friday
-2. A desk with good Wi-Fi, a few days a week
-3. A CV look-over from someone who hires
-4. A practice interview
-5. A written recommendation
-6. The kids on Thursday afternoon
-7. A lift to an interview
-8. A home-cooked meal
-9. An hour going through outgoings
-10. A walk and a chat
-> Just reply with the number you can cover. Thank you x
+> https://build40for40.com/handup/l/4c1d9a07e2b85f36
+> If you can help with any of these, tap 'I can do this' on the list or just reply here. Thank you, it means a lot x
 
 --- That evening
 
 # 4. A tick. Uncle Rob has no laptop and sends money instead. Handup ticks it off and keeps the amount out of everything
 time: 18:12
 fwd: Uncle Rob: Haven't got a spare laptop, love, but I've sent you something to get one. Don't argue x
-handup: Ticked off 1, the laptop, from Rob. 9 still open.
+handup: Ticked off 1, the laptop, from Rob. That's 1 of 10 sorted.
 
 paste: For the family group
 > The laptop's sorted, thank you Rob x
@@ -327,7 +300,7 @@ paste: For Sam
 
 time: 19:30
 fwd: Sam: Of course. Send it over, and come in Thursday, we've got a spare desk too.
-handup: Ticked off 3 and 2, the CV and the desk, both from Sam. 7 still open.
+handup: Ticked off 3 and 2, the CV and the desk, both from Sam. That's 3 of 10 sorted.
 
 paste: For Sam
 > Thank you Sam. CV's on its way, see you Thursday.
@@ -336,8 +309,8 @@ me: Tomorrow I'm ringing Rob.
 handup: Good call. I'll be here.
 
 # The ending
-handup: That's me. A list of favours, in your chat. You paste, I keep count.
-handup: Sent a list by someone you love? Just reply to them with the number you can cover.
+handup: That's me. A list of favours. You paste, I keep count.
+handup: Sent a list by someone you love? Reply to them with the number, or just say what you could do.
 </script>
 
 <script>
@@ -428,9 +401,30 @@ handup: Sent a list by someone you love? Just reply to them with the number you 
   flush();
 
   show = Math.min(show, rows.length);
-  var steps = rows.length - show;
-  track.style.height = 'calc(100vh + ' + (steps * STEP + 40) + 'px)';
-  track.style.height = 'calc(100dvh + ' + (steps * STEP + 40) + 'px)';
+  // Each message takes one STEP of scrolling to arrive. One taller than the chat gets extra scrolling, spent moving from its top to its bottom.
+  var appear = [], extra = [];
+  function measure() {
+    var room = log.clientHeight - 28, at = -0.5 * STEP;
+    for (var i = show - 1; i < rows.length; i++) {
+      appear[i] = at;
+      extra[i] = Math.max(0, rows[i].firstChild.scrollHeight - room);
+      at = i === show - 1 ? 0.75 * STEP + extra[i] : at + STEP + extra[i];
+    }
+    var length = Math.round(appear[rows.length - 1] + 0.5 * STEP + extra[rows.length - 1] + 40);
+    track.style.height = 'calc(100vh + ' + length + 'px)';
+    track.style.height = 'calc(100dvh + ' + length + 'px)';
+  }
+  function place() {
+    var k = shown - 1, row = rows[k];
+    if (!row || log.hidden) return;
+    var bottom = log.scrollHeight - log.clientHeight, top = row.offsetTop - log.offsetTop - 14;
+    if (top >= bottom) { log.scrollTop = bottom; return; }
+    var y = Math.max(0, window.scrollY - track.offsetTop);
+    var pan = extra[k] ? Math.min(1, Math.max(0, (y - appear[k] - 0.5 * STEP) / extra[k])) : 1;
+    log.scrollTop = top + pan * (bottom - top);
+  }
+  var settleUntil = 0;
+  function settle() { place(); if (Date.now() < settleUntil) requestAnimationFrame(settle); }
 
   var hint = chips.innerHTML, shown = -1, ended = null;
   function end(on) {
@@ -445,18 +439,24 @@ handup: Sent a list by someone you love? Just reply to them with the number you 
   }
   function update() {
     var y = Math.max(0, window.scrollY - track.offsetTop);
-    var n = Math.min(rows.length, show + Math.floor((y + STEP * 0.25) / STEP));
+    var n = show;
+    while (n < rows.length && y >= appear[n]) n++;
     if (n !== shown) {
+      settleUntil = Date.now() + 450; requestAnimationFrame(settle);
       for (var i = 0; i < rows.length; i++) rows[i].classList.toggle('on', i < n);
       shown = n;
       var at = rows[n - 1].getAttribute('data-clock');
       if (at) now.textContent = at;
     }
+    place();
     end(n >= rows.length);
   }
+  function remeasure() { if (log.hidden) return; measure(); shown = -1; update(); }
   window.addEventListener('scroll', update, { passive: true });
-  window.addEventListener('resize', update);
+  window.addEventListener('resize', remeasure);
+  window.addEventListener('load', remeasure);
   log.classList.add('still'); // the messages already there at the start appear without animating
+  measure();
   update();
   setTimeout(function () { log.classList.remove('still'); }, 80);
 
@@ -488,6 +488,23 @@ handup: Sent a list by someone you love? Just reply to them with the number you 
       return para(lines.map(marks).join('<br>'));
     }).join('');
   }
+  // One bubble per paragraph, like a person texting. A numbered list stays with the line above it, and the message to paste stays whole. Same as splitReply in apps/agent/src/reply.ts.
+  function isList(p) { return p.split('\n').every(function (l) { return /^\s*(~\s*)?\d+\./.test(l); }); }
+  function bubbles(reply) {
+    var out = [];
+    reply.split(PASTE).forEach(function (part, i) {
+      var text = part.trim();
+      if (!text) return;
+      if (i > 0) { out.push(text); return; }
+      text.split(/\n\s*\n/).forEach(function (p) {
+        p = p.trim();
+        if (!p) return;
+        if (isList(p) && out.length && !isList(out[out.length - 1])) out[out.length - 1] += '\n\n' + p;
+        else out.push(p);
+      });
+    });
+    return out;
+  }
   function say1(who, html) {
     var row = document.createElement('div'); row.className = 'row on' + (livelog.lastChild && livelog.lastChild.getAttribute('data-who') !== who ? ' turn' : '');
     row.setAttribute('data-who', who);
@@ -506,7 +523,7 @@ handup: Sent a list by someone you love? Just reply to them with the number you 
     try {
       var reply = await window.HANDUP_ASK(turns, { onText: function () {}, signal: stop.signal });
       turns.push({ role: 'assistant', content: reply });
-      reply.split(PASTE).forEach(function (part) { if (part.trim()) say1('them', bubble(part)); });
+      bubbles(reply).forEach(function (part) { say1('them', bubble(part)); });
       if (turns.length + 2 > MAX_TURNS) { say1('sys', 'That\u2019s as long as this try-out goes. Reload the page to start again.'); say.disabled = true; send.disabled = true; busy = true; status.textContent = 'online'; return; }
     } catch (e) {
       if (e && e.name === 'AbortError') return;
@@ -539,7 +556,7 @@ handup: Sent a list by someone you love? Just reply to them with the number you 
     } else {
       if (stop) stop.abort();
       if (busy && !say.disabled) { turns.pop(); livelog.removeChild(livelog.lastChild); setBusy(false); }
-      track.style.height = storyHeight; now.textContent = storyClock; shown = -1; update();
+      track.style.height = storyHeight; now.textContent = storyClock; remeasure();
     }
   }
   document.getElementById('try').addEventListener('click', function () { live(true); });
