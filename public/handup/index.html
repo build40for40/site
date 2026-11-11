@@ -170,6 +170,17 @@
   .brand label { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px 3px 6px; border-radius: 999px; border: 1px solid var(--bar-line); cursor: pointer; color: var(--chat-ink); }
   .brand input { margin: 0; accent-color: var(--cloak); width: 13px; height: 13px; }
   .brand label:has(input:checked) { border-color: var(--cloak); font-weight: 700; }
+  /* On wide screens the toggle sits top right, opposite the wordmark, and the one in the phone is hidden. */
+  .brand.corner { display: none; position: absolute; z-index: 3; top: 26px; right: 32px; padding: 6px 6px 6px 14px; gap: 6px; border-radius: 999px; background: var(--bar); border: 1px solid var(--bar-line); box-shadow: 0 6px 18px rgba(40, 25, 10, 0.12); font-size: 13.5px; }
+  .brand.corner span { font-family: var(--display); font-style: italic; font-weight: 600; font-size: 16px; color: var(--soft-ink); }
+  :root[data-brand="86"] .brand.corner span { font-style: normal; font-size: 14px; }
+  .brand.corner label { padding: 6px 13px 6px 9px; font-size: 14px; }
+  .brand.corner label:has(input:checked) { background: var(--cloak); border-color: var(--cloak); color: var(--cloak-ink); }
+  .brand.corner input { accent-color: var(--cloak-ink); }
+  @media (min-width: 900px) and (min-height: 560px) {
+    .brand.corner { display: flex; }
+    .bar .brand { display: none; }
+  }
   .av-bg { fill: var(--av-bg, #ecdfc6); } .av-hand { stroke: var(--av-hand, #8a2f1f); } .av-spark { fill: var(--av-spark, #c9973f); }
 
   /* Maradona, 1986: Argentina's sky blue and white, a sunlit pitch, a fist and a glove where the fresco hands were. */
@@ -225,6 +236,11 @@
 <div class="track" id="track">
 <div class="stage">
   <a class="mark" href="https://build40for40.com"><b>HANDUP</b><span>Day 8 of 40</span></a>
+  <div class="brand corner" role="radiogroup" aria-label="Which hand of God">
+    <span>Hand of God</span>
+    <label><input type="radio" name="brand-corner" value="fresco" checked> Michelangelo</label>
+    <label><input type="radio" name="brand-corner" value="86"> Maradona</label>
+  </div>
   <div class="lamp" aria-hidden="true"></div>
   <img class="hand adam fresco" src="hand-adam.jpg" alt="" width="480" height="220">
   <img class="hand god fresco" src="hand-god.jpg" alt="" width="480" height="220">
