@@ -5,48 +5,53 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Handup turns 'let me know if I can help' into a list of real things your people can do, the week you lose your job. A chat that shows how it works.">
 <title>Handup</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:ital,wght@0,500;0,700;1,800&family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500;1,600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500;1,600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
 <style>
   /* Layout: the page is one chat between Handup and someone who has just been laid off. The chat is pinned to the screen and the page behind it is tall. Scrolling down brings in the next message, scrolling up fades it away again. The conversation is the plain text block at the bottom.
-     The look: the Creation of Adam. Warm fresco plaster, cracks and grain, and on a wide screen the two reaching hands sit either side of the phone, so the chat is the gap between them. */
+     Two parts, kept apart on purpose:
+     - The phone is WhatsApp, and looks like WhatsApp whatever the website looks like. Its colours are the --wa-* ones and never change with the look.
+     - The website around it has two looks, picked with the toggle: Michelangelo's hand of God (the fresco, the default) and Maradona's, painted in the same fresco style. */
   :root {
-    --page: #ecdfc6; --page-deep: #d9c29b; --ink: #3b2416; --soft-ink: #6e5442; --crack: #7a5a3e;
-    --bezel: #2a1a12; --bezel-edge: #6b4a35;
-    --chat-bg: #f2e7d2; --me: #f3d7ae; --them: #fbf6ec; --chat-ink: #33241a; --chat-soft: #85705f; --tick: #4f7fa8;
-    --bar: #fbf6ec; --bar-line: #e2d2b6; --chip: #fbf6ec; --chip-ink: #3b2416; --chip-line: #3b2416;
-    --cloak: #8a2f1f; --cloak-ink: #fbf1e3; --gold: #c9973f; --gold-ink: #2e1d0b; --sage: #5f8a73;
-    --paste: #fffaf1; --paste-line: #c9973f;
-    --hand-filter: none;
+    /* The website */
+    --page: #ecdfc6; --page-deep: #d9c29b; --ink: #3b2416; --soft-ink: #6e5442;
+    --accent: #8a2f1f; --accent-ink: #fbf1e3; --panel: #fbf6ec; --panel-line: #e2d2b6;
+    --hand-filter: none; --scene-opacity: 0.62; --scene-blend: multiply;
     --display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
     --caps: "Cinzel", "Trajan Pro", "Iowan Old Style", Georgia, serif;
     --body: "Source Serif 4", "Iowan Old Style", Georgia, serif;
+    /* The phone: WhatsApp's own colours */
+    --wa-head: #008069; --wa-head-ink: #ffffff; --wa-bg: #efeae2; --wa-me: #d9fdd3; --wa-them: #ffffff;
+    --wa-ink: #111b21; --wa-soft: #667781; --wa-tick: #53bdeb; --wa-bar: #f0f2f5; --wa-line: #e9edef; --wa-green: #008069; --wa-green-ink: #ffffff;
+    --wa-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --page: #1d1510; --page-deep: #120c08; --ink: #f1e4cc; --soft-ink: #bfa88c; --crack: #c9a77f;
-      --bezel: #0b0705; --bezel-edge: #6b4a35;
-      --chat-bg: #211812; --me: #5b3a22; --them: #33271e; --chat-ink: #f1e4cc; --chat-soft: #a8927b; --tick: #7fb0dc;
-      --bar: #2b2019; --bar-line: #3d2e23; --chip: #2b2019; --chip-ink: #f1e4cc; --chip-line: #a8927b;
-      --cloak: #7a2819; --cloak-ink: #fbf1e3; --gold: #d6a650; --gold-ink: #2e1d0b; --sage: #86b39a;
-      --paste: #2a1f17; --paste-line: #d6a650;
-      --hand-filter: brightness(0.8) sepia(0.15);
+      --page: #1d1510; --page-deep: #120c08; --ink: #f1e4cc; --soft-ink: #bfa88c;
+      --accent: #a8432d; --accent-ink: #fbf1e3; --panel: #2b2019; --panel-line: #3d2e23;
+      --hand-filter: brightness(0.8) sepia(0.15); --scene-opacity: 0.32; --scene-blend: normal;
+      --wa-head: #202c33; --wa-head-ink: #e9edef; --wa-bg: #0b141a; --wa-me: #005c4b; --wa-them: #202c33;
+      --wa-ink: #e9edef; --wa-soft: #8696a0; --wa-bar: #202c33; --wa-line: #2f3b43; --wa-green: #00a884; --wa-green-ink: #0b141a;
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --page: #1d1510; --page-deep: #120c08; --ink: #f1e4cc; --soft-ink: #bfa88c; --crack: #c9a77f;
-    --bezel: #0b0705; --bezel-edge: #6b4a35;
-    --chat-bg: #211812; --me: #5b3a22; --them: #33271e; --chat-ink: #f1e4cc; --chat-soft: #a8927b; --tick: #7fb0dc;
-    --bar: #2b2019; --bar-line: #3d2e23; --chip: #2b2019; --chip-ink: #f1e4cc; --chip-line: #a8927b;
-    --cloak: #7a2819; --cloak-ink: #fbf1e3; --gold: #d6a650; --gold-ink: #2e1d0b; --sage: #86b39a;
-    --paste: #2a1f17; --paste-line: #d6a650;
-    --hand-filter: brightness(0.8) sepia(0.15);
+    --page: #1d1510; --page-deep: #120c08; --ink: #f1e4cc; --soft-ink: #bfa88c;
+    --accent: #a8432d; --accent-ink: #fbf1e3; --panel: #2b2019; --panel-line: #3d2e23;
+    --hand-filter: brightness(0.8) sepia(0.15); --scene-opacity: 0.32; --scene-blend: normal;
+    --wa-head: #202c33; --wa-head-ink: #e9edef; --wa-bg: #0b141a; --wa-me: #005c4b; --wa-them: #202c33;
+    --wa-ink: #e9edef; --wa-soft: #8696a0; --wa-bar: #202c33; --wa-line: #2f3b43; --wa-green: #00a884; --wa-green-ink: #0b141a;
     color-scheme: dark;
   }
+  /* Maradona, 1986, painted as a fresco: cooler plaster and sky-blue accents. Only the website changes, never the phone. */
+  :root[data-brand="86"] { --page: #e6e2d6; --page-deep: #b9c0c4; --ink: #1f2b3d; --soft-ink: #4d5a6b; --accent: #2e5f92; --accent-ink: #ffffff; --panel: #f7f5ef; --panel-line: #d6d8d4; }
+  @media (prefers-color-scheme: dark) {
+    :root[data-brand="86"]:not([data-theme="light"]) { --page: #121820; --page-deep: #080b10; --ink: #e8ecf0; --soft-ink: #a7b2bf; --accent: #3f78b4; --panel: #1b222c; --panel-line: #2b3440; }
+  }
+  :root[data-brand="86"][data-theme="dark"] { --page: #121820; --page-deep: #080b10; --ink: #e8ecf0; --soft-ink: #a7b2bf; --accent: #3f78b4; --panel: #1b222c; --panel-line: #2b3440; }
 
   html, body { margin: 0; }
   body {
-    color: var(--chat-ink); font-family: var(--body); font-size: 15.5px; line-height: 1.42;
+    color: var(--ink); font-family: var(--body); font-size: 15.5px; line-height: 1.42;
     background-color: var(--page);
     /* Fresco plaster: soft patches of pigment, darker at the edges like an old ceiling. */
     background-image:
@@ -56,6 +61,7 @@
       radial-gradient(ellipse 120% 90% at 50% 50%, transparent 55%, var(--page-deep) 130%);
     background-attachment: fixed;
   }
+  :root[data-brand="86"] body { background-image: radial-gradient(ellipse 120% 90% at 50% 45%, transparent 55%, var(--page-deep) 130%); }
   /* Grain and cracks over the plaster, under everything else. */
   body::before, body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; }
   body::before {
@@ -68,42 +74,45 @@
   }
   :root[data-theme="dark"] body::before { mix-blend-mode: screen; opacity: 0.08; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) body::before { mix-blend-mode: screen; opacity: 0.08; } }
+  /* The painted stadium behind the 1986 look: sky, a hazy crowd, the hoardings and the pitch, brushed onto the plaster. */
+  .scene { display: none; position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; opacity: var(--scene-opacity); mix-blend-mode: var(--scene-blend); }
+  :root[data-brand="86"] .scene { display: block; }
 
   .track { position: relative; z-index: 1; min-height: 100vh; min-height: 100dvh; }
-  /* The phone: pinned to the screen while the page scrolls behind it. On a real phone it keeps a thin bezel so the chat isn't squeezed. */
-  .stage { --pw: min(390px, calc(100vw - 12px)); position: sticky; top: 0; height: 100vh; height: 100dvh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-  .phone { position: relative; z-index: 2; flex: none; box-sizing: border-box; width: var(--pw); height: min(800px, calc(100vh - 12px)); height: min(800px, calc(100dvh - 12px)); padding: 6px; border-radius: 40px; background: var(--bezel); border: 1.5px solid var(--bezel-edge); box-shadow: 0 0 0 1px rgba(40, 20, 8, 0.3), 0 24px 50px rgba(60, 30, 10, 0.35); }
-  .phone::before, .phone::after { content: ""; position: absolute; width: 3px; background: var(--bezel-edge); }
-  .phone::before { left: -4.5px; top: 132px; height: 46px; border-radius: 2px 0 0 2px; box-shadow: 0 60px 0 var(--bezel-edge); }
+  /* The phone: pinned to the screen while the page scrolls behind it. On a narrow screen the look toggle sits above it, so the phone leaves room. */
+  .stage { --pw: min(390px, calc(100vw - 12px)); position: sticky; top: 0; height: 100vh; height: 100dvh; display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center; overflow: hidden; }
+  .phone { position: relative; z-index: 2; flex: none; box-sizing: border-box; width: var(--pw); height: min(800px, calc(100vh - 60px)); height: min(800px, calc(100dvh - 60px)); padding: 6px; border-radius: 40px; background: #161616; border: 1.5px solid #3a3a3a; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 24px 50px rgba(40, 25, 10, 0.35); }
+  .phone::before, .phone::after { content: ""; position: absolute; width: 3px; background: #3a3a3a; }
+  .phone::before { left: -4.5px; top: 132px; height: 46px; border-radius: 2px 0 0 2px; box-shadow: 0 60px 0 #3a3a3a; }
   .phone::after { right: -4.5px; top: 176px; height: 74px; border-radius: 0 2px 2px 0; }
-  .cam { position: absolute; z-index: 2; top: 13px; left: 50%; transform: translateX(-50%); width: 78px; height: 20px; border-radius: 999px; background: #070403; }
-  .cam::after { content: ""; position: absolute; right: 7px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: #241a14; }
-  .app { position: relative; height: 100%; border-radius: 33px; overflow: hidden; display: flex; flex-direction: column; background: var(--chat-bg); }
-  .sbar { background: var(--cloak); color: var(--cloak-ink); display: flex; justify-content: space-between; align-items: center; height: 30px; padding: 4px 24px 0; font-family: system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: 700; flex: none; }
+  .cam { position: absolute; z-index: 2; top: 13px; left: 50%; transform: translateX(-50%); width: 78px; height: 20px; border-radius: 999px; background: #050505; }
+  .cam::after { content: ""; position: absolute; right: 7px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: #1d1d2a; }
+  .app { position: relative; height: 100%; border-radius: 33px; overflow: hidden; display: flex; flex-direction: column; background: var(--wa-bg); color: var(--wa-ink); font-family: var(--wa-font); font-size: 15px; line-height: 1.38; }
+  .sbar { background: var(--wa-head); color: var(--wa-head-ink); display: flex; justify-content: space-between; align-items: center; height: 30px; padding: 4px 24px 0; font-size: 13px; font-weight: 700; flex: none; }
   .sbar span { display: flex; align-items: center; gap: 5px; }
   .sbar svg { height: 11px; width: auto; display: block; fill: currentColor; }
-  .home { background: var(--bar); display: flex; justify-content: center; padding: 2px 0 7px; flex: none; }
-  .home i { width: 118px; height: 4px; border-radius: 4px; background: var(--chat-ink); opacity: 0.5; }
+  .home { background: var(--wa-bar); display: flex; justify-content: center; padding: 2px 0 7px; flex: none; }
+  .home i { width: 118px; height: 4px; border-radius: 4px; background: var(--wa-ink); opacity: 0.5; }
   @media (min-width: 600px) {
-    .stage { --pw: min(390px, calc((100vh - 48px) * 0.4875)); }
-    .phone { height: min(800px, calc(100vh - 48px)); padding: 10px; border-radius: 52px; }
+    .stage { --pw: min(390px, calc((100vh - 72px) * 0.4875)); }
+    .phone { height: min(800px, calc(100vh - 72px)); padding: 10px; border-radius: 52px; }
     .app { border-radius: 41px; }
     .cam { top: 18px; }
     .sbar { height: 34px; }
   }
-  :focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
   /* The two hands, on screens wide enough for them. The fingertips stop just short of the phone. */
-  .hand { display: none; position: absolute; z-index: 1; top: 47%; width: min(620px, calc(50vw - var(--pw) / 2 - 4px)); height: auto; transform: translateY(-50%); filter: var(--hand-filter); pointer-events: none; user-select: none; }
-  .hand { mix-blend-mode: multiply; }
+  .hand { display: none; position: absolute; z-index: 1; top: 47%; width: min(620px, calc(50vw - var(--pw) / 2 - 4px)); height: auto; transform: translateY(-50%); filter: var(--hand-filter); mix-blend-mode: multiply; pointer-events: none; user-select: none; }
   .hand.adam { right: calc(50% + var(--pw) / 2 + 4px); -webkit-mask-image: radial-gradient(ellipse 100% 50% at 100% 50%, #000 45%, transparent 100%); mask-image: radial-gradient(ellipse 100% 50% at 100% 50%, #000 45%, transparent 100%); }
   .hand.god { left: calc(50% + var(--pw) / 2 + 4px); -webkit-mask-image: radial-gradient(ellipse 100% 50% at 0% 50%, #000 45%, transparent 100%); mask-image: radial-gradient(ellipse 100% 50% at 0% 50%, #000 45%, transparent 100%); }
+  .hand.kit { -webkit-mask-image: radial-gradient(ellipse 100% 62% at 100% 45%, #000 55%, transparent 100%); mask-image: radial-gradient(ellipse 100% 62% at 100% 45%, #000 55%, transparent 100%); }
+  .hand.god.kit { -webkit-mask-image: radial-gradient(ellipse 100% 62% at 0% 45%, #000 55%, transparent 100%); mask-image: radial-gradient(ellipse 100% 62% at 0% 45%, #000 55%, transparent 100%); }
+  :root[data-brand="86"] .hand.fresco, :root:not([data-brand="86"]) .hand.kit { display: none !important; }
   /* At night the ceiling is lit by a lamp: a warm glow behind the hands, so they still read on the dark wall. */
   .lamp { display: none; position: absolute; z-index: 0; left: 0; right: 0; top: 47%; height: 62vh; transform: translateY(-50%); pointer-events: none; background: radial-gradient(ellipse 46% 40% at 50% 50%, rgba(214, 186, 140, 0.62), rgba(214, 186, 140, 0.18) 60%, transparent 80%); }
   :root[data-theme="dark"] .lamp { display: block; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .lamp { display: block; } }
-  :root[data-theme="dark"] .big em { color: var(--gold); }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .big em { color: var(--gold); } }
   .mark, .tag { display: none; position: absolute; z-index: 1; color: var(--ink); }
   .mark { top: 28px; left: 36px; text-decoration: none; }
   .mark b { display: block; font-family: var(--caps); font-weight: 700; font-size: 30px; letter-spacing: 0.16em; line-height: 1; }
@@ -111,126 +120,136 @@
   .tag { bottom: 40px; left: 36px; max-width: calc(50vw - var(--pw) / 2 - 72px); font-family: var(--display); font-style: italic; font-weight: 600; font-size: clamp(24px, 2.3vw, 36px); line-height: 1.12; letter-spacing: -0.005em; }
   .tag small { display: block; margin-top: 12px; font-family: var(--body); font-style: normal; font-weight: 400; font-size: 14px; line-height: 1.45; color: var(--soft-ink); letter-spacing: 0; }
   .tag.right { left: auto; right: 36px; text-align: right; }
+  :root[data-brand="86"] .tag { top: 118px; bottom: auto; }
+
+  /* The look toggle: part of the website, never the phone. Above the phone on a narrow screen, top right on a wide one. */
+  .look { position: relative; z-index: 3; flex: none; display: flex; align-items: center; gap: 6px; padding: 4px 4px 4px 12px; border-radius: 999px; background: var(--panel); border: 1px solid var(--panel-line); box-shadow: 0 6px 18px rgba(40, 25, 10, 0.12); font-family: var(--body); font-size: 13px; color: var(--ink); }
+  .look > span { font-family: var(--display); font-style: italic; font-weight: 600; font-size: 15px; color: var(--soft-ink); }
+  .look label { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px 5px 8px; border-radius: 999px; cursor: pointer; }
+  .look input { margin: 0; width: 13px; height: 13px; accent-color: var(--accent-ink); }
+  .look label:has(input:checked) { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
   @media (min-width: 900px) and (min-height: 560px) {
+    .stage { --pw: min(390px, calc((100vh - 48px) * 0.4875)); }
+    .phone { height: min(800px, calc(100vh - 48px)); }
+    .look { position: absolute; top: 26px; right: 32px; padding: 6px 6px 6px 16px; font-size: 14px; }
+    .look > span { font-size: 16px; }
+    .look label { padding: 6px 13px 6px 9px; }
     .hand, .mark { display: block; }
   }
   @media (min-width: 1100px) and (min-height: 700px) { .tag { display: block; } }
 
-  .head { background: var(--cloak); color: var(--cloak-ink); display: flex; align-items: center; gap: 12px; padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  /* Inside the phone: WhatsApp, as it is. */
+  .head { background: var(--wa-head); color: var(--wa-head-ink); display: flex; align-items: center; gap: 12px; padding-block: 8px 10px; padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .head svg { width: 40px; height: 40px; flex: none; }
-  .head .name { font-family: var(--caps); font-weight: 700; font-size: 20px; line-height: 1.1; letter-spacing: 0.1em; }
-  .head .status { font-family: var(--display); font-style: italic; font-size: 15px; opacity: 0.92; }
-
+  .head .name { font-weight: 600; font-size: 17px; line-height: 1.2; }
+  .head .status { font-size: 13px; opacity: 0.85; }
   .log { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding-block: 14px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
-  .msg { max-width: 84%; padding: 8px 10px 5px; border-radius: 10px; overflow-wrap: anywhere; box-shadow: 0 1px 0 rgba(80, 50, 20, 0.12); }
-  .msg.them { align-self: flex-start; background: var(--them); border-top-left-radius: 2px; }
-  .msg.me { align-self: flex-end; background: var(--me); border-top-right-radius: 2px; }
+  .msg { max-width: 84%; padding: 6px 9px 4px; border-radius: 8px; overflow-wrap: anywhere; box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13); }
+  .msg.them { align-self: flex-start; background: var(--wa-them); border-top-left-radius: 0; }
+  .msg.me { align-self: flex-end; background: var(--wa-me); border-top-right-radius: 0; }
   .row { display: grid; grid-template-rows: 0fr; opacity: 0; transform: translateY(10px); transition: grid-template-rows 0.32s ease, opacity 0.32s ease, transform 0.32s ease; flex: none; }
   .row.on { grid-template-rows: 1fr; opacity: 1; transform: none; }
   .row > .in { min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
-  .row > .in > * { margin-bottom: 6px; }
-  .row.turn > .in { padding-top: 6px; }
+  .row > .in > * { margin-bottom: 4px; }
+  .row.turn > .in { padding-top: 8px; }
   .still .row { transition: none; }
   @media (prefers-reduced-motion: reduce) { .row { transition: none; transform: none; } }
   .msg strong { font-weight: 700; }
-  .msg a { color: inherit; font-weight: 700; }
-  .meta { display: block; text-align: right; font-family: system-ui, -apple-system, sans-serif; font-size: 11px; color: var(--chat-soft); margin-top: 2px; }
-  .meta b { color: var(--tick); font-weight: 400; }
-  .big { font-family: var(--display); font-weight: 700; font-size: 29px; line-height: 1.04; letter-spacing: -0.01em; }
-  .big em { font-style: italic; color: var(--cloak); }
-  .day { align-self: center; background: var(--them); color: var(--chat-soft); font-family: var(--display); font-style: italic; font-size: 15px; padding: 3px 14px; border-radius: 8px; margin: 8px 0 14px; }
+  .meta { display: block; text-align: right; font-size: 11px; color: var(--wa-soft); margin-top: 1px; }
+  .meta b { color: var(--wa-tick); font-weight: 400; }
+  .day { align-self: center; background: var(--wa-them); color: var(--wa-soft); font-size: 12.5px; padding: 5px 12px; border-radius: 8px; margin: 8px 0 12px; box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13); }
   .p + .p { margin-top: 8px; }
-  /* A list: numbered lines, the way the real agent sends it as plain text. A ticked line is crossed through with who sorted it. */
-  .list { margin-top: 4px; font-size: 14px; line-height: 1.35; }
-  .list span { display: block; padding-left: 1.45em; text-indent: -1.45em; margin-top: 2px; }
-  .list span.done { color: var(--chat-soft); }
-  .list span.done s { text-decoration-thickness: 1px; }
-  .list span.done i { font-style: normal; color: var(--sage); font-weight: 700; }
-  /* The message to paste: set apart, so it reads as something to copy whole. */
-  .msg.paste { background: var(--paste); border: 1px dashed var(--paste-line); }
-  .paste .label { display: flex; align-items: center; gap: 6px; font-family: var(--caps); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
-  .paste .label svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; }
-  .fwd { display: flex; align-items: center; gap: 4px; font-size: 12.5px; font-style: italic; color: var(--chat-soft); margin-bottom: 3px; }
+  /* A list: numbered lines of plain text, as the agent sends it. A ticked line is crossed through, the way WhatsApp shows ~text~. */
+  .list span { display: block; padding-left: 1.4em; text-indent: -1.4em; }
+  .list s { color: var(--wa-soft); }
+  .fwd { display: flex; align-items: center; gap: 4px; font-size: 12.5px; font-style: italic; color: var(--wa-soft); margin-bottom: 2px; }
   .fwd svg { width: 13px; height: 13px; fill: currentColor; }
-  .who { font-size: 12.5px; font-weight: 700; color: var(--cloak); }
 
-  .bar { background: var(--bar); border-top: 1px solid var(--bar-line); padding-block: 10px 12px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 8px; }
+  .bar { background: var(--wa-bar); border-top: 1px solid var(--wa-line); padding-block: 10px 12px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 8px; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 44px; align-items: center; }
-  .chip { font: inherit; font-weight: 600; background: var(--chip); color: var(--chip-ink); border: 1.5px solid var(--chip-line); border-radius: 999px; padding: 9px 16px; cursor: pointer; text-align: left; text-decoration: none; display: inline-block; }
-  .chip:hover { border-color: var(--cloak); color: var(--cloak); }
-  .chip.go { background: var(--cloak); color: var(--cloak-ink); border-color: var(--cloak); font-weight: 700; }
-  .chip.go:hover { background: var(--gold); border-color: var(--gold); color: var(--gold-ink); }
-  .hint { color: var(--chat-soft); font-size: 14px; font-style: italic; display: flex; align-items: center; gap: 8px; }
+  .chip { font: inherit; font-weight: 600; border-radius: 999px; padding: 10px 18px; cursor: pointer; text-decoration: none; display: inline-block; background: var(--wa-green); color: var(--wa-green-ink); border: none; }
+  .chip:hover { filter: brightness(1.08); }
+  .hint { color: var(--wa-soft); font-size: 14px; display: flex; align-items: center; gap: 8px; }
   .hint i { width: 9px; height: 9px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); margin-top: -4px; }
-  .note { font-size: 12px; color: var(--chat-soft); }
-
-  /* The look toggle. Two hands of God: Michelangelo's (the default) and Maradona's. */
-  .brand { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--chat-soft); flex-wrap: wrap; }
-  .brand span { margin-right: 4px; }
-  .brand label { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px 3px 6px; border-radius: 999px; border: 1px solid var(--bar-line); cursor: pointer; color: var(--chat-ink); }
-  .brand input { margin: 0; accent-color: var(--cloak); width: 13px; height: 13px; }
-  .brand label:has(input:checked) { border-color: var(--cloak); font-weight: 700; }
-  .av-bg { fill: var(--av-bg, #ecdfc6); } .av-hand { stroke: var(--av-hand, #8a2f1f); } .av-spark { fill: var(--av-spark, #c9973f); }
-
-  /* Maradona, 1986: Argentina's sky blue and white, a sunlit pitch, a fist and a glove where the fresco hands were. */
-  :root[data-brand="86"] {
-    --page: #e9f2fa; --page-deep: #b4cfe8; --ink: #0f2340; --soft-ink: #3d5674; --crack: transparent;
-    --bezel: #10151d; --bezel-edge: #3b4a5e;
-    --chat-bg: #eaf2f9; --me: #cfe5f7; --them: #ffffff; --chat-ink: #13223a; --chat-soft: #5f7189; --tick: #2f86d6;
-    --bar: #ffffff; --bar-line: #d3e0ec; --chip: #ffffff; --chip-ink: #0f2340; --chip-line: #0f2340;
-    --cloak: #17325c; --cloak-ink: #ffffff; --gold: #4b97d8; --gold-ink: #ffffff; --sage: #2f8f4e;
-    --paste: #f7fbff; --paste-line: #6cace4; --pitch: #4b8a3a; --pitch-2: #3f7c31;
-    --av-bg: #eaf2fa; --av-hand: #17325c; --av-spark: #6cace4;
-    --display: "Archivo", system-ui, sans-serif; --caps: "Archivo Black", "Arial Black", system-ui, sans-serif;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root[data-brand="86"]:not([data-theme="light"]) {
-      --page: #0d1828; --page-deep: #060c16; --ink: #eaf2fa; --soft-ink: #9fb4cc;
-      --chat-bg: #0f1b2b; --me: #1d4673; --them: #1a2738; --chat-ink: #eaf2fa; --chat-soft: #8ea2b9; --tick: #7fc0f0;
-      --bar: #162233; --bar-line: #24334a; --chip: #162233; --chip-ink: #eaf2fa; --chip-line: #8ea2b9;
-      --cloak: #24508c; --gold: #7fc0f0; --gold-ink: #0d1828; --sage: #5cc07f; --paste: #142235; --paste-line: #7fc0f0;
-      --pitch: #1f4a26; --pitch-2: #1a3f20;
-    }
-  }
-  :root[data-brand="86"][data-theme="dark"] {
-    --page: #0d1828; --page-deep: #060c16; --ink: #eaf2fa; --soft-ink: #9fb4cc;
-    --chat-bg: #0f1b2b; --me: #1d4673; --them: #1a2738; --chat-ink: #eaf2fa; --chat-soft: #8ea2b9; --tick: #7fc0f0;
-    --bar: #162233; --bar-line: #24334a; --chip: #162233; --chip-ink: #eaf2fa; --chip-line: #8ea2b9;
-    --cloak: #24508c; --gold: #7fc0f0; --gold-ink: #0d1828; --sage: #5cc07f; --paste: #142235; --paste-line: #7fc0f0;
-    --pitch: #1f4a26; --pitch-2: #1a3f20;
-  }
-  :root[data-brand="86"] body {
-    background-image:
-      repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.07) 0 70px, transparent 70px 140px),
-      linear-gradient(var(--pitch), var(--pitch-2)),
-      repeating-linear-gradient(90deg, rgba(108, 172, 228, 0.3) 0 84px, transparent 84px 168px),
-      radial-gradient(ellipse 120% 90% at 50% 40%, transparent 55%, var(--page-deep) 130%);
-    background-size: 100% 20%, 100% 20%, 100% 100%, 100% 100%;
-    background-position: bottom, bottom, 0 0, 0 0;
-    background-repeat: no-repeat;
-  }
-  :root[data-brand="86"] body::after, :root[data-brand="86"] .lamp { display: none; }
-  :root[data-brand="86"] .hand.fresco, :root:not([data-brand="86"]) .hand.kit { display: none; }
-  :root[data-brand="86"] .hand.kit { mix-blend-mode: normal; -webkit-mask-image: none; mask-image: none; filter: none; }
-  :root[data-brand="86"] .mark b { letter-spacing: 0.04em; font-size: 32px; }
-  :root[data-brand="86"] .head .name { letter-spacing: 0.04em; }
-  :root[data-brand="86"] .big { font-style: italic; font-weight: 800; font-size: 27px; letter-spacing: -0.02em; }
-  :root[data-brand="86"] .tag { bottom: auto; top: 112px; font-style: normal; font-weight: 700; letter-spacing: -0.01em; }
-  :root[data-brand="86"] .tag small { font-family: var(--display); font-weight: 500; }
-  :root[data-brand="86"] .day, :root[data-brand="86"] .hint, :root[data-brand="86"] .head .status { font-family: var(--display); }
+  .note { font-size: 12px; color: var(--wa-soft); }
 </style>
 </head>
 <body>
+<!-- 1986, painted: the stadium behind the Maradona look. Sky, a hazy crowd, the hoardings and the pitch, brushed onto the plaster. -->
+<svg class="scene" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+    <filter id="brush" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.011 0.028" numOctaves="3" seed="4" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="30" xChannelSelector="R" yChannelSelector="G"/></filter>
+    <filter id="crowd" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.18 0.26" numOctaves="2" seed="11"/><feColorMatrix values="0.9 0 0 0 0.12  0 0.75 0 0 0.12  0 0 0.75 0 0.14  0 0 0 0 1"/></filter>
+    <filter id="wash" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="18"/></filter>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6f9cc4"/><stop offset="0.5" stop-color="#bccbd2"/><stop offset="1" stop-color="#e2dccb"/></linearGradient>
+    <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a7b783"/><stop offset="1" stop-color="#7a9157"/></linearGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#sky)"/>
+  <g filter="url(#wash)" fill="#f4efe2" opacity="0.55"><ellipse cx="260" cy="150" rx="260" ry="60"/><ellipse cx="900" cy="90" rx="320" ry="50"/><ellipse cx="1380" cy="210" rx="240" ry="55"/></g>
+  <g filter="url(#brush)">
+    <path d="M-60 572 L1660 540 L1660 600 L-60 628 Z" fill="#5e6672" opacity="0.6"/>
+    <rect x="-60" y="612" width="1720" height="156" filter="url(#crowd)" opacity="0.6"/>
+    <rect x="-60" y="762" width="1720" height="36" fill="#ebe5d4"/>
+    <g opacity="0.7"><rect x="120" y="767" width="220" height="26" fill="#3f6694"/><rect x="520" y="767" width="160" height="26" fill="#c9a14a"/><rect x="900" y="767" width="240" height="26" fill="#3f6694"/><rect x="1320" y="767" width="150" height="26" fill="#b5503a"/></g>
+    <rect x="-60" y="794" width="1720" height="260" fill="url(#grass)"/>
+    <g fill="#ffffff" opacity="0.09"><rect x="-60" y="794" width="180" height="260"/><rect x="300" y="794" width="180" height="260"/><rect x="660" y="794" width="180" height="260"/><rect x="1020" y="794" width="180" height="260"/><rect x="1380" y="794" width="180" height="260"/></g>
+  </g>
+</svg>
 
 <div class="track" id="track">
 <div class="stage">
   <a class="mark" href="https://build40for40.com"><b>HANDUP</b><span>Day 8 of 40</span></a>
+  <div class="look" role="radiogroup" aria-label="Which hand of God">
+    <span>Hand of God</span>
+    <label><input type="radio" name="look" value="fresco" checked> Michelangelo</label>
+    <label><input type="radio" name="look" value="86"> Maradona</label>
+  </div>
   <div class="lamp" aria-hidden="true"></div>
   <img class="hand adam fresco" src="hand-adam.jpg" alt="" width="480" height="220">
   <img class="hand god fresco" src="hand-god.jpg" alt="" width="480" height="220">
-  <!-- 1986: drawn here, not a photo. A striped sleeve punching the ball up, and a keeper's glove reaching for it. -->
-  <svg class="hand adam kit" viewBox="0 0 480 220" aria-hidden="true"><defs><pattern id="albi" width="26" height="26" patternUnits="userSpaceOnUse" patternTransform="rotate(-24)"><rect width="13" height="26" fill="#6cace4"/><rect x="13" width="13" height="26" fill="#f4f8fb"/></pattern></defs><g transform="rotate(-24 240 110)"><rect x="-60" y="122" width="390" height="62" rx="28" fill="url(#albi)"/><rect x="300" y="130" width="112" height="46" rx="21" fill="#c68a5c"/><rect x="318" y="126" width="20" height="54" rx="4" fill="#ffffff"/><circle cx="426" cy="152" r="29" fill="#b97c50"/><path d="M412 136 q14-6 26 2 M410 152 q16-5 30 3" stroke="#8e5a35" stroke-width="3" fill="none" stroke-linecap="round"/></g><g transform="translate(446 30)"><circle r="26" fill="#ffffff" stroke="#1d2530" stroke-width="2.5"/><path d="M0-9 L8.6-2.8 L5.3 7.3 L-5.3 7.3 L-8.6-2.8Z" fill="#1d2530"/><path d="M0-9 V-24 M8.6-2.8 L22-8 M5.3 7.3 L14 20 M-5.3 7.3 L-14 20 M-8.6-2.8 L-22-8" stroke="#1d2530" stroke-width="2"/></g></svg>
-  <svg class="hand god kit" viewBox="0 0 480 220" aria-hidden="true"><g transform="translate(480 0) scale(-1 1) rotate(-30 240 110)"><rect x="-60" y="124" width="400" height="60" rx="28" fill="#7a8290"/><rect x="40" y="124" width="60" height="60" fill="#e0462f"/><rect x="318" y="122" width="30" height="64" rx="6" fill="#e9ecf0"/><rect x="340" y="120" width="70" height="68" rx="18" fill="#f6f7f9" stroke="#c9ced6" stroke-width="2"/><rect x="398" y="124" width="56" height="13" rx="6.5" fill="#f6f7f9" stroke="#c9ced6" stroke-width="2"/><rect x="402" y="140" width="60" height="13" rx="6.5" fill="#f6f7f9" stroke="#c9ced6" stroke-width="2"/><rect x="400" y="156" width="56" height="13" rx="6.5" fill="#f6f7f9" stroke="#c9ced6" stroke-width="2"/><rect x="392" y="172" width="46" height="12" rx="6" fill="#f6f7f9" stroke="#c9ced6" stroke-width="2"/></g></svg>
+  <!-- 1986, painted in the same fresco way: a striped sleeve punching the ball up, and a keeper's glove reaching for it. Drawn here, not a photo. -->
+  <svg class="hand adam kit" viewBox="0 0 480 220" aria-hidden="true">
+    <defs>
+      <pattern id="albi" width="40" height="22" patternUnits="userSpaceOnUse"><rect width="40" height="11" fill="#86b5dc"/><rect y="11" width="40" height="11" fill="#f2efe6"/></pattern>
+      <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.3"/><stop offset="0.45" stop-color="#000000" stop-opacity="0"/><stop offset="1" stop-color="#3a2a1c" stop-opacity="0.5"/></linearGradient>
+      <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8b892"/><stop offset="0.55" stop-color="#c48660"/><stop offset="1" stop-color="#8f5a3a"/></linearGradient>
+      <radialGradient id="ball" cx="0.36" cy="0.3" r="0.8"><stop offset="0" stop-color="#fffdf6"/><stop offset="0.65" stop-color="#e4ddcb"/><stop offset="1" stop-color="#9e937c"/></radialGradient>
+      <filter id="paint" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="7" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/><feTurbulence type="fractalNoise" baseFrequency="0.55 0.12" numOctaves="2" seed="2" result="g"/><feColorMatrix in="g" type="matrix" values="0.45 0 0 0 0.66  0.45 0 0 0 0.64  0.45 0 0 0 0.6  0 0 0 0 1" result="gt"/><feBlend in="d" in2="gt" mode="multiply" result="b"/><feComposite in="b" in2="d" operator="in"/></filter>
+    </defs>
+    <g filter="url(#paint)">
+      <g transform="translate(40 0) rotate(-28 240 110)">
+        <path d="M-90 88 C40 91 160 95 250 100 C266 112 266 132 250 142 C160 146 40 151 -90 156 Z" fill="url(#albi)"/>
+        <path d="M-90 88 C40 91 160 95 250 100 C266 112 266 132 250 142 C160 146 40 151 -90 156 Z" fill="url(#shade)"/>
+        <path d="M246 99 L268 100 Q274 121 268 142 L246 143 Q240 121 246 99 Z" fill="#efe9dc"/>
+        <path d="M264 104 C300 104 340 106 362 110 C374 118 374 128 362 134 C340 138 300 140 264 140 Q256 122 264 104 Z" fill="url(#skin)"/>
+        <path d="M350 100 C372 88 404 90 416 104 C424 116 422 136 410 144 C394 152 364 150 350 140 Z" fill="url(#skin)"/>
+        <path d="M400 97 q10 6 12 16 M406 112 q8 4 9 12 M404 126 q7 4 7 10" stroke="#7a4a2c" stroke-width="2.2" fill="none" stroke-linecap="round" opacity="0.55"/>
+        <path d="M358 126 C376 121 392 125 399 134 C390 141 372 141 358 136 Z" fill="#b97a52"/>
+      </g>
+      <g transform="translate(450 24)">
+        <circle r="21" fill="url(#ball)" stroke="#5a5244" stroke-width="1.4"/>
+        <path d="M0 -7 L6.7 -2.2 L4.1 5.7 L-4.1 5.7 L-6.7 -2.2 Z" fill="#3b372f"/>
+        <path d="M0 -7 V-19 M6.7 -2.2 L17 -7 M4.1 5.7 L11 16 M-4.1 5.7 L-11 16 M-6.7 -2.2 L-17 -7" stroke="#3b372f" stroke-width="1.6" fill="none"/>
+      </g>
+    </g>
+  </svg>
+  <svg class="hand god kit" viewBox="0 0 480 220" aria-hidden="true">
+    <defs>
+      <linearGradient id="shade2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.28"/><stop offset="0.45" stop-color="#000000" stop-opacity="0"/><stop offset="1" stop-color="#2a2a2a" stop-opacity="0.5"/></linearGradient>
+      <filter id="paint2" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="9" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="6" xChannelSelector="R" yChannelSelector="G" result="d"/><feTurbulence type="fractalNoise" baseFrequency="0.55 0.12" numOctaves="2" seed="5" result="g"/><feColorMatrix in="g" type="matrix" values="0.45 0 0 0 0.66  0.45 0 0 0 0.64  0.45 0 0 0 0.6  0 0 0 0 1" result="gt"/><feBlend in="d" in2="gt" mode="multiply" result="b"/><feComposite in="b" in2="d" operator="in"/></filter>
+    </defs>
+    <g filter="url(#paint2)">
+      <g transform="translate(480 0) scale(-1 1) translate(30 6) rotate(-22 240 110)">
+        <path d="M-90 88 C40 91 160 95 252 100 C268 112 268 132 252 142 C160 146 40 151 -90 156 Z" fill="#8d9298"/>
+        <path d="M40 92 L96 94 L96 150 L40 153 Z" fill="#b5503a"/>
+        <path d="M-90 88 C40 91 160 95 252 100 C268 112 268 132 252 142 C160 146 40 151 -90 156 Z" fill="url(#shade2)"/>
+        <path d="M248 98 L276 99 Q282 121 276 143 L248 144 Q242 121 248 98 Z" fill="#d6d1c4"/>
+        <path d="M272 100 C306 96 340 98 358 104 C368 116 368 132 358 140 C334 146 300 146 272 142 Q264 121 272 100 Z" fill="#ece8dd"/>
+        <g stroke-linecap="round" fill="none"><g stroke="#b9b2a2" stroke-width="16"><path d="M352 104 L430 94"/><path d="M358 115 L442 112"/><path d="M358 127 L438 130"/><path d="M352 138 L420 148"/><path d="M326 103 L368 82"/></g><g stroke="#efebe1" stroke-width="12"><path d="M352 104 L430 94"/><path d="M358 115 L442 112"/><path d="M358 127 L438 130"/><path d="M352 138 L420 148"/><path d="M326 103 L368 82"/></g></g>
+        <path d="M272 100 C306 96 340 98 358 104 C368 116 368 132 358 140 C334 146 300 146 272 142 Q264 121 272 100 Z" fill="url(#shade2)"/>
+      </g>
+    </g>
+  </svg>
   <p class="tag">Everyone says &ldquo;let me know if I can help&rdquo;.<small>Handup turns it into a list of real things they can do, the week you lose your job.</small></p>
   <p class="tag right">Things, favours and time.<small>Your people pick something off the list and you tell Handup it's sorted.</small></p>
 
@@ -246,10 +265,10 @@
   </div>
   <div class="head">
     <!-- Handup's mark: two fingers reaching, a spark of gold in the gap. -->
-    <svg viewBox="0 0 40 40" aria-hidden="true"><circle class="av-bg" cx="20" cy="20" r="20"/><g class="av-hand" fill="none" stroke-width="3.4" stroke-linecap="round"><path d="M5 25 C10 23 13 21.5 17 21"/><path d="M35 15.5 C30 17 27 18.5 23 19"/></g><circle class="av-spark" cx="20" cy="20" r="1.9"/></svg>
+    <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="20" fill="#ecdfc6"/><g stroke="#8a2f1f" fill="none" stroke-width="3.4" stroke-linecap="round"><path d="M5 25 C10 23 13 21.5 17 21"/><path d="M35 15.5 C30 17 27 18.5 23 19"/></g><circle cx="20" cy="20" r="1.9" fill="#c9973f"/></svg>
     <div>
-      <div class="name">HANDUP</div>
-      <div class="status">online, and on your side</div>
+      <div class="name">Handup</div>
+      <div class="status">online</div>
     </div>
   </div>
 
@@ -258,11 +277,6 @@
   <div class="bar">
     <div class="chips" id="chips"><span class="hint"><i></i>Scroll to read on</span></div>
     <div class="note">Handup's real message shapes, with a made-up person and her made-up friends.</div>
-    <div class="brand" role="radiogroup" aria-label="Which hand of God">
-      <span>Hand of God:</span>
-      <label><input type="radio" name="brand" value="fresco" checked> Michelangelo</label>
-      <label><input type="radio" name="brand" value="86"> Maradona</label>
-    </div>
   </div>
   <div class="home" aria-hidden="true"><i></i></div>
 </div>
@@ -275,10 +289,10 @@
 
   ONE LINE, ONE MESSAGE
 
-    big: text            Handup, in the large headline style. *stars* go italic red
+    big: text            Handup's opening line, all in bold
     handup: text         a message from Handup
     me: text             a message from the person who was laid off
-    fwd: Name: text      a friend's message, forwarded to Handup by the person
+    fwd: Name: text      a friend's message, forwarded to Handup by the person. Shown as WhatsApp shows a forward, with the name in bold
     --- text             a divider across the chat, such as "That evening"
     time: 10:31          sets the clock shown on the messages that follow (UK time)
     show: 2              how many messages are already there before any scrolling (first line only)
@@ -288,12 +302,12 @@
 
     list: text           the line above the list, such as "Here's your list. It's yours now."
     1. text              an open item. Numbers never move
-    +3. text | Sam       a ticked item, crossed through, with who sorted it after the bar
+    +3. text | Sam       a ticked item, crossed through, with who sorted it in brackets
     last: text           the line under the list
 
   A MESSAGE TO PASTE (several lines, one message, set apart so it can be copied whole). Start with paste: and put the rest under it.
 
-    paste: text          the small label on top, such as "For the family group"
+    paste: text          who it's for, such as "For the family group". A note for you: it isn't shown, the message arrives as a plain bubble
     > text               a paragraph of the message, written as the person
     1. text              an item still open
 
@@ -400,12 +414,12 @@ handup: Sent a list by someone you love? Just reply to them with the number you 
     var root = document.documentElement, KEY = 'handup-look';
     function set(v) {
       if (v === '86') root.setAttribute('data-brand', '86'); else root.removeAttribute('data-brand');
-      document.querySelectorAll('.brand input').forEach(function (i) { i.checked = i.value === (v === '86' ? '86' : 'fresco'); });
+      document.querySelectorAll('.look input').forEach(function (i) { i.checked = i.value === (v === '86' ? '86' : 'fresco'); });
     }
     var pick = new URLSearchParams(location.search).get('look');
     if (!pick) { try { pick = localStorage.getItem(KEY); } catch (e) {} }
     set(pick);
-    document.querySelectorAll('.brand input').forEach(function (i) {
+    document.querySelectorAll('.look input').forEach(function (i) {
       i.addEventListener('change', function () { set(i.value); try { localStorage.setItem(KEY, i.value); } catch (e) {} });
     });
   })();
@@ -419,7 +433,6 @@ handup: Sent a list by someone you love? Just reply to them with the number you 
   function esc(t) { return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function rich(t, tag) { return esc(t).replace(/\*([^*]+)\*/g, '<' + tag + '>$1</' + tag + '>'); }
   var fwdIcon = '<svg viewBox="0 0 16 16"><path d="M9 3l6 5-6 5V9.6C5 9.6 2.6 11 1 14c.6-4.4 3-8 8-8.6V3z"/></svg>';
-  var copyIcon = '<svg viewBox="0 0 16 16"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg>';
 
   var clock = '', show = 1, last = '', rows = [];
   function add(who, html, extra) {
@@ -442,7 +455,7 @@ handup: Sent a list by someone you love? Just reply to them with the number you 
   function para(html) { return html ? '<div class="p">' + html + '</div>' : ''; }
   function item(it) {
     if (!it.done) return '<span>' + it.n + '. ' + rich(it.text, 'strong') + '</span>';
-    return '<span class="done"><s>' + it.n + '. ' + rich(it.text, 'strong') + '</s> <i>&check;' + (it.by ? ' ' + esc(it.by) : '') + '</i></span>';
+    return '<span><s>' + it.n + '. ' + rich(it.text, 'strong') + '</s>' + (it.by ? ' (' + esc(it.by) + ')' : '') + '</span>';
   }
   function flush() {
     var b = block; block = null;
@@ -455,7 +468,7 @@ handup: Sent a list by someone you love? Just reply to them with the number you 
         if (p.items) return '<div class="p list">' + p.items.map(item).join('') + '</div>';
         return para(rich(p.text, 'strong'));
       }).join('');
-      add('them', '<div class="label">' + copyIcon + 'Ready to paste &middot; ' + esc(b.name) + '</div>' + body, 'paste');
+      add('them', body);
     }
   }
   function parseItem(line) {
@@ -487,10 +500,10 @@ handup: Sent a list by someone you love? Just reply to them with the number you 
     if ((m = line.match(/^---\s*(.*)$/))) return add('day', esc(m[1]));
     if ((m = line.match(/^time:\s*(.+)$/i))) { clock = m[1]; return; }
     if ((m = line.match(/^show:\s*(\d+)$/i))) { show = Math.max(1, +m[1]); return; }
-    if ((m = line.match(/^big:\s*(.+)$/i))) return add('them', '<div class="big">' + rich(m[1], 'em') + '</div>');
+    if ((m = line.match(/^big:\s*(.+)$/i))) return add('them', '<strong>' + esc(m[1]).replace(/\*/g, '') + '</strong>');
     if ((m = line.match(/^handup:\s*(.+)$/i))) return add('them', rich(m[1], 'strong'));
     if ((m = line.match(/^me:\s*(.+)$/i))) return add('me', rich(m[1], 'strong'));
-    if ((m = line.match(/^fwd:\s*([^:]+):\s*(.+)$/i))) return add('me', '<div class="fwd">' + fwdIcon + 'Forwarded</div><div class="who">' + esc(m[1]) + '</div>' + rich(m[2], 'strong'));
+    if ((m = line.match(/^fwd:\s*([^:]+):\s*(.+)$/i))) return add('me', '<div class="fwd">' + fwdIcon + 'Forwarded</div><strong>' + esc(m[1]) + ':</strong> ' + rich(m[2], 'strong'));
   });
   flush();
 
