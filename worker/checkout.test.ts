@@ -52,7 +52,7 @@ describe("openCheckout", () => {
 
   test("brands the session in the dialog's night panel and lime from the theme", async () => {
     const sent = stubStripe();
-    await openCheckout(env, { cents: 400, day: 10, origin: "http://localhost:4321" });
+    await openCheckout(env, { cents: 400, day: 11, origin: "http://localhost:4321" });
 
     const theme = readFileSync(new URL("../src/styles/global.css", import.meta.url), "utf8");
     const token = (name: string) => theme.match(new RegExp(`--color-${name}:\\s*(#[0-9a-f]{6})`))?.[1];
@@ -66,18 +66,18 @@ describe("openCheckout", () => {
 
   test("asks for a name on the site unless they'd rather stay anonymous", async () => {
     const sent = stubStripe();
-    await openCheckout(env, { cents: 400, day: 10, origin: "http://localhost:4321" });
-    await openCheckout(env, { cents: 400, day: 10, anonymous: true, origin: "http://localhost:4321" });
+    await openCheckout(env, { cents: 400, day: 11, origin: "http://localhost:4321" });
+    await openCheckout(env, { cents: 400, day: 11, anonymous: true, origin: "http://localhost:4321" });
 
     expect(sent[0].get("custom_fields[0][key]")).toBe("credit");
-    expect(sent[0].get("metadata[day]")).toBe("10");
+    expect(sent[0].get("metadata[day]")).toBe("11");
     expect(sent[1].has("custom_fields[0][key]")).toBe(false);
   });
 
   test("passes on Stripe's reason when it says no, and refuses without a key", async () => {
     vi.stubGlobal("fetch", async () => Response.json({ error: { message: "Amount must be no more than $999,999.99" } }, { status: 400 }));
-    await expect(openCheckout(env, { cents: 400_000_000, day: 10, origin: "" })).rejects.toThrow("Amount must be no more than $999,999.99");
-    await expect(openCheckout({ ...env, STRIPE_SECRET_KEY: "" }, { cents: 400, day: 10, origin: "" })).rejects.toBeInstanceOf(StripeError);
+    await expect(openCheckout(env, { cents: 400_000_000, day: 11, origin: "" })).rejects.toThrow("Amount must be no more than $999,999.99");
+    await expect(openCheckout({ ...env, STRIPE_SECRET_KEY: "" }, { cents: 400, day: 11, origin: "" })).rejects.toBeInstanceOf(StripeError);
   });
 });
 
@@ -98,11 +98,11 @@ describe("recordPayment", () => {
 
   test("credits the name typed at checkout, and keeps only guest days", async () => {
     const { db, sqlite } = testDb();
-    await recordPayment(db, session({ id: "cs_test_a", metadata: { day: "10" }, custom_fields: [{ key: "credit", text: { value: "  Grace  " } }] }), "t");
+    await recordPayment(db, session({ id: "cs_test_a", metadata: { day: "11" }, custom_fields: [{ key: "credit", text: { value: "  Grace  " } }] }), "t");
     await recordPayment(db, session({ id: "cs_test_b", metadata: { day: "3" }, client_reference_id: "not-a-problem" }), "t");
 
     expect(sqlite.prepare("SELECT id, day, name, problem_id FROM payments ORDER BY id").all()).toEqual([
-      { id: "cs_test_a", day: 10, name: "Grace", problem_id: null },
+      { id: "cs_test_a", day: 11, name: "Grace", problem_id: null },
       { id: "cs_test_b", day: null, name: null, problem_id: null },
     ]);
   });
