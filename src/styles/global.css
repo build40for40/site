@@ -29,12 +29,12 @@
   --color-brand-pink: #ff7fcf;
 
   /* Day states are signals only: dots, strips, badges, never buttons. */
-  --color-shipped: oklch(0.84 0.15 88);
+  --color-shipped: oklch(0.68 0.12 170);
   --color-live: oklch(0.69 0.19 38);
   /* Crimson, well clear of live's orange, for the days that sank. */
   --color-wrecked: oklch(0.63 0.22 12);
   --color-queued: oklch(0.66 0.06 265);
-  --color-guest: #009874;
+  --color-guest: oklch(0.84 0.15 88);
 
   --color-pop-red: oklch(0.66 0.22 25);
   --color-pop-orange: oklch(0.75 0.18 55);
