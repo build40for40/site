@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Handup turns 'let me know if I can help' into a list of real things your people can do, the week you lose your job. A chat that shows how it works.">
+<title>Handup</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:ital,wght@0,500;0,700;1,800&family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500;1,600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+<style>
+  /* Layout: the page is one chat between Handup and someone who has just been laid off. The chat is pinned to the screen and the page behind it is tall. Scrolling down brings in the next message, scrolling up fades it away again. The conversation is the plain text block at the bottom.
+     The look: the Creation of Adam. Warm fresco plaster, cracks and grain, and on a wide screen the two reaching hands sit either side of the phone, so the chat is the gap between them. */
+  :root {
+    --page: #ecdfc6; --page-deep: #d9c29b; --ink: #3b2416; --soft-ink: #6e5442; --crack: #7a5a3e;
+    --bezel: #2a1a12; --bezel-edge: #6b4a35;
+    --chat-bg: #f2e7d2; --me: #f3d7ae; --them: #fbf6ec; --chat-ink: #33241a; --chat-soft: #85705f; --tick: #4f7fa8;
+    --bar: #fbf6ec; --bar-line: #e2d2b6; --chip: #fbf6ec; --chip-ink: #3b2416; --chip-line: #3b2416;
+    --cloak: #8a2f1f; --cloak-ink: #fbf1e3; --gold: #c9973f; --gold-ink: #2e1d0b; --sage: #5f8a73;
+    --paste: #fffaf1; --paste-line: #c9973f;
+    --hand-filter: none;
+    --display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+    --caps: "Cinzel", "Trajan Pro", "Iowan Old Style", Georgia, serif;
+    --body: "Source Serif 4", "Iowan Old Style", Georgia, serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #1d1510; --page-deep: #120c08; --ink: #f1e4cc; --soft-ink: #bfa88c; --crack: #c9a77f;
+      --bezel: #0b0705; --bezel-edge: #6b4a35;
+      --chat-bg: #211812; --me: #5b3a22; --them: #33271e; --chat-ink: #f1e4cc; --chat-soft: #a8927b; --tick: #7fb0dc;
+      --bar: #2b2019; --bar-line: #3d2e23; --chip: #2b2019; --chip-ink: #f1e4cc; --chip-line: #a8927b;
+      --cloak: #7a2819; --cloak-ink: #fbf1e3; --gold: #d6a650; --gold-ink: #2e1d0b; --sage: #86b39a;
+      --paste: #2a1f17; --paste-line: #d6a650;
+      --hand-filter: brightness(0.8) sepia(0.15);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #1d1510; --page-deep: #120c08; --ink: #f1e4cc; --soft-ink: #bfa88c; --crack: #c9a77f;
+    --bezel: #0b0705; --bezel-edge: #6b4a35;
+    --chat-bg: #211812; --me: #5b3a22; --them: #33271e; --chat-ink: #f1e4cc; --chat-soft: #a8927b; --tick: #7fb0dc;
+    --bar: #2b2019; --bar-line: #3d2e23; --chip: #2b2019; --chip-ink: #f1e4cc; --chip-line: #a8927b;
+    --cloak: #7a2819; --cloak-ink: #fbf1e3; --gold: #d6a650; --gold-ink: #2e1d0b; --sage: #86b39a;
+    --paste: #2a1f17; --paste-line: #d6a650;
+    --hand-filter: brightness(0.8) sepia(0.15);
+    color-scheme: dark;
+  }
+
+  html, body { margin: 0; }
+  body {
+    color: var(--chat-ink); font-family: var(--body); font-size: 15.5px; line-height: 1.42;
+    background-color: var(--page);
+    /* Fresco plaster: soft patches of pigment, darker at the edges like an old ceiling. */
+    background-image:
+      radial-gradient(ellipse 60% 45% at 18% 22%, rgba(127, 155, 181, 0.16), transparent 70%),
+      radial-gradient(ellipse 50% 40% at 85% 75%, rgba(138, 47, 31, 0.10), transparent 70%),
+      radial-gradient(ellipse 45% 35% at 70% 15%, rgba(201, 151, 63, 0.14), transparent 70%),
+      radial-gradient(ellipse 120% 90% at 50% 50%, transparent 55%, var(--page-deep) 130%);
+    background-attachment: fixed;
+  }
+  /* Grain and cracks over the plaster, under everything else. */
+  body::before, body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  body::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .24 0 0 0 0 .14 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.22; mix-blend-mode: multiply;
+  }
+  body::after {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 700' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%237a5a3e' stroke-width='1.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M120 0 L128 60 L117 120 L134 190 L126 260 L140 330'/%3E%3Cpath d='M128 60 L170 92 L196 150'/%3E%3Cpath d='M455 0 L448 48 L470 110 L462 170 L488 230 L476 300 L495 360 L489 430'/%3E%3Cpath d='M470 110 L520 128 L560 120'/%3E%3Cpath d='M820 700 L812 640 L830 580 L818 520 L840 470'/%3E%3Cpath d='M830 580 L880 600 L930 590 L1000 610'/%3E%3Cpath d='M0 520 L60 512 L110 530 L170 520'/%3E%3Cpath d='M640 0 L652 40 L640 90'/%3E%3Cpath d='M300 700 L310 650 L296 600'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 100% 100%; opacity: 0.32;
+  }
+  :root[data-theme="dark"] body::before { mix-blend-mode: screen; opacity: 0.08; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) body::before { mix-blend-mode: screen; opacity: 0.08; } }
+
+  .track { position: relative; z-index: 1; min-height: 100vh; min-height: 100dvh; }
+  /* The phone: pinned to the screen while the page scrolls behind it. On a real phone it keeps a thin bezel so the chat isn't squeezed. */
+  .stage { --pw: min(390px, calc(100vw - 12px)); position: sticky; top: 0; height: 100vh; height: 100dvh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .phone { position: relative; z-index: 2; flex: none; box-sizing: border-box; width: var(--pw); height: min(800px, calc(100vh - 12px)); height: min(800px, calc(100dvh - 12px)); padding: 6px; border-radius: 40px; background: var(--bezel); border: 1.5px solid var(--bezel-edge); box-shadow: 0 0 0 1px rgba(40, 20, 8, 0.3), 0 24px 50px rgba(60, 30, 10, 0.35); }
+  .phone::before, .phone::after { content: ""; position: absolute; width: 3px; background: var(--bezel-edge); }
+  .phone::before { left: -4.5px; top: 132px; height: 46px; border-radius: 2px 0 0 2px; box-shadow: 0 60px 0 var(--bezel-edge); }
+  .phone::after { right: -4.5px; top: 176px; height: 74px; border-radius: 0 2px 2px 0; }
+  .cam { position: absolute; z-index: 2; top: 13px; left: 50%; transform: translateX(-50%); width: 78px; height: 20px; border-radius: 999px; background: #070403; }
+  .cam::after { content: ""; position: absolute; right: 7px; top: 6px; width: 8px; height: 8px; border-radius: 50%; background: #241a14; }
+  .app { position: relative; height: 100%; border-radius: 33px; overflow: hidden; display: flex; flex-direction: column; background: var(--chat-bg); }
+  .sbar { background: var(--cloak); color: var(--cloak-ink); display: flex; justify-content: space-between; align-items: center; height: 30px; padding: 4px 24px 0; font-family: system-ui, -apple-system, sans-serif; font-size: 13px; font-weight: 700; flex: none; }
+  .sbar span { display: flex; align-items: center; gap: 5px; }
+  .sbar svg { height: 11px; width: auto; display: block; fill: currentColor; }
+  .home { background: var(--bar); display: flex; justify-content: center; padding: 2px 0 7px; flex: none; }
+  .home i { width: 118px; height: 4px; border-radius: 4px; background: var(--chat-ink); opacity: 0.5; }
+  @media (min-width: 600px) {
+    .stage { --pw: min(390px, calc((100vh - 48px) * 0.4875)); }
+    .phone { height: min(800px, calc(100vh - 48px)); padding: 10px; border-radius: 52px; }
+    .app { border-radius: 41px; }
+    .cam { top: 18px; }
+    .sbar { height: 34px; }
+  }
+  :focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+  /* The two hands, on screens wide enough for them. The fingertips stop just short of the phone. */
+  .hand { display: none; position: absolute; z-index: 1; top: 47%; width: min(620px, calc(50vw - var(--pw) / 2 - 4px)); height: auto; transform: translateY(-50%); filter: var(--hand-filter); pointer-events: none; user-select: none; }
+  .hand { mix-blend-mode: multiply; }
+  .hand.adam { right: calc(50% + var(--pw) / 2 + 4px); -webkit-mask-image: radial-gradient(ellipse 100% 50% at 100% 50%, #000 45%, transparent 100%); mask-image: radial-gradient(ellipse 100% 50% at 100% 50%, #000 45%, transparent 100%); }
+  .hand.god { left: calc(50% + var(--pw) / 2 + 4px); -webkit-mask-image: radial-gradient(ellipse 100% 50% at 0% 50%, #000 45%, transparent 100%); mask-image: radial-gradient(ellipse 100% 50% at 0% 50%, #000 45%, transparent 100%); }
+  /* At night the ceiling is lit by a lamp: a warm glow behind the hands, so they still read on the dark wall. */
+  .lamp { display: none; position: absolute; z-index: 0; left: 0; right: 0; top: 47%; height: 62vh; transform: translateY(-50%); pointer-events: none; background: radial-gradient(ellipse 46% 40% at 50% 50%, rgba(214, 186, 140, 0.62), rgba(214, 186, 140, 0.18) 60%, transparent 80%); }
+  :root[data-theme="dark"] .lamp { display: block; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .lamp { display: block; } }
+  :root[data-theme="dark"] .big em { color: var(--gold); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .big em { color: var(--gold); } }
+  .mark, .tag { display: none; position: absolute; z-index: 1; color: var(--ink); }
+  .mark { top: 28px; left: 36px; text-decoration: none; }
+  .mark b { display: block; font-family: var(--caps); font-weight: 700; font-size: 30px; letter-spacing: 0.16em; line-height: 1; }
+  .mark span { display: block; margin-top: 8px; font-family: var(--display); font-style: italic; font-weight: 500; font-size: 17px; color: var(--soft-ink); letter-spacing: 0.02em; }
+  .tag { bottom: 40px; left: 36px; max-width: calc(50vw - var(--pw) / 2 - 72px); font-family: var(--display); font-style: italic; font-weight: 600; font-size: clamp(24px, 2.3vw, 36px); line-height: 1.12; letter-spacing: -0.005em; }
+  .tag small { display: block; margin-top: 12px; font-family: var(--body); font-style: normal; font-weight: 400; font-size: 14px; line-height: 1.45; color: var(--soft-ink); letter-spacing: 0; }
+  .tag.right { left: auto; right: 36px; text-align: right; }
+  @media (min-width: 900px) and (min-height: 560px) {
+    .hand, .mark { display: block; }
+  }
+  @media (min-width: 1100px) and (min-height: 700px) { .tag { display: block; } }
+
+  .head { background: var(--cloak); color: var(--cloak-ink); display: flex; align-items: center; gap: 12px; padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .head svg { width: 40px; height: 40px; flex: none; }
+  .head .name { font-family: var(--caps); font-weight: 700; font-size: 20px; line-height: 1.1; letter-spacing: 0.1em; }
+  .head .status { font-family: var(--display); font-style: italic; font-size: 15px; opacity: 0.92; }
+
+  .log { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding-block: 14px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
+  .msg { max-width: 84%; padding: 8px 10px 5px; border-radius: 10px; overflow-wrap: anywhere; box-shadow: 0 1px 0 rgba(80, 50, 20, 0.12); }
+  .msg.them { align-self: flex-start; background: var(--them); border-top-left-radius: 2px; }
+  .msg.me { align-self: flex-end; background: var(--me); border-top-right-radius: 2px; }
+  .row { display: grid; grid-template-rows: 0fr; opacity: 0; transform: translateY(10px); transition: grid-template-rows 0.32s ease, opacity 0.32s ease, transform 0.32s ease; flex: none; }
+  .row.on { grid-template-rows: 1fr; opacity: 1; transform: none; }
+  .row > .in { min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .row > .in > * { margin-bottom: 6px; }
+  .row.turn > .in { padding-top: 6px; }
+  .still .row { transition: none; }
+  @media (prefers-reduced-motion: reduce) { .row { transition: none; transform: none; } }
+  .msg strong { font-weight: 700; }
+  .msg a { color: inherit; font-weight: 700; }
+  .meta { display: block; text-align: right; font-family: system-ui, -apple-system, sans-serif; font-size: 11px; color: var(--chat-soft); margin-top: 2px; }
+  .meta b { color: var(--tick); font-weight: 400; }
+  .big { font-family: var(--display); font-weight: 700; font-size: 29px; line-height: 1.04; letter-spacing: -0.01em; }
+  .big em { font-style: italic; color: var(--cloak); }
+  .day { align-self: center; background: var(--them); color: var(--chat-soft); font-family: var(--display); font-style: italic; font-size: 15px; padding: 3px 14px; border-radius: 8px; margin: 8px 0 14px; }
+  .p + .p { margin-top: 8px; }
+  /* A list: numbered lines, the way the real agent sends it as plain text. A ticked line is crossed through with who sorted it. */
+  .list { margin-top: 4px; font-size: 14px; line-height: 1.35; }
+  .list span { display: block; padding-left: 1.45em; text-indent: -1.45em; margin-top: 2px; }
+  .list span.done { color: var(--chat-soft); }
+  .list span.done s { text-decoration-thickness: 1px; }
+  .list span.done i { font-style: normal; color: var(--sage); font-weight: 700; }
+  /* The message to paste: set apart, so it reads as something to copy whole. */
+  .msg.paste { background: var(--paste); border: 1px dashed var(--paste-line); }
+  .paste .label { display: flex; align-items: center; gap: 6px; font-family: var(--caps); font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+  .paste .label svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; }
+  .fwd { display: flex; align-items: center; gap: 4px; font-size: 12.5px; font-style: italic; color: var(--chat-soft); margin-bottom: 3px; }
+  .fwd svg { width: 13px; height: 13px; fill: currentColor; }
+  .who { font-size: 12.5px; font-weight: 700; color: var(--cloak); }
+
+  .bar { background: var(--bar); border-top: 1px solid var(--bar-line); padding-block: 10px 12px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 44px; align-items: center; }
+  .chip { font: inherit; font-weight: 600; background: var(--chip); color: var(--chip-ink); border: 1.5px solid var(--chip-line); border-radius: 999px; padding: 9px 16px; cursor: pointer; text-align: left; text-decoration: none; display: inline-block; }
+  .chip:hover { border-color: var(--cloak); color: var(--cloak); }
+  .chip.go { background: var(--cloak); color: var(--cloak-ink); border-color: var(--cloak); font-weight: 700; }
+  .chip.go:hover { background: var(--gold); border-color: var(--gold); color: var(--gold-ink); }
+  .hint { color: var(--chat-soft); font-size: 14px; font-style: italic; display: flex; align-items: center; gap: 8px; }
+  .hint i { width: 9px; height: 9px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); margin-top: -4px; }
+  .note { font-size: 12px; color: var(--chat-soft); }
+
+  /* The look toggle. Two hands of God: Michelangelo's (the default) and Maradona's. */
+  .brand { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--chat-soft); flex-wrap: wrap; }
+  .brand span { margin-right: 4px; }
+  .brand label { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px 3px 6px; border-radius: 999px; border: 1px solid var(--bar-line); cursor: pointer; color: var(--chat-ink); }
+  .brand input { margin: 0; accent-color: var(--cloak); width: 13px; height: 13px; }
+  .brand label:has(input:checked) { border-color: var(--cloak); font-weight: 700; }
+  .av-bg { fill: var(--av-bg, #ecdfc6); } .av-hand { stroke: var(--av-hand, #8a2f1f); } .av-spark { fill: var(--av-spark, #c9973f); }
+
+  /* Maradona, 1986: Argentina's sky blue and white, a sunlit pitch, a fist and a glove where the fresco hands were. */
+  :root[data-brand="86"] {
+    --page: #e9f2fa; --page-deep: #b4cfe8; --ink: #0f2340; --soft-ink: #3d5674; --crack: transparent;
+    --bezel: #10151d; --bezel-edge: #3b4a5e;
+    --chat-bg: #eaf2f9; --me: #cfe5f7; --them: #ffffff; --chat-ink: #13223a; --chat-soft: #5f7189; --tick: #2f86d6;
+    --bar: #ffffff; --bar-line: #d3e0ec; --chip: #ffffff; --chip-ink: #0f2340; --chip-line: #0f2340;
+    --cloak: #17325c; --cloak-ink: #ffffff; --gold: #4b97d8; --gold-ink: #ffffff; --sage: #2f8f4e;
+    --paste: #f7fbff; --paste-line: #6cace4; --pitch: #4b8a3a; --pitch-2: #3f7c31;
+    --av-bg: #eaf2fa; --av-hand: #17325c; --av-spark: #6cace4;
+    --display: "Archivo", system-ui, sans-serif; --caps: "Archivo Black", "Arial Black", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root[data-brand="86"]:not([data-theme="light"]) {
+      --page: #0d1828; --page-deep: #060c16; --ink: #eaf2fa; --soft-ink: #9fb4cc;
+      --chat-bg: #0f1b2b; --me: #1d4673; --them: #1a2738; --chat-ink: #eaf2fa; --chat-soft: #8ea2b9; --tick: #7fc0f0;
+      --bar: #162233; --bar-line: #24334a; --chip: #162233; --chip-ink: #eaf2fa; --chip-line: #8ea2b9;
+      --cloak: #24508c; --gold: #7fc0f0; --gold-ink: #0d1828; --sage: #5cc07f; --paste: #142235; --paste-line: #7fc0f0;
+      --pitch: #1f4a26; --pitch-2: #1a3f20;
+    }
+  }
+  :root[data-brand="86"][data-theme="dark"] {
+    --page: #0d1828; --page-deep: #060c16; --ink: #eaf2fa; --soft-ink: #9fb4cc;
+    --chat-bg: #0f1b2b; --me: #1d4673; --them: #1a2738; --chat-ink: #eaf2fa; --chat-soft: #8ea2b9; --tick: #7fc0f0;
+    --bar: #162233; --bar-line: #24334a; --chip: #162233; --chip-ink: #eaf2fa; --chip-line: #8ea2b9;
+    --cloak: #24508c; --gold: #7fc0f0; --gold-ink: #0d1828; --sage: #5cc07f; --paste: #142235; --paste-line: #7fc0f0;
+    --pitch: #1f4a26; --pitch-2: #1a3f20;
+  }
+  :root[data-brand="86"] body {
+    background-image:
+      repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.07) 0 70px, transparent 70px 140px),
+      linear-gradient(var(--pitch), var(--pitch-2)),
+      repeating-linear-gradient(90deg, rgba(108, 172, 228, 0.3) 0 84px, transparent 84px 168px),
+      radial-gradient(ellipse 120% 90% at 50% 40%, transparent 55%, var(--page-deep) 130%);
+    background-size: 100% 20%, 100% 20%, 100% 100%, 100% 100%;
+    background-position: bottom, bottom, 0 0, 0 0;
+    background-repeat: no-repeat;
+  }
+  :root[data-brand="86"] body::after, :root[data-brand="86"] .lamp { display: none; }
+  :root[data-brand="86"] .hand.fresco, :root:not([data-brand="86"]) .hand.kit { display: none; }
+  :root[data-brand="86"] .hand.kit { mix-blend-mode: normal; -webkit-mask-image: none; mask-image: none; filter: none; }
+  :root[data-brand="86"] .mark b { letter-spacing: 0.04em; font-size: 32px; }
+  :root[data-brand="86"] .head .name { letter-spacing: 0.04em; }
+  :root[data-brand="86"] .big { font-style: italic; font-weight: 800; font-size: 27px; letter-spacing: -0.02em; }
+  :root[data-brand="86"] .tag { bottom: auto; top: 112px; font-style: normal; font-weight: 700; letter-spacing: -0.01em; }
+  :root[data-brand="86"] .tag small { font-family: var(--display); font-weight: 500; }
+  :root[data-brand="86"] .day, :root[data-brand="86"] .hint, :root[data-brand="86"] .head .status { font-family: var(--display); }
+</style>
+</head>
+<body>
+
+<div class="track" id="track">
+<div class="stage">
+  <a class="mark" href="https://build40for40.com"><b>HANDUP</b><span>Day 8 of 40</span></a>
+  <div class="lamp" aria-hidden="true"></div>
+  <img class="hand adam fresco" src="hand-adam.jpg" alt="" width="480" height="220">
+  <img class="hand god fresco" src="hand-god.jpg" alt="" width="480" height="220">
+  <!-- 1986: drawn here, not a photo. A striped sleeve punching the ball up, and a keeper's glove reaching for it. -->
+  <svg class="hand adam kit" viewBox="0 0 480 220" aria-hidden="true"><defs><pattern id="albi" width="26" height="26" patternUnits="userSpaceOnUse" patternTransform="rotate(-24)"><rect width="13" height="26" fill="#6cace4"/><rect x="13" width="13" height="26" fill="#f4f8fb"/></pattern></defs><g transform="rotate(-24 240 110)"><rect x="-60" y="122" width="390" height="62" rx="28" fill="url(#albi)"/><rect x="300" y="130" width="112" height="46" rx="21" fill="#c68a5c"/><rect x="318" y="126" width="20" height="54" rx="4" fill="#ffffff"/><circle cx="426" cy="152" r="29" fill="#b97c50"/><path d="M412 136 q14-6 26 2 M410 152 q16-5 30 3" stroke="#8e5a35" stroke-width="3" fill="none" stroke-linecap="round"/></g><g transform="translate(446 30)"><circle r="26" fill="#ffffff" stroke="#1d2530" stroke-width="2.5"/><path d="M0-9 L8.6-2.8 L5.3 7.3 L-5.3 7.3 L-8.6-2.8Z" fill="#1d2530"/><path d="M0-9 V-24 M8.6-2.8 L22-8 M5.3 7.3 L14 20 M-5.3 7.3 L-14 20 M-8.6-2.8 L-22-8" stroke="#1d2530" stroke-width="2"/></g></svg>
+  <svg class="hand god kit" viewBox="0 0 480 220" aria-hidden="true"><g transform="translate(480 0) scale(-1 1) rotate(-30 240 110)"><rect x="-60" y="124" width="400" height="60" rx="28" fill="#7a8290"/><rect x="40" y="124" width="60" height="60" fill="#e0462f"/><rect x="318" y="122" width="30" height="64" rx="6" fill="#e9ecf0"/><rect x="340" y="120" width="70" height="68" rx="18" fill="#f6f7f9" stroke="#c9ced6" stroke-width="2"/><rect x="398" y="124" width="56" height="13" rx="6.5" fill="#f6f7f9" stroke="#c9ced6" stroke-width="2"/><rect x="402" y="140" width="60" height="13" rx="6.5" fill="#f6f7f9" stroke="#c9ced6" stroke-width="2"/><rect x="400" y="156" width="56" height="13" rx="6.5" fill="#f6f7f9" stroke="#c9ced6" stroke-width="2"/><rect x="392" y="172" width="46" height="12" rx="6" fill="#f6f7f9" stroke="#c9ced6" stroke-width="2"/></g></svg>
+  <p class="tag">Everyone says &ldquo;let me know if I can help&rdquo;.<small>Handup turns it into a list of real things they can do, the week you lose your job.</small></p>
+  <p class="tag right">Things, favours and time.<small>Your people pick something off the list and you tell Handup it's sorted.</small></p>
+
+<div class="phone">
+<div class="cam" aria-hidden="true"></div>
+<div class="app">
+  <div class="sbar" aria-hidden="true">
+    <span id="now">10:30</span>
+    <span>
+      <svg viewBox="0 0 18 11"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="6" rx="1"/><rect x="10" y="2.5" width="3" height="8.5" rx="1"/><rect x="15" y="0" width="3" height="11" rx="1"/></svg>
+      <svg viewBox="0 0 26 11"><rect x="0.6" y="0.6" width="21.8" height="9.8" rx="3" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.6"/><rect x="2.3" y="2.3" width="15" height="6.4" rx="1.6"/><rect x="23.6" y="3.6" width="2" height="3.8" rx="1" opacity="0.6"/></svg>
+    </span>
+  </div>
+  <div class="head">
+    <!-- Handup's mark: two fingers reaching, a spark of gold in the gap. -->
+    <svg viewBox="0 0 40 40" aria-hidden="true"><circle class="av-bg" cx="20" cy="20" r="20"/><g class="av-hand" fill="none" stroke-width="3.4" stroke-linecap="round"><path d="M5 25 C10 23 13 21.5 17 21"/><path d="M35 15.5 C30 17 27 18.5 23 19"/></g><circle class="av-spark" cx="20" cy="20" r="1.9"/></svg>
+    <div>
+      <div class="name">HANDUP</div>
+      <div class="status">online, and on your side</div>
+    </div>
+  </div>
+
+  <div class="log" id="log"></div>
+
+  <div class="bar">
+    <div class="chips" id="chips"><span class="hint"><i></i>Scroll to read on</span></div>
+    <div class="note">Handup's real message shapes, with a made-up person and her made-up friends.</div>
+    <div class="brand" role="radiogroup" aria-label="Which hand of God">
+      <span>Hand of God:</span>
+      <label><input type="radio" name="brand" value="fresco" checked> Michelangelo</label>
+      <label><input type="radio" name="brand" value="86"> Maradona</label>
+    </div>
+  </div>
+  <div class="home" aria-hidden="true"><i></i></div>
+</div>
+</div>
+</div>
+</div>
+
+<!--
+  THE SCRIPT. Edit only the block below to change the conversation.
+
+  ONE LINE, ONE MESSAGE
+
+    big: text            Handup, in the large headline style. *stars* go italic red
+    handup: text         a message from Handup
+    me: text             a message from the person who was laid off
+    fwd: Name: text      a friend's message, forwarded to Handup by the person
+    --- text             a divider across the chat, such as "That evening"
+    time: 10:31          sets the clock shown on the messages that follow (UK time)
+    show: 2              how many messages are already there before any scrolling (first line only)
+    # text               a note to yourself, never shown
+
+  A LIST (several lines, one message from Handup). Start with list: and put the rest straight under it.
+
+    list: text           the line above the list, such as "Here's your list. It's yours now."
+    1. text              an open item. Numbers never move
+    +3. text | Sam       a ticked item, crossed through, with who sorted it after the bar
+    last: text           the line under the list
+
+  A MESSAGE TO PASTE (several lines, one message, set apart so it can be copied whole). Start with paste: and put the rest under it.
+
+    paste: text          the small label on top, such as "For the family group"
+    > text               a paragraph of the message, written as the person
+    1. text              an item still open
+
+  A list or a paste ends at the next line that isn't one of its parts. Empty lines are fine anywhere.
+  Wrap words in *stars* to make them bold.
+-->
+<script type="text/plain" id="script">
+show: 2
+
+time: 10:30
+big: When the job goes, let your people *reach back*.
+handup: This is Jess. Her whole studio closed this morning, no warning. Scroll to see what happened.
+
+# 1. The list. Handup gives before it asks, so ten favours come first, with no questions. Nothing on it is bought
+time: 10:41
+me: I've just been laid off. The whole company. Everyone keeps saying "let me know if I can help" and I don't know what to tell them.
+
+list: I'm Handup, and I'm sorry, Jess. Here are ten things people can actually do. It's your list now.
+1. A laptop to borrow, if the work one has to go back
+2. A desk or a quiet spot with good Wi-Fi, a few days a week
+3. Someone who hires to look over my CV
+4. A practice interview
+5. A written recommendation from someone I've worked with
+6. Childcare for a few hours on interview days
+7. A lift to an interview
+8. A home-cooked meal dropped round
+9. An hour with someone good with money, going through outgoings
+10. A walk and a chat, to get out of the house
+last: Change, swap or drop any of them by number, like "change 7 to a lift to the station", or add your own.
+
+# 2. The edit. By number, and Handup makes it specific itself
+time: 10:44
+me: The laptop goes back Friday. And 6 is really just the kids on Thursday afternoon.
+
+list: Done. Here it is as it stands.
+1. A laptop to borrow, the work one goes back Friday
+2. A desk or a quiet spot with good Wi-Fi, a few days a week
+3. Someone who hires to look over my CV
+4. A practice interview
+5. A written recommendation from someone I've worked with
+6. Someone to have the kids on Thursday afternoon
+7. A lift to an interview
+8. A home-cooked meal dropped round
+9. An hour with someone good with money, going through outgoings
+10. A walk and a chat, to get out of the house
+last: Say when it looks right and I'll write the message to send.
+
+# 3. The share. Written as Jess, set apart so she can copy it in one go. She pastes it, Handup never posts
+time: 10:46
+me: Looks right. What do I send?
+handup: Here you go. Paste it into the family group as it is.
+
+paste: For the family group
+> Hi all. The studio closed this morning, all of us at once, so I'm out of work as of today. Lots of you have asked what you can do, so here's what would genuinely help.
+1. A laptop to borrow, mine goes back Friday
+2. A desk with good Wi-Fi, a few days a week
+3. A CV look-over from someone who hires
+4. A practice interview
+5. A written recommendation
+6. The kids on Thursday afternoon
+7. A lift to an interview
+8. A home-cooked meal
+9. An hour going through outgoings
+10. A walk and a chat
+> Just reply with the number you can cover. Thank you x
+
+--- That evening
+
+# 4. A tick. Uncle Rob has no laptop and sends money instead. Handup ticks it off and keeps the amount out of everything
+time: 18:12
+fwd: Uncle Rob: Haven't got a spare laptop, love, but I've sent you something to get one. Don't argue x
+handup: Ticked off 1, the laptop, from Rob. 9 still open.
+
+paste: For the family group
+> The laptop's sorted, thank you Rob x
+
+# 5. One next move, never a menu
+handup: Who do you know who hires? I can write a message just for them, for number 3.
+me: My old boss, Sam.
+
+paste: For Sam
+> Hi Sam. You'll have heard about the studio. Would you look over my CV this week? Half an hour would make a real difference. No worries if not.
+
+time: 19:30
+fwd: Sam: Of course. Send it over, and come in Thursday, we've got a spare desk too.
+handup: Ticked off 3 and 2, the CV and the desk, both from Sam. 7 still open.
+
+paste: For Sam
+> Thank you Sam. CV's on its way, see you Thursday.
+
+me: Tomorrow I'm ringing Rob.
+handup: Good call. I'll be here.
+
+# The ending
+handup: That's me. A list of favours, in your chat. You paste, I keep count.
+handup: Sent a list by someone you love? Just reply to them with the number you can cover.
+</script>
+
+<script>
+(function () {
+
+  // The look toggle. Remembered per viewer, and ?look=86 or ?look=fresco in the address picks one.
+  (function () {
+    var root = document.documentElement, KEY = 'handup-look';
+    function set(v) {
+      if (v === '86') root.setAttribute('data-brand', '86'); else root.removeAttribute('data-brand');
+      document.querySelectorAll('.brand input').forEach(function (i) { i.checked = i.value === (v === '86' ? '86' : 'fresco'); });
+    }
+    var pick = new URLSearchParams(location.search).get('look');
+    if (!pick) { try { pick = localStorage.getItem(KEY); } catch (e) {} }
+    set(pick);
+    document.querySelectorAll('.brand input').forEach(function (i) {
+      i.addEventListener('change', function () { set(i.value); try { localStorage.setItem(KEY, i.value); } catch (e) {} });
+    });
+  })();
+  var STEP = 150; // pixels of scrolling per message
+  var WHATSAPP = ''; // Handup's number, digits only with the country code, once scaffolding has one. Empty means the button points at the stream instead
+  var track = document.getElementById('track');
+  var log = document.getElementById('log');
+  var chips = document.getElementById('chips');
+  var now = document.getElementById('now');
+
+  function esc(t) { return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function rich(t, tag) { return esc(t).replace(/\*([^*]+)\*/g, '<' + tag + '>$1</' + tag + '>'); }
+  var fwdIcon = '<svg viewBox="0 0 16 16"><path d="M9 3l6 5-6 5V9.6C5 9.6 2.6 11 1 14c.6-4.4 3-8 8-8.6V3z"/></svg>';
+  var copyIcon = '<svg viewBox="0 0 16 16"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg>';
+
+  var clock = '', show = 1, last = '', rows = [];
+  function add(who, html, extra) {
+    var row = document.createElement('div');
+    row.className = 'row' + (last && last !== who ? ' turn' : '');
+    last = who;
+    var inner = document.createElement('div'); inner.className = 'in';
+    var el = document.createElement('div');
+    if (who === 'day') { el.className = 'day'; el.innerHTML = html; }
+    else {
+      el.className = 'msg ' + who + (extra ? ' ' + extra : '');
+      el.innerHTML = html + '<span class="meta">' + esc(clock) + (who === 'me' ? ' <b>&check;&check;</b>' : '') + '</span>';
+    }
+    row.setAttribute('data-clock', clock);
+    inner.appendChild(el); row.appendChild(inner); log.appendChild(row); rows.push(row);
+  }
+
+  // A list and a paste are each one message written over several lines. They are collected here, then drawn.
+  var block = null;
+  function para(html) { return html ? '<div class="p">' + html + '</div>' : ''; }
+  function item(it) {
+    if (!it.done) return '<span>' + it.n + '. ' + rich(it.text, 'strong') + '</span>';
+    return '<span class="done"><s>' + it.n + '. ' + rich(it.text, 'strong') + '</s> <i>&check;' + (it.by ? ' ' + esc(it.by) : '') + '</i></span>';
+  }
+  function flush() {
+    var b = block; block = null;
+    if (!b) return;
+    if (b.kind === 'list') {
+      var list = '<div class="list">' + b.items.map(item).join('') + '</div>';
+      add('them', para(rich(b.name, 'strong') + list) + para(b.last ? rich(b.last, 'strong') : ''));
+    } else {
+      var body = b.parts.map(function (p) {
+        if (p.items) return '<div class="p list">' + p.items.map(item).join('') + '</div>';
+        return para(rich(p.text, 'strong'));
+      }).join('');
+      add('them', '<div class="label">' + copyIcon + 'Ready to paste &middot; ' + esc(b.name) + '</div>' + body, 'paste');
+    }
+  }
+  function parseItem(line) {
+    var m = line.match(/^(\+)?\s*(\d+)\.\s*(.+)$/);
+    if (!m) return null;
+    var bits = m[3].split('|');
+    return { done: !!m[1], n: m[2], text: bits[0].trim(), by: (bits[1] || '').trim() };
+  }
+
+  document.getElementById('script').textContent.split('\n').forEach(function (line) {
+    line = line.trim();
+    if (!line || line.charAt(0) === '#') return;
+    var m, it;
+    if ((m = line.match(/^list:\s*(.+)$/i))) { flush(); block = { kind: 'list', name: m[1], items: [] }; return; }
+    if ((m = line.match(/^paste:\s*(.+)$/i))) { flush(); block = { kind: 'paste', name: m[1], parts: [] }; return; }
+    if (block && block.kind === 'list') {
+      if ((m = line.match(/^last:\s*(.+)$/i))) { block.last = m[1]; return; }
+      if ((it = parseItem(line))) { block.items.push(it); return; }
+    }
+    if (block && block.kind === 'paste') {
+      if ((m = line.match(/^>\s*(.*)$/))) { block.parts.push({ text: m[1] }); return; }
+      if ((it = parseItem(line))) {
+        var tail = block.parts[block.parts.length - 1];
+        if (!tail || !tail.items) block.parts.push(tail = { items: [] });
+        tail.items.push(it); return;
+      }
+    }
+    flush();
+    if ((m = line.match(/^---\s*(.*)$/))) return add('day', esc(m[1]));
+    if ((m = line.match(/^time:\s*(.+)$/i))) { clock = m[1]; return; }
+    if ((m = line.match(/^show:\s*(\d+)$/i))) { show = Math.max(1, +m[1]); return; }
+    if ((m = line.match(/^big:\s*(.+)$/i))) return add('them', '<div class="big">' + rich(m[1], 'em') + '</div>');
+    if ((m = line.match(/^handup:\s*(.+)$/i))) return add('them', rich(m[1], 'strong'));
+    if ((m = line.match(/^me:\s*(.+)$/i))) return add('me', rich(m[1], 'strong'));
+    if ((m = line.match(/^fwd:\s*([^:]+):\s*(.+)$/i))) return add('me', '<div class="fwd">' + fwdIcon + 'Forwarded</div><div class="who">' + esc(m[1]) + '</div>' + rich(m[2], 'strong'));
+  });
+  flush();
+
+  show = Math.min(show, rows.length);
+  var steps = rows.length - show;
+  track.style.height = 'calc(100vh + ' + (steps * STEP + 40) + 'px)';
+  track.style.height = 'calc(100dvh + ' + (steps * STEP + 40) + 'px)';
+
+  var hint = chips.innerHTML, shown = -1, ended = null;
+  function end(on) {
+    if (on === ended) return; ended = on;
+    if (!on) { chips.innerHTML = hint; return; }
+    chips.innerHTML = '';
+    var a = document.createElement('a');
+    a.className = 'chip go';
+    if (WHATSAPP) { a.href = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent('Hi Handup, I\'ve just been laid off.'); a.textContent = 'Start your list'; }
+    else { a.href = 'https://www.twitch.tv/40for40'; a.textContent = 'Watch Handup being built'; }
+    chips.appendChild(a);
+  }
+  function update() {
+    var y = Math.max(0, window.scrollY - track.offsetTop);
+    var n = Math.min(rows.length, show + Math.floor((y + STEP * 0.25) / STEP));
+    if (n !== shown) {
+      for (var i = 0; i < rows.length; i++) rows[i].classList.toggle('on', i < n);
+      shown = n;
+      var at = rows[n - 1].getAttribute('data-clock');
+      if (at) now.textContent = at;
+    }
+    end(n >= rows.length);
+  }
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  log.classList.add('still'); // the messages already there at the start appear without animating
+  update();
+  setTimeout(function () { log.classList.remove('still'); }, 80);
+})();
+</script>
+</body>
+</html>
