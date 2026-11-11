@@ -113,9 +113,7 @@ Everything goes in the General space (id 2). Use the `superthread-cli` skill for
 
   It prints the board's public link. Run it on an existing day board too if it isn't public yet.
 
-- **Starter cards** in To do. Every day so far started by defining the problem, and the Day 2 retro asked for a content check on the board:
-  - "Define the 5 W's"
-  - "Where are we on content progress?"
+- **One starter card** in To do, "Define the 5 W's", since every day starts by defining the problem. Don't add any others.
 - **Page** called "Day N+1" under the Days page (id 7), in the same format as "Day 2":
 
   ```bash
