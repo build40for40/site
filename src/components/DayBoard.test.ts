@@ -266,7 +266,7 @@ test("Browse throws the days into the pool, docks a page of problems beside the 
   await vi.waitFor(() => expect(bodies.registered).toHaveLength(6));
   document.querySelector<HTMLAnchorElement>("a[href='#browse']")!.click();
   await vi.waitFor(() => expect(bodies.dropped.filter((id) => id.startsWith("day-"))).toHaveLength(39), { timeout: 2000 });
-  expect(bodies.dropped).not.toContain("day-11");
+  expect(bodies.dropped).not.toContain("day-14");
   expect(w.find("ul[aria-label='The 40 days']").isVisible()).toBe(false);
 
   const docked = () => [...bodies.hovers].flatMap(([id, at]) => (at && typeof at === "object" ? [id] : []));
