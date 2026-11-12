@@ -6,14 +6,16 @@ const PLACES = {
   nl: ['Netherlands', [5.3, 52.2]], no: ['Norway', [9.5, 61.0]], ee: ['Estonia', [25.5, 58.7]], lu: ['Luxembourg', [6.13, 49.6]],
   ro: ['Romania', [25.0, 45.9]], se: ['Sweden', [16.0, 60.3]],
 };
-const CAT = { garment: '#ff7fcf', subculture: '#f0503c', accessory: '#e0b800', hair: '#9a6bff', footwear: '#3cc4dc', silhouette: '#4f86f7', pattern: '#3fc380', fabric: '#1fb5a3', makeup: '#f59a23', colour: '#d06bd8' };
-const HOME = { uk: '#ff7fcf', us: '#3cc4dc', fr: '#e0b800', it: '#3fc380', jp: '#9a6bff' };
+// The app's four trend families (src/nerds/data.ts), validated for colour blindness on the night background.
+const FAMILY = { clothes: '#5b8ef0', scenes: '#e2703a', kit: '#1fa583', face: '#a970da' };
+const CAT = { garment: FAMILY.clothes, silhouette: FAMILY.clothes, fabric: FAMILY.clothes, pattern: FAMILY.clothes, colour: FAMILY.clothes, subculture: FAMILY.scenes, accessory: FAMILY.kit, footwear: FAMILY.kit, hair: FAMILY.face, makeup: FAMILY.face };
+const HOME = { uk: '#ff6fa8', us: '#5b8ef0', fr: '#e8c27a', it: '#1fa583', jp: '#a970da' };
 const CORE = new Set(['uk', 'us', 'fr', 'it']);
 Object.assign(PLACES, XPLACES);
 const FEATURED = ['miniskirt', 'paisley', 'hawaiian-shirt', 'harem-pants', 'dashiki', 'punk', 'new-look', 'jeans', 'grunge', 'hip-hop', 'zoot-suit', 'bell-bottoms', 'harajuku'];
 const FIRST = 1920, LAST = 2026;
 TRENDS.sort((a, b) => a.n.localeCompare(b.n));
-for (const t of TRENDS) t.col = CAT[t.c] || '#9aa6c4';
+for (const t of TRENDS) t.col = CAT[t.c] || '#a39fae';
 const byId = Object.fromEntries(TRENDS.map((t) => [t.id, t]));
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = (id) => document.getElementById(id);
@@ -121,7 +123,7 @@ function draw() {
       const [a, b] = k.split('>');
       if (S.home >= 1) break;
       ctx.beginPath(); path(arcLine(PLACES[a][1], PLACES[b][1], 1 - S.home));
-      ctx.strokeStyle = HOME[a] || '#9aa6c4'; ctx.globalAlpha = 0.75; ctx.lineWidth = 1 + Math.sqrt(m[k]) * 1.2; ctx.stroke();
+      ctx.strokeStyle = HOME[a] || '#a39fae'; ctx.globalAlpha = 0.75; ctx.lineWidth = 1 + Math.sqrt(m[k]) * 1.2; ctx.stroke();
     }
     // What the West borrowed: one dotted line per trend, from its birthplace back to its root.
     for (const x of TRENDS) {
@@ -262,7 +264,7 @@ function refresh() {
     if (!rows.length) { const d = document.createElement('div'); d.className = 'more'; d.textContent = 'Nobody has borrowed anything yet.'; $('routes').append(d); }
     for (const [k, n] of rows) {
       const [a, b] = k.split('>'), d = document.createElement('div');
-      d.innerHTML = '<i style="background:' + (HOME[a] || '#9aa6c4') + '"></i><span></span><b></b>';
+      d.innerHTML = '<i style="background:' + (HOME[a] || '#a39fae') + '"></i><span></span><b></b>';
       d.children[1].textContent = PLACES[a][0] + ' to ' + PLACES[b][0]; d.children[2].textContent = n;
       $('routes').append(d);
     }
