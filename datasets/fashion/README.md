@@ -69,3 +69,24 @@ The three `build-wiki` scripts turn hand-written extractions (the `.spec.txt` fi
 - Museum dates pile up on round years, because an object dated to a decade gets its first year. Group by decade before reading much into a single year.
 - A few periods and revival originals start before 1920, so clamp them to the timeline.
 - The scope is Western: the UK, the US, France and Italy, plus looks not tied to one place.
+
+## The Trend Atlas globe
+
+`globe/` builds a single self-contained page: a globe showing where each trend was born, where it travelled, when it came back, and what each place was wearing in any year. It was published as a Claude artifact on Day 9.
+
+```sh
+node datasets/fashion/globe/build.mjs
+```
+
+It reads `public/nerds-of-fashion/fashion.json` and writes `raw/globe/trend-atlas.html` (gitignored). The first run downloads one small V&A photo per trend into `raw/globe/vam/`.
+
+- `build.mjs`: works out birthplaces and journeys, embeds the photos, and inlines everything into the page. It prints how much of the dataset the globe covers.
+- `page.html` and `page.js`: the page shell and its script. Edit these to change how it looks or behaves.
+- `arrivals-pilot.json`: sourced arrival years for eight trends in places beyond the dataset's four countries, copied from the `arrivals-pilot` branch of the `day9` repo.
+- `land-110m.json`: coastlines from Natural Earth, via the `world-atlas` package.
+
+The rules, which are choices and not facts:
+
+- **Birthplace** is the named country (UK, US, France or Italy) where a trend is first recorded, but only when that is no later than its first worldwide period. Otherwise the country is just where a later revival was written up, and the trend is left off the globe. About 40% of trends pass.
+- **A journey** is another country's first period. It is drawn dashed as "picked up later" when it starts more than five years after the birthplace's first wave ended, because that is a revival and not travel.
+- **A place is lit** in a year when one of its periods covers that year. Places from the pilot have no end date, so they stay lit from their arrival year.
