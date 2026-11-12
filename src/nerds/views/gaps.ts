@@ -42,7 +42,7 @@ const view: View = {
   order: 2,
   mount(host, context) {
     const { nerds } = context;
-    const comebacks = nerds.comebacks();
+    const comebacks = nerds.waits().filter((w) => w.gap > 0);
     const stats = nerds.gapStats();
     const maxGap = Math.max(...stats.gaps);
     const bins = Array.from({ length: Math.ceil((maxGap + 1) / BIN) }, (_, i) => comebacks.filter((c) => c.gap >= i * BIN && c.gap < (i + 1) * BIN).sort((a, b) => a.gap - b.gap));
@@ -57,7 +57,7 @@ const view: View = {
       box.append(el("p", "font-nof-display text-[44px] leading-none font-bold text-nof-gold", value), el("p", "mt-1 text-[13px] text-nof-muted", label));
       return box;
     };
-    head.append(figure(`${stats.median}`, "years, the typical wait (median)"), figure(`${Math.round(stats.mean)}`, "years on average, dragged up by a few very patient ones"), figure(`${stats.count}`, "comebacks counted"));
+    head.append(figure(`${stats.median}`, "years, the typical wait (median)"), figure(`${Math.round(stats.mean)}`, "years on average, dragged up by a few very patient ones"), figure(`${stats.count}`, "comebacks counted, wave to wave"));
     root.append(head);
 
     const frame = el("div", "relative overflow-hidden rounded-xl border border-nof-line bg-nof-panel");
@@ -67,7 +67,7 @@ const view: View = {
 
     const st = stage(frame, {
       height: context.compact ? "min(40vh, 300px)" : "min(44vh, 360px)",
-      label: `Histogram of ${stats.count} fashion comebacks by years between the original and the revival. Median ${stats.median} years.`,
+      label: `Histogram of ${stats.count} fashion comebacks by years from one wave starting to the next. Median ${stats.median} years.`,
       render({ ctx, width, height }, pointer) {
         const pad = { left: 34, right: 14, top: 30, bottom: 34 };
         const bw = (width - pad.left - pad.right) / bins.length;
@@ -136,7 +136,7 @@ const view: View = {
           const bin = bins[hoverBin];
           tip.show(x(hoverBin * BIN + BIN / 2), y(bin.length), (box) => {
             box.append(el("p", "font-mono text-[12px] font-semibold text-nof-pink", `${hoverBin * BIN} to ${hoverBin * BIN + BIN - 1} years · ${bin.length} comeback${bin.length === 1 ? "" : "s"}`));
-            for (const c of bin.slice(0, 7)) box.append(el("p", "mt-1", `${c.subject}: ${c.from} look, back in ${c.to}`));
+            for (const c of bin.slice(0, 7)) box.append(el("p", "mt-1", `${c.subject}: on in ${c.from}, back in ${c.to}`));
             if (bin.length > 7) box.append(el("p", "mt-1 text-nof-muted", `and ${bin.length - 7} more`));
           });
         } else tip.hide();
@@ -179,7 +179,7 @@ const view: View = {
         return box;
       };
       if (onNow) {
-        grid.append(big("Now", "it's on right now", true), big(`${trend.periods.length}`, "times it's been on"), big(`${nerds.comebacks().filter((c) => c.trend === trend.id).length}`, "comebacks on record"));
+        grid.append(big("Now", "it's on right now", true), big(`${trend.periods.length}`, "times it's been on"), big(`${nerds.waits().filter((c) => c.trend === trend.id).length}`, "comebacks on record"));
         answer.append(grid, el("p", "mt-4 font-nof-display text-[20px] italic text-nof-sub", "It's on right now. Wear it before it isn't."));
         return;
       }

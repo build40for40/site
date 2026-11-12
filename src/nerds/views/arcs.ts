@@ -42,18 +42,22 @@ const view: View = {
   order: 0,
   title: "Everything Comes Back",
   blurb: "Every arc leaps from a trend's first run to its comeback. The taller the arc, the longer it hid in the loft",
-  how: "Hover or tap an arc for the comeback and the sentence that proves it. Dashed arcs are our guesses.",
+  how: "Hover or tap an arc to see which trend came back and how long it waited. Dashed arcs are our guesses.",
   sources: ["wikipedia"],
   mount(el, { nerds, born }) {
     const stats = nerds.gapStats();
     const sorted = stats.gaps;
     const q1 = sorted[Math.floor(sorted.length * 0.25)];
     const q3 = sorted[Math.floor(sorted.length * 0.75)];
-    const real: Arc[] = nerds.comebacks().map((r) => {
-      const trend = r.trend ? nerds.byId.get(r.trend) : undefined;
-      return { name: trend?.name ?? r.subject, from: Math.max(FIRST_YEAR, r.from), to: r.to, family: trend ? familyOf(trend.category) : "era", quote: r.quote, article: r.article };
-    });
-    const due = forecasts(nerds, stats.median);
+    // One arc per comeback: from the start of a trend's wave to the start of its next one.
+    const real: Arc[] = nerds
+      .waits()
+      .filter((w) => w.gap > 0 && w.from >= FIRST_YEAR)
+      .map((w) => {
+        const trend = nerds.byId.get(w.trend);
+        return { name: w.subject, from: w.from, to: w.to, family: trend ? familyOf(trend.category) : "era" };
+      });
+    const due = forecasts(nerds, Math.round(stats.median));
     const guessed: Arc[] = due.map((f) => ({ name: f.t.name, from: f.last, to: f.due, family: familyOf(f.t.category), forecast: f.odds }));
     const colour = (family: Arc["family"]) => (family === "era" ? token("--color-nof-gold") : token(FAMILIES[family].token));
 
@@ -62,7 +66,7 @@ const view: View = {
     const legend = document.createElement("div");
     legend.className = "mb-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] text-nof-muted";
     for (const f of Object.keys(FAMILIES) as Family[]) legend.insertAdjacentHTML("beforeend", `<span class="inline-flex items-center gap-1.5"><i class="inline-block size-2.5 rounded-full" style="background:var(${FAMILIES[f].token})"></i>${FAMILIES[f].label}</span>`);
-    legend.insertAdjacentHTML("beforeend", `<span class="inline-flex items-center gap-1.5"><i class="inline-block size-2.5 rounded-full bg-nof-gold"></i>A whole era</span><span class="inline-flex items-center gap-1.5"><i class="inline-block h-0 w-4 border-t-2 border-dashed border-nof-text"></i>Our forecast</span>`);
+    legend.insertAdjacentHTML("beforeend", `<span class="inline-flex items-center gap-1.5"><i class="inline-block h-0 w-4 border-t-2 border-dashed border-nof-text"></i>Our forecast</span>`);
     const box = document.createElement("div");
     box.className = "relative";
     const cards = document.createElement("div");
@@ -104,7 +108,7 @@ const view: View = {
       const bandTop = base - lift(q3);
       svg.append(svgEl("rect", { x: m.l, y: bandTop, width: W - m.l - m.r, height: lift(q3) - lift(q1), fill: token("--color-nof-pink"), opacity: 0.07 }));
       const band = svgEl("text", { x: m.l + 4, y: bandTop - 6, fill: sub, stroke: token("--color-nof-panel"), "stroke-width": 4, "paint-order": "stroke", "font-size": 11, "font-family": "JetBrains Mono, monospace" });
-      band.textContent = `half of all comebacks take ${q1} to ${q3} years`;
+      band.textContent = `half of all comebacks take ${q1} to ${q3} years · typical ${stats.median}`;
       svg.append(band);
       svg.append(svgEl("line", { x1: m.l, x2: W - m.r, y1: base, y2: base, stroke: line }));
       const step = W < 520 ? 25 : 10;
@@ -129,7 +133,7 @@ const view: View = {
       const strokes: SVGPathElement[] = [];
       const all = [...real, ...guessed];
       for (const a of all) {
-        const p = svgEl("path", { d: path(a), fill: "none", stroke: colour(a.family), "stroke-width": a.forecast ? 2.4 : 1.6, opacity: a.forecast ? 0.95 : 0.5, "stroke-dasharray": a.forecast ? "6 6" : "", "stroke-linecap": "round" });
+        const p = svgEl("path", { d: path(a), fill: "none", stroke: colour(a.family), "stroke-width": a.forecast ? 2.4 : 1.2, opacity: a.forecast ? 0.95 : 0.28, "stroke-dasharray": a.forecast ? "6 6" : "", "stroke-linecap": "round" });
         p.style.transition = "opacity .15s";
         strokes.push(p);
         svg.append(p);
@@ -146,7 +150,7 @@ const view: View = {
             event,
             a.forecast
               ? `${head}<span class="font-mono text-[11px] text-nof-muted">last on ${a.from} · due around ${a.to}</span><span class="mt-1 block">${Math.round(a.forecast * 100)}% chance it's back within ten years, going by every comeback we've counted.</span>`
-              : `${head}<span class="font-mono text-[11px] text-nof-muted">${a.from} → ${a.to} · ${a.to - a.from} years in the loft</span>${a.quote ? `<span class="mt-1 block">“${escapeHtml(a.quote.length > 200 ? `${a.quote.slice(0, 198)}…` : a.quote)}”</span><span class="font-mono text-[10px] text-nof-muted">${escapeHtml(a.article ?? "Wikipedia")}, CC BY-SA</span>` : ""}`,
+              : `${head}<span class="font-mono text-[11px] text-nof-muted">on in ${a.from}, back in ${a.to} · ${a.to - a.from} years in the loft</span>`,
           );
         };
         hit.addEventListener("pointermove", on);
@@ -154,7 +158,7 @@ const view: View = {
         hit.addEventListener("pointerleave", () => {
           strokes.forEach((s, k) => {
             s.style.opacity = "";
-            s.setAttribute("stroke-width", all[k].forecast ? "2.4" : "1.6");
+            s.setAttribute("stroke-width", all[k].forecast ? "2.4" : "1.2");
           });
           hover.hide();
         });

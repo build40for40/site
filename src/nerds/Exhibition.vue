@@ -24,7 +24,7 @@ const ROOMS = [
     title: "Everything Comes",
     em: "Back",
     index: "Every comeback, as a leap",
-    text: "Each arc jumps from a trend's first run to its comeback, as Wikipedia tells it. If fashion runs on a cycle, the arcs should all be about the same height. They nearly are.",
+    text: "Each arc jumps from one wave of a trend to its next. Nothing really dies: the typical look is back in about 16 and a half years, which is roughly how long it takes to stop being embarrassing.",
   },
   {
     id: "strings",
@@ -32,7 +32,7 @@ const ROOMS = [
     title: "String",
     em: "Theory",
     index: "Every comeback, tied in thread",
-    text: "The same comebacks wound around a clock of the century. Every thread ties a trend's first life to its second. The dashed ones are what's due next.",
+    text: "The comebacks Wikipedia names, wound around a clock of the century. Every thread ties a trend's first life to its second. The dashed ones are what's due next.",
   },
   {
     id: "silhouette",
@@ -58,7 +58,16 @@ const ROOMS = [
     index: "A hundred years, played out loud",
     text: "Press play and every trend makes its own noise as it comes into style. Jackets zip, boots stomp, skirts swish and punks play a power chord. Or switch to the tuned version, where heavy coats sound low and bikinis sound light.",
   },
-].map((room) => ({ ...room, view: viewById(room.id) }));
+  {
+    id: "atlas",
+    no: "VII",
+    title: "Who Wore It",
+    em: "First?",
+    index: "Where trends started, and where they went",
+    text: "Spin the globe and follow each trend from the city that started it to everywhere that caught it next. Dug out of old newspapers and Wikipedia in every language by Samira.",
+    href: "/nerds-of-fashion/atlas",
+  },
+].map((room) => ({ ...room, view: "href" in room ? undefined : viewById(room.id) }));
 
 const hero = ref<HTMLElement>();
 let stopCurtain: (() => void) | undefined;
@@ -73,7 +82,7 @@ onBeforeUnmount(() => stopCurtain?.());
     <div ref="hero" class="absolute inset-0 [&>canvas]:h-full" aria-hidden="true" />
     <div class="pointer-events-none relative mx-auto flex h-full max-w-[1280px] flex-col justify-between px-4 pt-5 pb-7 text-white mix-blend-difference">
       <div class="flex justify-between gap-3 font-mono text-[11px] tracking-[0.14em] uppercase">
-        <span>Nerds of Fashion</span><span>Six rooms · 1920 to {{ new Date().getFullYear() }}</span>
+        <span>Nerds of Fashion</span><span>Seven rooms · 1920 to {{ new Date().getFullYear() }}</span>
       </div>
       <h1 class="font-nof-display text-[clamp(64px,15.5vw,236px)] leading-[0.8] font-normal tracking-[-0.035em] text-balance">
         The Century <em class="block pl-[0.55em] font-normal italic">Unspooled</em>
@@ -87,7 +96,7 @@ onBeforeUnmount(() => stopCurtain?.());
 
   <nav aria-label="Rooms" class="mx-auto max-w-[1280px] px-4">
     <div class="grid border-t border-nof-line pt-16 pb-6 md:grid-cols-3">
-      <a v-for="room in ROOMS" :key="room.id" :href="`#${room.id}`" class="group grid min-w-0 grid-cols-[auto_1fr] gap-x-3.5 gap-y-1 border-b border-nof-line py-4 pr-4 no-underline">
+      <a v-for="room in ROOMS" :key="room.id" :href="'href' in room ? room.href : `#${room.id}`" class="group grid min-w-0 grid-cols-[auto_1fr] gap-x-3.5 gap-y-1 border-b border-nof-line py-4 pr-4 no-underline">
         <span class="pt-2 font-mono text-[11px] text-nof-muted">{{ room.no }}</span>
         <span class="font-nof-display text-[clamp(24px,3vw,34px)] leading-[1.05] italic transition group-hover:translate-x-1.5 group-hover:text-nof-pink motion-reduce:transition-none">{{ room.title }} {{ room.em }}</span>
         <span class="col-start-2 text-sm text-nof-muted">{{ room.index }}</span>
@@ -106,7 +115,11 @@ onBeforeUnmount(() => stopCurtain?.());
       </div>
       <div class="border-y border-nof-line bg-nof-panel">
         <div class="mx-auto max-w-[1280px]">
-          <ViewHost v-if="room.view" :nerds="nerds" :view="room.view" :born="born" :params="{}" />
+          <a v-if="'href' in room" :href="room.href" class="group flex flex-wrap items-center justify-between gap-4 px-4 py-14 no-underline sm:px-8">
+            <span class="font-nof-display text-[clamp(28px,4vw,48px)] italic transition group-hover:translate-x-1.5 group-hover:text-nof-pink motion-reduce:transition-none">Enter the atlas →</span>
+            <span class="font-mono text-xs text-nof-muted">Its own page, so the globe gets the whole screen</span>
+          </a>
+          <ViewHost v-else-if="room.view" :nerds="nerds" :view="room.view" :born="born" :params="{}" />
           <p v-else class="px-4 py-24 text-center font-nof-display text-2xl text-nof-muted italic">This room is still being hung. Back soon.</p>
         </div>
       </div>

@@ -62,14 +62,21 @@ export interface Dataset {
   colours: { pantone: { year: number; hex: string; name: string }[]; vam: Record<string, Record<string, number>> };
 }
 
+/** One wait between a trend's waves, start to start, from Ben's forecast.json. */
+export interface Wait { trend: string; subject: string; from: number; to: number; gap: number }
+
 let loading: Promise<Nerds> | undefined;
 export function loadNerds() {
-  loading ??= fetch(`${BASE}/fashion.json`)
-    .then((response) => {
-      if (!response.ok) throw new Error(`fashion.json: ${response.status}`);
-      return response.json() as Promise<Dataset>;
-    })
-    .then((data) => new Nerds(data));
+  const json = <T>(file: string) =>
+    fetch(`${BASE}/${file}`).then((response) => {
+      if (!response.ok) throw new Error(`${file}: ${response.status}`);
+      return response.json() as Promise<T>;
+    });
+  loading ??= Promise.all([
+    json<Dataset>("fashion.json"),
+    // The comeback numbers everywhere come from these waits. Without them we fall back to Wikipedia's named revivals.
+    json<{ trends: Record<string, { waves: [number, number][] }> }>("forecast.json").catch(() => undefined),
+  ]).then(([data, forecast]) => new Nerds(data, forecast?.trends));
   return loading;
 }
 
@@ -118,8 +125,18 @@ export class Nerds {
   private readonly presenceCache = new Map<string, Float32Array>();
   private readonly fameCache = new Map<string, number>();
 
-  constructor(readonly data: Dataset) {
+  private readonly waitList: Wait[] | undefined;
+
+  constructor(
+    readonly data: Dataset,
+    waves?: Record<string, { waves: [number, number][] }>,
+  ) {
     this.byId = new Map(data.trends.map((trend) => [trend.id, trend]));
+    this.waitList = waves
+      ? Object.entries(waves).flatMap(([id, { waves: list }]) =>
+          list.slice(1).map((wave, i) => ({ trend: id, subject: this.byId.get(id)?.name ?? id, from: list[i][0], to: wave[0], gap: wave[0] - list[i][0] })),
+        )
+      : undefined;
     this.decadeColours = this.signatureColours();
     this.yearColours = this.colourByYear();
   }
@@ -263,10 +280,20 @@ export class Nerds {
       .filter((revival) => revival.gap > 0);
   }
 
+  /** Every comeback wait, start of one wave to the start of the next (Ben's measure). */
+  waits(): Wait[] {
+    return this.waitList ?? this.comebacks().map((r) => ({ trend: r.trend ?? "", subject: r.subject, from: r.from, to: r.to, gap: r.gap }));
+  }
+
   gapStats() {
-    const gaps = this.comebacks().map((revival) => revival.gap).sort((a, b) => a - b);
+    const gaps = this.waits()
+      .map((wait) => wait.gap)
+      .filter((gap) => gap > 0)
+      .sort((a, b) => a - b);
     const mean = gaps.reduce((a, b) => a + b, 0) / gaps.length;
-    return { count: gaps.length, mean, median: gaps[Math.floor(gaps.length / 2)], gaps };
+    const mid = gaps.length >> 1;
+    const median = gaps.length % 2 ? gaps[mid] : (gaps[mid - 1] + gaps[mid]) / 2;
+    return { count: gaps.length, mean, median, gaps };
   }
 
   /** Chance a trend that peaked `since` years ago comes back within `within` years, from the real gap distribution. */
