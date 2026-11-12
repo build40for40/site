@@ -240,6 +240,18 @@ export const history: Record<number, ShippedIdea> = {
     screenshot: "/screenshots/handup.webp",
     shorts: [],
   },
+  9: {
+    id: "2206072d-6a72-4d5d-837a-4e596cb434f1",
+    title: "Deciding what to wear",
+    problem: "i want a clueless wardrobe app that tells me what to wear from my cupboard.",
+    owner: "Samira",
+    sponsors: [{ name: "Samira", amount: 4 }, { name: "Anonymous", amount: 40 }],
+    buildTime: "4:40:00",
+    appUrl: "https://build40for40.com/nerds-of-fashion/",
+    recordingUrl: "https://www.twitch.tv/build40for40",
+    screenshot: "/screenshots/nerds-of-fashion.webp",
+    shorts: [],
+  },
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");

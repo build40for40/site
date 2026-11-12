@@ -43,9 +43,14 @@ async function resolve(resolver: typeof whileTyping, q: string) {
   }
 }
 
-function typed() {
+// Read the box itself, not v-model: Android keyboards compose each word, and v-model ignores input mid-composition,
+// so the bar would think it was empty and clear what you'd typed.
+function typed(event: Event) {
+  // query.value only updates once the page re-renders, so search what's in the box now.
+  const value = (event.target as HTMLInputElement).value;
+  query.value = value;
   onSubmit.cancel();
-  const q = clean(query.value);
+  const q = clean(value);
   if (!q) return clear();
   if (q.length < props.minLive) {
     whileTyping.cancel();
@@ -100,7 +105,7 @@ onBeforeUnmount(() => {
     </svg>
     <input
       :id="id"
-      v-model="query"
+      :value="query"
       type="search"
       name="q"
       enterkeyhint="search"
