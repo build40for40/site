@@ -116,6 +116,20 @@ footer p { margin: 0; max-width: 80ch; }
 .sample { border-radius: 12px; }
 .find input { border-radius: 999px; padding-inline: 16px; }
 footer { border-top: 1px solid var(--line); padding-top: 16px; }
+.combo { max-width: 460px; display: flex; flex-direction: column; gap: 6px; }
+.find input { max-width: none; font-size: 16px; padding-block: 11px; }
+.hits { list-style: none; margin: 0; padding: 6px; display: flex; flex-direction: column; gap: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
+.hits li { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; cursor: pointer; font-weight: 600; min-width: 0; }
+.hits li:hover, .hits li[aria-selected="true"] { background: var(--tile); }
+.hits li i { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.hits li .n { min-width: 0; overflow-wrap: anywhere; }
+.hits li .m { margin-left: auto; font-family: var(--mono); font-size: 11px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.hits li.none { cursor: default; font-weight: 400; color: var(--muted); }
+.hits li.none:hover { background: none; }
+.chips { align-items: center; }
+.try { font-size: 13px; color: var(--muted); }
+.linkbtn { font: inherit; font-size: 13px; color: var(--sub); background: none; border: 0; padding: 4px 2px; cursor: pointer; text-decoration: underline; text-decoration-color: var(--edge); text-underline-offset: 3px; }
+.linkbtn:hover, .linkbtn[aria-pressed="true"] { color: var(--text); text-decoration-color: var(--lime); }
 </style>
 
 <div class="wrap">
@@ -127,9 +141,11 @@ footer { border-top: 1px solid var(--line); padding-top: 16px; }
   </header>
 
   <div class="find">
-    <div class="chips" id="trends" role="group" aria-label="Pick a trend"></div>
-    <input type="search" id="q" placeholder="Search all the trends, try beehive or flat cap" aria-label="Search trends" autocomplete="off">
-    <div class="chips" id="hits" role="group" aria-label="Search results"></div>
+    <div class="combo">
+      <input type="search" id="q" role="combobox" aria-expanded="false" aria-controls="hits" aria-autocomplete="list" placeholder="Type a trend, like punk or zoot suit" aria-label="Search trends" autocomplete="off">
+      <ul class="hits" id="hits" role="listbox" aria-label="Matching trends" hidden></ul>
+    </div>
+    <div class="chips" id="trends" role="group" aria-label="Examples"></div>
   </div>
 
   <div class="stage">

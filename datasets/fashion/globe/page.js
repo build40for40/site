@@ -12,7 +12,8 @@ const CAT = { garment: FAMILY.clothes, silhouette: FAMILY.clothes, fabric: FAMIL
 const HOME = { uk: '#ff6fa8', us: '#5b8ef0', fr: '#e8c27a', it: '#1fa583', jp: '#a970da' };
 const CORE = new Set(['uk', 'us', 'fr', 'it']);
 Object.assign(PLACES, XPLACES);
-const FEATURED = ['miniskirt', 'paisley', 'hawaiian-shirt', 'harem-pants', 'dashiki', 'punk', 'new-look', 'jeans', 'grunge', 'hip-hop', 'zoot-suit', 'bell-bottoms', 'harajuku'];
+// Three ways in from three corners of the map. Everything else is found by typing.
+const EXAMPLES = ['miniskirt', 'paisley', 'hawaiian-shirt'];
 const FIRST = 1920, LAST = 2026;
 TRENDS.sort((a, b) => a.n.localeCompare(b.n));
 for (const t of TRENDS) t.col = CAT[t.c] || '#a39fae';
@@ -226,17 +227,46 @@ function chip(t, pressed) {
   el.addEventListener('click', () => pickTrend(t.id));
   return el;
 }
+let hitAt = -1;
+function matches() {
+  const q = S.q.trim().toLowerCase();
+  if (!q) return [];
+  const rank = (t) => (t.n.toLowerCase().startsWith(q) ? 0 : t.n.toLowerCase().includes(' ' + q) ? 1 : 2);
+  return TRENDS.filter((t) => t.n.toLowerCase().includes(q) || t.id.includes(q)).sort((x, y) => rank(x) - rank(y) || x.n.localeCompare(y.n)).slice(0, 8);
+}
 function drawPicker() {
   const top = $('trends'); top.innerHTML = '';
-  top.append(chip({ id: 'all', n: 'All trends' }, S.sel === 'all'));
-  for (const id of FEATURED) if (byId[id]) top.append(chip(byId[id], S.sel === id));
-  if (S.sel !== 'all' && !FEATURED.includes(S.sel)) top.append(chip(byId[S.sel], true));
-  const hits = $('hits'); hits.innerHTML = '';
-  const q = S.q.trim().toLowerCase();
-  if (!q) return;
-  const found = TRENDS.filter((t) => t.n.toLowerCase().includes(q) || t.id.includes(q)).slice(0, 14);
-  if (!found.length) { const s = document.createElement('span'); s.className = 'more'; s.textContent = 'No trend by that name. Try jeans, hat or punk.'; hits.append(s); }
-  for (const t of found) hits.append(chip(t, S.sel === t.id));
+  const label = document.createElement('span'); label.className = 'try'; label.textContent = 'Or try'; top.append(label);
+  for (const id of EXAMPLES) if (byId[id]) top.append(chip(byId[id], S.sel === id));
+  const all = document.createElement('button');
+  all.type = 'button'; all.className = 'linkbtn'; all.textContent = 'every trend at once'; all.setAttribute('aria-pressed', S.sel === 'all');
+  all.addEventListener('click', () => pickTrend('all'));
+  top.append(all);
+  drawHits();
+}
+// The list under the search box: it only appears once someone starts typing.
+function drawHits() {
+  const list = $('hits'), input = $('q'), found = matches();
+  list.innerHTML = '';
+  const open = S.q.trim() !== '';
+  list.hidden = !open; input.setAttribute('aria-expanded', open);
+  if (!open) { hitAt = -1; input.removeAttribute('aria-activedescendant'); return; }
+  if (!found.length) { const li = document.createElement('li'); li.className = 'none'; li.textContent = 'Not on the globe. Either we have no trend by that name, or nobody can say where it started.'; list.append(li); return; }
+  hitAt = Math.min(hitAt, found.length - 1);
+  found.forEach((t, i) => {
+    const li = document.createElement('li');
+    li.id = 'hit-' + i; li.setAttribute('role', 'option'); li.setAttribute('aria-selected', i === hitAt);
+    li.innerHTML = '<i style="background:' + t.col + '"></i><span class="n"></span><span class="m"></span>';
+    li.children[1].textContent = t.n; li.children[2].textContent = t.c;
+    li.addEventListener('pointerdown', (e) => e.preventDefault());
+    li.addEventListener('click', () => choose(t));
+    list.append(li);
+  });
+  if (hitAt >= 0) input.setAttribute('aria-activedescendant', 'hit-' + hitAt); else input.removeAttribute('aria-activedescendant');
+}
+function choose(t) {
+  S.q = ''; $('q').value = ''; hitAt = -1;
+  pickTrend(t.id);
 }
 
 let uiKey = '';
@@ -388,7 +418,20 @@ function pickTrend(id, keepPlace) {
   drawPicker(); uiKey = ''; refresh();
 }
 
-$('q').addEventListener('input', (e) => { S.q = e.target.value; drawPicker(); });
+$('q').addEventListener('input', (e) => { S.q = e.target.value; hitAt = -1; drawHits(); });
+$('q').addEventListener('keydown', (e) => {
+  const found = matches();
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    if (!found.length) return;
+    e.preventDefault();
+    hitAt = (hitAt + (e.key === 'ArrowDown' ? 1 : -1) + found.length) % found.length;
+    drawHits();
+  } else if (e.key === 'Enter' && found.length) {
+    e.preventDefault(); choose(found[Math.max(0, hitAt)]);
+  } else if (e.key === 'Escape') {
+    S.q = ''; e.target.value = ''; drawHits();
+  }
+});
 $('year').addEventListener('input', (e) => { tweens.delete('year'); S.year = +e.target.value; refresh(); });
 $('home').addEventListener('click', () => {
   const t = byId[S.sel], out = S.home > 0.5, root = t && rootOf(t);
