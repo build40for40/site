@@ -4,6 +4,10 @@ import { loadNerds, type Nerds } from "./data";
 import Exhibition from "./Exhibition.vue";
 import Explore from "./Explore.vue";
 import Draw from "./Draw.vue";
+import { pickComponents } from "./intent/client";
+import IntentBar from "./intent/IntentBar.vue";
+import { components, type IntentResult } from "./intent/registry";
+import { viewById } from "./registry";
 import { BORN_KEY, readBorn, routeKey, type Route } from "./route";
 
 const nerds = shallowRef<Nerds>();
@@ -52,6 +56,41 @@ function open(id: Route) {
   scrollTo({ top: 0 });
 }
 
+const note = ref("");
+const also = ref<string[]>([]);
+const VIEW_PARAMS = ["trend", "trends", "year", "decade", "place", "family", "corpus", "forecast", "story", "set"];
+
+/** A search either opens the view Jev picked, or has a chart drawn in place of whatever is showing. */
+function searched(result: IntentResult) {
+  const { show, comingSoon } = pickComponents(result);
+  const cleared = Object.fromEntries(VIEW_PARAMS.map((key) => [key, null]));
+  also.value = show.slice(1, 4).map((c) => c.id);
+  scrollTo({ top: 0 });
+  if (!show.length) {
+    const wanted = components.find((c) => c.id === comingSoon[0]?.id)?.label;
+    note.value = wanted ? `That wants ${wanted}, which we haven't built yet, so here's a chart drawn for you.` : "Nothing on the rails for that, so here's a chart drawn for you.";
+    go({ ...cleared, tab: "draw", view: null, q: result.q });
+    return;
+  }
+  note.value = "";
+  const year = result.year ?? (result.decade === null ? null : result.decade + 5);
+  go({
+    ...cleared,
+    tab: "explore",
+    view: show[0].id,
+    q: null,
+    trend: result.trend?.id ?? null,
+    trends: result.trend?.id ?? null,
+    year: year === null ? null : String(year),
+    decade: result.decade === null ? null : String(result.decade),
+  });
+}
+
+function cleared() {
+  note.value = "";
+  also.value = [];
+}
+
 onMounted(async () => {
   read();
   born.value = readBorn();
@@ -86,6 +125,17 @@ onUnmounted(() => removeEventListener("popstate", read));
       </nav>
     </div>
   </header>
+
+  <section class="border-b border-nof-line/70 px-4 py-4" aria-label="Ask a question">
+    <div class="mx-auto max-w-3xl">
+      <IntentBar label="Ask a hundred years of wardrobes anything" @resolved="searched" @cleared="cleared" />
+      <p v-if="note" role="status" class="mt-2 text-sm text-nof-gold">{{ note }}</p>
+      <p v-if="also.length" class="mt-2 flex flex-wrap items-center gap-2 text-sm text-nof-muted">
+        Also fits:
+        <button v-for="id in also" :key="id" type="button" class="rounded-full border border-nof-line px-3 py-1 text-nof-sub hover:border-nof-muted hover:text-nof-text" @click="go({ tab: 'explore', view: id })">{{ viewById(id)?.title ?? id }}</button>
+      </p>
+    </div>
+  </section>
 
   <main class="min-h-[70dvh]">
     <p v-if="failed" class="mx-auto max-w-xl px-4 py-24 text-center text-nof-sub">The wardrobe's stuck shut. Try a refresh. <span class="block pt-2 font-mono text-xs text-nof-muted">{{ failed }}</span></p>

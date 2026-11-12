@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import type { Nerds } from "./data";
 import { EXAMPLES, renderSpec, type Spec } from "./drawSpec";
+import { useRoute } from "./route";
 
 const props = defineProps<{ nerds: Nerds }>();
 
@@ -43,6 +44,15 @@ async function draw(text = question.value) {
     busy.value = false;
   }
 }
+
+const { params } = useRoute();
+watch(
+  () => params.value.q,
+  (q) => {
+    if (q && q !== asked.value) draw(q);
+  },
+  { immediate: true },
+);
 
 function example(i: number) {
   spec.value = EXAMPLES[i].spec;
