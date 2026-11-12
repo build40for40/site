@@ -140,6 +140,16 @@ const neg = rows.filter((r) => !r.actual);
 let wins = 0;
 for (const a of pos) for (const b of neg) wins += a.p > b.p ? 1 : a.p === b.p ? 0.5 : 0;
 
+const BUCKET = 0.05;
+const buckets = new Map();
+for (const r of rows) {
+  const i = Math.floor(r.p / BUCKET);
+  buckets.set(i, [...(buckets.get(i) ?? []), r]);
+}
+const calibration = [...buckets.entries()]
+  .sort((a, b) => a[0] - b[0])
+  .map(([i, rs]) => ({ from: round(i * BUCKET, 2), to: round((i + 1) * BUCKET, 2), guesses: rs.length, predicted: round(mean(rs.map((r) => r.p))), observed: round(mean(rs.map((r) => r.actual))) }));
+
 const result = {
   meta: {
     now: NOW,
@@ -149,7 +159,7 @@ const result = {
     params: { returnShare: round(model.cure, 2), medianGapYears: round(Math.exp(model.mu), 1), logMu: round(model.mu, 2), logSd: round(model.sd, 2), medianWaveYears: round(Math.exp(dMu), 1) },
     counts: { trends: trends.length, gaps: model.gaps, ...counts },
     bands: BANDS,
-    backtest: { guesses: rows.length, baseRate: round(base), brier: round(brier, 4), brierBaseRate: round(brierBase, 4), skill: round(1 - brier / brierBase), auc: round(wins / (pos.length * neg.length)) },
+    backtest: { guesses: rows.length, baseRate: round(base), brier: round(brier, 4), brierBaseRate: round(brierBase, 4), skill: round(1 - brier / brierBase), auc: round(wins / (pos.length * neg.length)), calibration },
   },
   trends: out,
 };

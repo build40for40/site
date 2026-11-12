@@ -64,12 +64,12 @@ The three `build-wiki` scripts turn hand-written extractions (the `.spec.txt` fi
 node datasets/fashion/scripts/forecast.mjs
 ```
 
-Reads `public/nerds-of-fashion/fashion.json` and writes `public/nerds-of-fashion/forecast.json`, which the globe at `/nerds-of-fashion` reads for 2027 to 2029. Rerun it whenever `fashion.json` changes.
+Reads `public/nerds-of-fashion/fashion.json` and writes `public/nerds-of-fashion/forecast.json`, which the globe and the comeback views at `/nerds-of-fashion` read for 2027 to 2029. Rerun it whenever `fashion.json` changes.
 
 - A trend's periods, in any region, are merged into waves. Each wave either never returns or returns after a gap, and the model learns the gaps from every trend that came back.
 - A trend that is out gets the chance a new wave starts by each of the next three years. A trend that is in gets the chance it is still in.
 - A trend with one wave has no gap to learn from, so it is `unknown` and never gets a number.
-- The script backtests itself from 1990 on and saves the result in `meta.backtest`. On this dataset it is close to a coin toss (`auc` near 0.5), because the periods come from decade-level article sections. Treat the numbers as a talking point, not a prediction.
+- The script backtests itself from 1990 on and saves the result in `meta.backtest`, with `calibration` buckets of what it said against what happened. On this dataset it is close to a coin toss (`auc` near 0.5), because the periods come from decade-level article sections. Treat the numbers as a talking point, not a prediction.
 
 ## Extending it
 
