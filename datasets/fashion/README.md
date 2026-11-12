@@ -54,6 +54,19 @@ The three `build-wiki` scripts turn hand-written extractions (the `.spec.txt` fi
 
 `assemble.mjs` is deterministic: the same parts and mappings give the same bytes. It prints a warning for any mapping that points at a type, name or tag that doesn't exist, and for any part that's missing.
 
+## The comeback forecast
+
+```sh
+node datasets/fashion/scripts/forecast.mjs
+```
+
+Reads `public/nerds-of-fashion/fashion.json` and writes `public/nerds-of-fashion/forecast.json`, which the globe at `/nerds-of-fashion` reads for 2027 to 2029. Rerun it whenever `fashion.json` changes.
+
+- A trend's periods, in any region, are merged into waves. Each wave either never returns or returns after a gap, and the model learns the gaps from every trend that came back.
+- A trend that is out gets the chance a new wave starts by each of the next three years. A trend that is in gets the chance it is still in.
+- A trend with one wave has no gap to learn from, so it is `unknown` and never gets a number.
+- The script backtests itself from 1990 on and saves the result in `meta.backtest`. On this dataset it is close to a coin toss (`auc` near 0.5), because the periods come from decade-level article sections. Treat the numbers as a talking point, not a prediction.
+
 ## Extending it
 
 - **Link a trend to museum or runway evidence:** add or edit its entry in `mappings.json`, then run `assemble.mjs`. The `about` block at the top explains the rule format. Keep it conservative: map a type only when it clearly is the trend.
