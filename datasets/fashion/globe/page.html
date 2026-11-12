@@ -1,0 +1,190 @@
+<title>Trend Atlas Origins</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap">
+<style>
+/* Layout: the globe is the stage. Controls sit under it, the place's wardrobe beside it (below it on a phone). */
+:root {
+  --bg: #081633; --panel: #10224a; --tile: #172c58; --line: #1e3260; --edge: #2e4170;
+  --muted: #9aa6c4; --sub: #c9cfe0; --text: #f2f0ea;
+  --lime: #a6e22e; --lime-hover: #bdf05a; --lime-ink: #1a2e05; --yellow: #ffd400; --pink: #ff7fcf;
+  --link: #a6e22e; --ocean: #0b1d42; --land: #20376b; --land-edge: #34497c; --grid: #142a55;
+  --logo-bg: #10224a; --q: #ffd400;
+  --font: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f2f0ea; --panel: #ffffff; --tile: #ebe7dd; --line: #e3dfd6; --edge: #c9c4b8;
+  --muted: #6b675f; --sub: #4a4740; --text: #1b1a17;
+  --link: #002d69; --ocean: #dbe4f3; --land: #ffffff; --land-edge: #9aa6c4; --grid: #cdd8ea;
+  --logo-bg: #081633; --q: #002d69; color-scheme: light;
+} }
+:root[data-theme="light"] {
+  --bg: #f2f0ea; --panel: #ffffff; --tile: #ebe7dd; --line: #e3dfd6; --edge: #c9c4b8;
+  --muted: #6b675f; --sub: #4a4740; --text: #1b1a17;
+  --link: #002d69; --ocean: #dbe4f3; --land: #ffffff; --land-edge: #9aa6c4; --grid: #cdd8ea;
+  --logo-bg: #081633; --q: #002d69; color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.55;
+  padding-block: 20px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+a { color: var(--link); }
+.wrap { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+header { display: flex; flex-direction: column; gap: 8px; }
+.logo { align-self: flex-start; background: var(--logo-bg); border-radius: 8px; padding: 3px 10px; font-weight: 800; font-size: 15px; letter-spacing: 0.02em; }
+.logo .a { color: #a6e22e; } .logo .b { color: #ffd400; } .logo .c { color: #ff7fcf; }
+h1 { font-size: clamp(26px, 6vw, 40px); line-height: 1.1; margin: 0; font-weight: 800; text-wrap: balance; }
+.lede { margin: 0; color: var(--sub); max-width: 60ch; }
+.sample { margin: 0; border: 1px dashed var(--edge); border-radius: 8px; padding: 8px 12px; color: var(--sub); font-size: 12.5px; }
+.sample b { color: var(--text); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: inherit; font-size: 12.5px; color: var(--sub); background: transparent; border: 1px solid var(--edge); border-radius: 999px; padding: 6px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+.chip:hover { border-color: var(--muted); color: var(--text); }
+.chip[aria-pressed="true"] { background: var(--tile); color: var(--text); border-color: var(--muted); font-weight: 700; }
+.chip i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+.stage { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+.globe-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.globe { position: relative; width: 100%; max-width: 560px; aspect-ratio: 1 / 1; margin: 0 auto; }
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: pan-y; cursor: grab; border-radius: 50%; }
+canvas:active { cursor: grabbing; }
+canvas:focus-visible, button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
+.zoom { position: absolute; right: 0; bottom: 0; display: flex; gap: 6px; }
+.zoom button { font: inherit; font-weight: 800; font-size: 16px; width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--edge); background: var(--panel); color: var(--text); cursor: pointer; }
+.zoom button:hover { border-color: var(--muted); }
+.hint { text-align: center; color: var(--muted); font-size: 12px; margin: 0; }
+.key { display: inline-block; width: 22px; border-top: 2px solid var(--muted); vertical-align: middle; margin: 0 4px 2px 0; }
+.key.dash { border-top-style: dashed; margin-left: 10px; }
+.key.dot { border-top-style: dotted; border-top-color: var(--q); margin-left: 10px; }
+.birth { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.birth[hidden] { display: none; }
+.birth .claim { color: var(--text); margin-top: 4px; }
+.birth .ev { color: var(--muted); font-size: 12px; }
+.time { display: flex; align-items: center; gap: 10px; }
+.time span { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.time input { flex: 1; min-width: 0; accent-color: var(--lime); }
+.btn { font: inherit; font-weight: 700; border-radius: 8px; padding: 10px 14px; cursor: pointer; border: 1px solid var(--edge); background: transparent; color: var(--text); }
+.btn:hover { border-color: var(--muted); }
+.btn.go { background: var(--lime); color: var(--lime-ink); border-color: var(--lime); }
+.btn.go:hover { background: var(--lime-hover); }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.actions .btn { flex: 1 1 150px; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.stat { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.stat small { display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+.stat strong { display: block; font-size: clamp(14px, 3.6vw, 21px); font-weight: 800; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; line-height: 1.2; margin-top: 2px; }
+.side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+h2 { font-size: 15px; margin: 0; font-weight: 800; }
+.card p { margin: 0; color: var(--sub); font-size: 13px; overflow-wrap: anywhere; }
+.q { color: var(--q); font-weight: 800; }
+ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.row { display: flex; flex-direction: column; gap: 2px; font-size: 13px; min-width: 0; }
+.row .top { display: flex; align-items: baseline; gap: 8px; }
+.row i { width: 9px; height: 9px; border-radius: 50%; flex: none; align-self: center; }
+.row .n { font-weight: 700; }
+.row .m { color: var(--muted); font-size: 12px; margin-left: auto; text-align: right; }
+.row .ev { color: var(--muted); font-size: 12px; padding-left: 17px; overflow-wrap: anywhere; }
+.row.gone .n { text-decoration: line-through; color: var(--muted); font-weight: 400; }
+.row.gone i { opacity: 0.3; }
+.row.gone .ev { display: none; }
+.shaky { border: 1px dashed var(--edge); border-radius: 999px; padding: 0 6px; font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.tag { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-top: 4px; }
+.log { display: flex; flex-wrap: wrap; gap: 6px; }
+.log .chip { font-size: 12px; padding: 4px 10px; }
+.log .chip.off { opacity: 0.4; }
+.log .chip.low { border-style: dashed; }
+.find { display: flex; flex-direction: column; gap: 8px; }
+.find input { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--edge); border-radius: 8px; padding: 9px 12px; width: 100%; max-width: 420px; }
+.find input::placeholder { color: var(--muted); }
+.pic { display: flex; gap: 12px; align-items: flex-start; margin: 0; }
+.pic img { width: 92px; flex: none; border-radius: 8px; border: 1px solid var(--line); }
+.pic figcaption { font-size: 12px; color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
+.cat { align-self: flex-start; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; border: 1px solid var(--edge); border-radius: 999px; padding: 1px 8px; color: var(--sub); display: inline-flex; align-items: center; gap: 6px; }
+.cat i { width: 8px; height: 8px; border-radius: 50%; }
+.row button.n { font: inherit; font-weight: 700; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; text-decoration: underline; text-decoration-color: var(--edge); text-underline-offset: 3px; }
+.row button.n:hover { text-decoration-color: var(--text); }
+.more { color: var(--muted); font-size: 12px; }
+.routes { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.routes div { display: flex; gap: 8px; align-items: center; }
+.routes b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.routes i { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.ring { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--muted); vertical-align: middle; margin: 0 4px 2px 10px; }
+footer { color: var(--muted); font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
+footer p { margin: 0; max-width: 80ch; }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="logo" aria-label="40 for 40"><span class="a">40</span><span class="b">(</span><span class="c">40</span><span class="b">)</span></span>
+    <h1>Who wore it first?</h1>
+    <p class="lede">Every trend has a home town, and half of them are lying about it. Pick one, watch it travel, then send it all the way home and see what each place has left to wear.</p>
+    <p class="sample"><b>Real data, with gaps.</b> <span id="n-trends">178</span> trends from the Day 9 fashion dataset. For <span id="n-src">49</span> of them the birthplace comes from a sentence in the trend's own Wikipedia article, with the rival claims beside it, and <span id="n-root">27</span> also say what the look was borrowed from. The rest are a rough guess: the first country (UK, US, France or Italy) our dataset records them in. Every card says which. A missing line means we found no source, not that the trend never got there.</p>
+  </header>
+
+  <div class="find">
+    <div class="chips" id="trends" role="group" aria-label="Pick a trend"></div>
+    <input type="search" id="q" placeholder="Search all the trends, try beehive or flat cap" aria-label="Search trends" autocomplete="off">
+    <div class="chips" id="hits" role="group" aria-label="Search results"></div>
+  </div>
+
+  <div class="stage">
+    <div class="globe-col">
+      <div class="globe">
+        <canvas id="globe" tabindex="0" role="img" aria-label="Globe showing where a fashion trend started and where it travelled. Use the arrow keys to spin it."></canvas>
+        <div class="zoom"><button type="button" id="zout" aria-label="Zoom out">−</button><button type="button" id="zin" aria-label="Zoom in">+</button></div>
+      </div>
+      <p class="hint">Drag to spin. Tap a place to open its wardrobe.<br><span class="key"></span>travelled<span class="key dash"></span>shaky, or picked up much later<span class="key dot"></span>borrowed from<span class="ring"></span>in fashion everywhere</p>
+      <div class="time">
+        <span>1920</span>
+        <input type="range" id="year" min="1920" max="2026" step="1" value="1967" aria-label="Year">
+        <span>2026</span>
+      </div>
+      <div class="stats">
+        <div class="stat"><small>Year</small><strong id="s-year">1967</strong></div>
+        <div class="stat"><small id="l-born">Born in</small><strong id="s-born">United Kingdom</strong></div>
+        <div class="stat"><small id="l-count">In fashion in</small><strong id="s-count">0</strong></div>
+      </div>
+      <div class="actions">
+        <button class="btn go" id="home" type="button">Send it home</button>
+        <button class="btn" id="play" type="button">Play it from the start</button>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="card" id="about">
+        <h2 id="t-name">Miniskirt</h2>
+        <span class="cat" id="t-cat"></span>
+        <p id="t-blurb"></p>
+        <figure class="pic" id="t-pic" hidden><img id="t-img" alt=""><figcaption id="t-cap"></figcaption></figure>
+        <p id="t-src"></p>
+        <div class="birth" id="t-birth"></div>
+        <div class="tag" id="log-tag">Where it went</div>
+        <div class="log" id="log"></div>
+        <div class="routes" id="routes" hidden></div>
+        <p id="t-back" class="more"></p>
+      </div>
+      <div class="card">
+        <h2><span class="q">(</span> <span id="c-name">United Kingdom</span> in <span id="c-year">1967</span> <span class="q">)</span></h2>
+        <p id="c-sum"></p>
+        <div class="tag">Born here</div>
+        <ul id="c-own"></ul>
+        <div class="tag">Borrowed</div>
+        <ul id="c-got"></ul>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Day 9 of 40 for 40. A place lights up while a trend is recorded as in fashion there, and goes dark when it falls out. Dates come from decade by decade histories, so treat a year as "around then". Music words (punk, hip hop, grunge) date the scene more than the clothes.</p>
+    <p>Trends, dates and quotes: the Day 9 fashion dataset, built from Wikipedia's fashion history articles (CC BY-SA 4.0). Birthplaces, rival claims and roots: each trend's own Wikipedia article, quoted word for word and checked by hand. Extra arrival dates: Wikipedia in many languages and newspaper archives at the national libraries of the Netherlands, Norway, Luxembourg and Estonia and the Deutsche Digitale Bibliothek. Photos © Victoria and Albert Museum, London. Coastlines from Natural Earth.</p>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+const LAND = /*LAND*/null;
+const TRENDS = /*DATA*/null;
+const THUMBS = /*THUMBS*/null;
+const XPLACES = /*XPLACES*/null;
