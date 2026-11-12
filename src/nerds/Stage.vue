@@ -15,12 +15,12 @@ const setParam = (key: string, value: string | null) => go({ [key]: value }, fal
 </script>
 
 <template>
-  <section class="mx-auto max-w-6xl px-4 pt-6">
+  <section class="mx-auto max-w-[1280px] px-4 pt-6">
     <h1 class="font-nof-display text-2xl leading-tight font-bold italic sm:text-3xl">{{ view.title }}</h1>
     <div class="mt-4 overflow-hidden rounded-2xl border border-nof-line bg-nof-panel">
       <ViewHost :nerds="nerds" :view="view" :born="born" :params="viewParams" @param="setParam" />
     </div>
-    <p class="mt-3 text-xs text-nof-muted">
+    <p class="mt-3 font-mono text-xs text-nof-muted">
       <template v-if="view.how">{{ view.how }}<template v-if="sources.length"> · </template></template>
       <template v-for="(s, i) in sources" :key="s.id"><a :href="s.url" class="underline hover:text-nof-text" target="_blank" rel="noopener">{{ s.name }}</a> ({{ s.licence }})<template v-if="i < sources.length - 1">, </template></template>
     </p>

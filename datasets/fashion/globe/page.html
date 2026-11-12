@@ -1,39 +1,33 @@
 <title>Trend Atlas Origins</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
 /* Layout: the globe is the stage. Controls sit under it, the place's wardrobe beside it (below it on a phone). */
 :root {
-  --bg: #081633; --panel: #10224a; --tile: #172c58; --line: #1e3260; --edge: #2e4170;
-  --muted: #9aa6c4; --sub: #c9cfe0; --text: #f2f0ea;
-  --lime: #a6e22e; --lime-hover: #bdf05a; --lime-ink: #1a2e05; --yellow: #ffd400; --pink: #ff7fcf;
-  --link: #a6e22e; --ocean: #0b1d42; --land: #20376b; --land-edge: #34497c; --grid: #142a55;
-  --logo-bg: #10224a; --q: #ffd400;
-  --font: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* Nerds of Fashion: a gallery after hours, read in bed. One dark look, same tokens as the app (src/styles/global.css). */
+  --bg: #0e0d12; --panel: #17151d; --tile: #211e29; --line: #302c3a; --edge: #453f52;
+  --muted: #a39fae; --sub: #cfc9d6; --text: #f2eee6;
+  --lime: #ff6fa8; --lime-hover: #ff8fbb; --lime-ink: #1f0612; --gold: #e8c27a;
+  --link: #ff6fa8; --ocean: #131118; --land: #262230; --land-edge: #453f52; --grid: #1c1923;
+  --q: #e8c27a;
+  --font: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --display: "Bodoni Moda", Didot, Georgia, serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   color-scheme: dark;
-}
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
-  --bg: #f2f0ea; --panel: #ffffff; --tile: #ebe7dd; --line: #e3dfd6; --edge: #c9c4b8;
-  --muted: #6b675f; --sub: #4a4740; --text: #1b1a17;
-  --link: #002d69; --ocean: #dbe4f3; --land: #ffffff; --land-edge: #9aa6c4; --grid: #cdd8ea;
-  --logo-bg: #081633; --q: #002d69; color-scheme: light;
-} }
-:root[data-theme="light"] {
-  --bg: #f2f0ea; --panel: #ffffff; --tile: #ebe7dd; --line: #e3dfd6; --edge: #c9c4b8;
-  --muted: #6b675f; --sub: #4a4740; --text: #1b1a17;
-  --link: #002d69; --ocean: #dbe4f3; --land: #ffffff; --land-edge: #9aa6c4; --grid: #cdd8ea;
-  --logo-bg: #081633; --q: #002d69; color-scheme: light;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.55;
-  padding-block: 20px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.55;
+  padding-block: 0 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 a { color: var(--link); }
 .wrap { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
-header { display: flex; flex-direction: column; gap: 8px; }
-.logo { align-self: flex-start; background: var(--logo-bg); border-radius: 8px; padding: 3px 10px; font-weight: 800; font-size: 15px; letter-spacing: 0.02em; }
-.logo .a { color: #a6e22e; } .logo .b { color: #ffd400; } .logo .c { color: #ff7fcf; }
-h1 { font-size: clamp(26px, 6vw, 40px); line-height: 1.1; margin: 0; font-weight: 800; text-wrap: balance; }
+header { display: flex; flex-direction: column; gap: 10px; }
+.bar { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-block: 12px; margin-bottom: 14px; }
+.brand { font-family: var(--display); font-style: italic; font-weight: 900; font-size: clamp(22px, 5.5vw, 30px); line-height: 1; letter-spacing: -0.01em; color: var(--text); text-decoration: none; }
+.brand span { color: var(--lime); }
+.back { font-size: 13px; font-weight: 600; color: var(--sub); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; }
+.back:hover { color: var(--text); border-color: var(--muted); }
+h1 { font-family: var(--display); font-size: clamp(34px, 8vw, 60px); line-height: 1; margin: 0; font-weight: 900; text-wrap: balance; }
 .lede { margin: 0; color: var(--sub); max-width: 60ch; }
 .sample { margin: 0; border: 1px dashed var(--edge); border-radius: 8px; padding: 8px 12px; color: var(--sub); font-size: 12.5px; }
 .sample b { color: var(--text); }
@@ -75,7 +69,7 @@ canvas:focus-visible, button:focus-visible, input:focus-visible, a:focus-visible
 .stat strong { display: block; font-size: clamp(14px, 3.6vw, 21px); font-weight: 800; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; line-height: 1.2; margin-top: 2px; }
 .side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-h2 { font-size: 15px; margin: 0; font-weight: 800; }
+h2 { font-family: var(--display); font-style: italic; font-size: 22px; line-height: 1.15; margin: 0; font-weight: 700; }
 .card p { margin: 0; color: var(--sub); font-size: 13px; overflow-wrap: anywhere; }
 .q { color: var(--q); font-weight: 800; }
 ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
@@ -112,20 +106,46 @@ ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: col
 .ring { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--muted); vertical-align: middle; margin: 0 4px 2px 10px; }
 footer { color: var(--muted); font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
 footer p { margin: 0; max-width: 80ch; }
+.chip { font-weight: 600; }
+.chip[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+.card { border-radius: 16px; }
+.stat { border-radius: 12px; }
+.stat small, .tag, .cat, .time span, .shaky { font-family: var(--mono); }
+.stat strong { font-family: var(--display); font-weight: 700; }
+.btn { border-radius: 999px; font-weight: 600; }
+.sample { border-radius: 12px; }
+.find input { border-radius: 999px; padding-inline: 16px; }
+footer { border-top: 1px solid var(--line); padding-top: 16px; }
+.combo { max-width: 460px; display: flex; flex-direction: column; gap: 6px; }
+.find input { max-width: none; font-size: 16px; padding-block: 11px; }
+.hits { list-style: none; margin: 0; padding: 6px; display: flex; flex-direction: column; gap: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
+.hits li { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; cursor: pointer; font-weight: 600; min-width: 0; }
+.hits li:hover, .hits li[aria-selected="true"] { background: var(--tile); }
+.hits li i { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.hits li .n { min-width: 0; overflow-wrap: anywhere; }
+.hits li .m { margin-left: auto; font-family: var(--mono); font-size: 11px; font-weight: 400; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.hits li.none { cursor: default; font-weight: 400; color: var(--muted); }
+.hits li.none:hover { background: none; }
+.chips { align-items: center; }
+.try { font-size: 13px; color: var(--muted); }
+.linkbtn { font: inherit; font-size: 13px; color: var(--sub); background: none; border: 0; padding: 4px 2px; cursor: pointer; text-decoration: underline; text-decoration-color: var(--edge); text-underline-offset: 3px; }
+.linkbtn:hover, .linkbtn[aria-pressed="true"] { color: var(--text); text-decoration-color: var(--lime); }
 </style>
 
 <div class="wrap">
   <header>
-    <span class="logo" aria-label="40 for 40"><span class="a">40</span><span class="b">(</span><span class="c">40</span><span class="b">)</span></span>
+    <div class="bar"><a class="brand" href="https://build40for40.com/nerds-of-fashion/">Nerds <span>of</span> Fashion</a><a class="back" href="https://build40for40.com/nerds-of-fashion/">Back to the app</a></div>
     <h1>Who wore it first?</h1>
     <p class="lede">Every trend has a home town, and half of them are lying about it. Pick one, watch it travel, then send it all the way home and see what each place has left to wear.</p>
     <p class="sample"><b>Real data, with gaps.</b> <span id="n-trends">178</span> trends from the Day 9 fashion dataset. For <span id="n-src">49</span> of them the birthplace comes from a sentence in the trend's own Wikipedia article, with the rival claims beside it, and <span id="n-root">27</span> also say what the look was borrowed from. The rest are a rough guess: the first country (UK, US, France or Italy) our dataset records them in. Every card says which. A missing line means we found no source, not that the trend never got there.</p>
   </header>
 
   <div class="find">
-    <div class="chips" id="trends" role="group" aria-label="Pick a trend"></div>
-    <input type="search" id="q" placeholder="Search all the trends, try beehive or flat cap" aria-label="Search trends" autocomplete="off">
-    <div class="chips" id="hits" role="group" aria-label="Search results"></div>
+    <div class="combo">
+      <input type="search" id="q" role="combobox" aria-expanded="false" aria-controls="hits" aria-autocomplete="list" placeholder="Type a trend, like punk or zoot suit" aria-label="Search trends" autocomplete="off">
+      <ul class="hits" id="hits" role="listbox" aria-label="Matching trends" hidden></ul>
+    </div>
+    <div class="chips" id="trends" role="group" aria-label="Examples"></div>
   </div>
 
   <div class="stage">
@@ -176,7 +196,7 @@ footer p { margin: 0; max-width: 80ch; }
   </div>
 
   <footer>
-    <p>Day 9 of 40 for 40. A place lights up while a trend is recorded as in fashion there, and goes dark when it falls out. Dates come from decade by decade histories, so treat a year as "around then". Music words (punk, hip hop, grunge) date the scene more than the clothes.</p>
+    <p>Built live on <a href="https://build40for40.com/">40 for 40</a>, day 9. A place lights up while a trend is recorded as in fashion there, and goes dark when it falls out. Dates come from decade by decade histories, so treat a year as "around then". Music words (punk, hip hop, grunge) date the scene more than the clothes.</p>
     <p>Trends, dates and quotes: the Day 9 fashion dataset, built from Wikipedia's fashion history articles (CC BY-SA 4.0). Birthplaces, rival claims and roots: each trend's own Wikipedia article, quoted word for word and checked by hand. Extra arrival dates: Wikipedia in many languages and newspaper archives at the national libraries of the Netherlands, Norway, Luxembourg and Estonia and the Deutsche Digitale Bibliothek. Photos © Victoria and Albert Museum, London. Coastlines from Natural Earth.</p>
   </footer>
 </div>

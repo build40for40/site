@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, provide, ref, shallowRef } from "vue";
 import { loadNerds, type Nerds } from "./data";
-import Home from "./Home.vue";
+import Exhibition from "./Exhibition.vue";
 import Stage from "./Stage.vue";
 import Methods from "./Methods.vue";
 import Draw from "./Draw.vue";
@@ -53,7 +53,7 @@ provide(routeKey, { params, go, born, setBorn });
 const SCREEN_PARAMS = ["tab", "set", "view", "q", "trend", "trends", "year", "decade", "place", "family", "corpus", "forecast", "story"];
 const blank = () => Object.fromEntries(SCREEN_PARAMS.map((key) => [key, null]));
 
-/** Swap what's on screen. Leaving home is a step back can undo; one search screen replacing another isn't. */
+/** Swap what's on screen. Leaving the exhibition is a step back can undo; one search screen replacing another isn't. */
 function swap(next: Record<string, string | null>) {
   go({ ...blank(), ...next }, screen.value.key === "home");
   scrollTo({ top: 0 });
@@ -93,7 +93,7 @@ onUnmounted(() => removeEventListener("popstate", read));
 
 <template>
   <header class="sticky top-0 z-30 border-b border-nof-line/40 bg-nof-night/85 backdrop-blur">
-    <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2.5">
+    <div class="mx-auto flex max-w-[1280px] items-center justify-between gap-4 px-4 py-2.5">
       <button type="button" class="shrink-0 text-left font-nof-display text-2xl leading-none font-black italic tracking-tight sm:text-3xl" aria-label="Nerds of Fashion, home" @click="home">
         <span class="sm:hidden">N<span class="text-nof-pink">o</span>F</span>
         <span class="hidden sm:inline">Nerds <span class="text-nof-pink">of</span> Fashion</span>
@@ -117,18 +117,18 @@ onUnmounted(() => removeEventListener("popstate", read));
         <Methods v-if="screen.key === 'methods'" :nerds="nerds" />
         <Stage v-else-if="screen.view" :nerds="nerds" :view="screen.view" />
         <Draw v-else-if="screen.q" :nerds="nerds" :q="screen.q" />
-        <Home v-else :nerds="nerds" />
+        <Exhibition v-else :nerds="nerds" />
       </div>
     </Transition>
   </main>
 
-  <footer class="mt-20 border-t border-nof-line px-4 py-10 text-sm text-nof-muted">
-    <div class="mx-auto max-w-6xl space-y-2">
-      <p>
-        Built live on <a class="underline hover:text-nof-text" href="/">40 for 40</a>, day 9. Data from Wikipedia (CC BY-SA 4.0), Google Books Ngram (CC BY 3.0), the V&amp;A, the Met (CC0), Vogue Runway tag counts and Pantone.
-        <button type="button" class="underline hover:text-nof-text" @click="swap({ view: 'methods' })">How we got the numbers</button>
-      </p>
-      <p>Mostly high fashion as written about and kept in museums, not what everyone wore. Your birth year never leaves your browser.</p>
-    </div>
+  <footer class="mx-auto mt-20 grid max-w-[1280px] gap-2 px-4 pt-16 pb-12 text-sm text-nof-muted">
+    <p class="font-nof-display text-[clamp(28px,4vw,44px)] leading-[1.1] text-nof-text italic">Nerds of Fashion</p>
+    <p>
+      Built live on <a class="underline hover:text-nof-text" href="/">40 for 40</a>, day 9. Data from <b class="font-medium text-nof-sub">Wikipedia</b> (CC BY-SA 4.0), <b class="font-medium text-nof-sub">Google Books Ngram</b> (CC BY 3.0), the <b class="font-medium text-nof-sub">V&amp;A</b>, <b class="font-medium text-nof-sub">the Met</b> (CC0), Vogue Runway tag counts and Pantone.
+      <button type="button" class="underline hover:text-nof-text" @click="swap({ view: 'methods' })">How we got the numbers</button>
+    </p>
+    <p>Mostly high fashion as written about and kept in museums, not what everyone wore. Year colours before 2000 are the colour each decade's museum pieces lean towards, then Pantone's pick.</p>
+    <p><button type="button" class="underline hover:text-nof-text" @click="home">Back to the curtain ↑</button></p>
   </footer>
 </template>
