@@ -224,6 +224,8 @@ export const history: Record<number, ShippedIdea> = {
     buildTime: "4:40:00",
     appUrl: "https://build40for40.com/poppy/",
     recordingUrl: "https://www.twitch.tv/build40for40",
+    postUrl: "https://build40for40.substack.com/p/whats-your-sleeping-beauty-game",
+    screenshot: "/screenshots/poppy.webp",
     shorts: [],
   },
   8: {
