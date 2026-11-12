@@ -114,7 +114,7 @@ const view: View = {
     const scene = stage(box, {
       height: context.compact ? "clamp(360px, 62vh, 560px)" : "clamp(420px, 78vh, 720px)",
       animate: true,
-      label: `A clock of years from ${START} to ${END} with ${real.length} comeback threads. The average comeback takes ${Math.round(stats.mean)} years`,
+      label: `A clock of years from ${START} to ${END} with ${real.length} comeback threads. The typical comeback takes ${stats.median} years`,
       render({ ctx: g, width: w, height: h, dt }, pointer) {
         clock += dt;
         const cx = w / 2;
@@ -269,11 +269,11 @@ const view: View = {
           });
         } else {
           g.font = FONT.display(clamp(R * 0.42, 52, 150), 700);
-          g.fillText(String(Math.round(stats.mean)), cx, cy + R * 0.1);
+          g.fillText(String(stats.median), cx, cy + R * 0.1);
           g.font = FONT.mono(clamp(R * 0.045, 9, 11));
           g.fillStyle = alpha(ink, 0.65);
-          g.fillText("years, the average comeback", cx, cy + R * 0.1 + 22);
-          g.fillText(`median ${stats.median} · ${stats.count} on record`, cx, cy + R * 0.1 + 38);
+          g.fillText("years, the typical comeback", cx, cy + R * 0.1 + 22);
+          g.fillText(`${stats.count} comebacks on record`, cx, cy + R * 0.1 + 38);
         }
         g.textAlign = "left";
         g.font = FONT.mono(10);
