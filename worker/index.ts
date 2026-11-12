@@ -3,6 +3,8 @@ import { TOTAL_DAYS, backings, helpTypes, involvement, isSponsorCents, SPONSOR_M
 import { categoriseProblem, verdict, type Sorted } from "./categories";
 import { StripeError, openCheckout, readCheckout, recordPayment, statusOf, summary, type CheckoutSession, type Sponsoring } from "./checkout";
 import { jevClassifier } from "./classifier";
+import { intentRoute } from "./intent";
+import { anthropicChartPlanner, answerWithChart, cleanQuestion } from "./nerds-chart";
 import { listProblems } from "./problems";
 import { searchIdeas } from "./search";
 import { fetchFeed, listShorts, syncShorts } from "./shorts";
@@ -263,17 +265,37 @@ const titlerFor = (env: Env) => (env.ANTHROPIC_API_KEY ? anthropicTitler({ apiKe
 const reportSorted = (env: Env, ctx: ExecutionContext, via: string) => (id: string, sorted: Sorted) =>
   ctx.waitUntil(capture(env, "problem_categorised", id, { problem_id: id, via, model: sorted.model, ...verdict(sorted) }).catch(() => {}));
 
+const edgeCache = () => (typeof caches === "undefined" ? undefined : (caches as unknown as { default: Cache }).default);
+
 async function poolSearch(request: Request, env: Env) {
   const query = new URL(request.url).searchParams.get("q") ?? "";
   const classifier = classifierFor(env);
-  const cache = typeof caches === "undefined" ? undefined : (caches as unknown as { default: Cache }).default;
+  const cache = edgeCache();
   return json({ query, ...(await searchIdeas(query, { db: env.DB, classifier, cache })) });
+}
+
+async function nerdsChart(request: Request, env: Env, ctx: ExecutionContext) {
+  if (request.method !== "POST") return new Response("Method not allowed.", { status: 405, headers: { Allow: "POST" } });
+  const origin = request.headers.get("Origin");
+  if (origin && origin !== new URL(request.url).origin) return text("Forbidden.", 403);
+  const body = (await request.json().catch(() => null)) as { q?: unknown } | null;
+  const question = cleanQuestion(body?.q);
+  if (!question) return text("Ask a question, please.", 400);
+
+  const planner = env.ANTHROPIC_API_KEY ? anthropicChartPlanner({ apiKey: env.ANTHROPIC_API_KEY }) : undefined;
+  const cache = typeof caches === "undefined" ? undefined : (caches as unknown as { default: Cache }).default;
+  const { cached = false, ...answer } = await answerWithChart(question, { planner, cache });
+  const outcome = { chart: answer.spec?.chart ?? null, trends: answer.spec?.trends ?? [], reason: answer.reason ?? null, model: answer.model ?? null, ms: answer.ms, cached };
+  console.log(JSON.stringify({ event: "nerds_chart", question_length: question.length, ...outcome }));
+  ctx.waitUntil(capture(env, "nerds_chart_planned", "$posthog_cookieless", { ...cookieless(request), question_length: question.length, ...outcome }).catch(() => {}));
+  return json(answer);
 }
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (/^\/api\/stripe\/webhook\/?$/.test(url.pathname)) return stripeWebhook(request, env, ctx);
+    if (/^\/api\/nerds-of-fashion\/intent\/?$/.test(url.pathname)) return intentRoute(request, { classifier: classifierFor(env), cache: edgeCache() });
 
     const read = { "/api/problems": problems, "/api/pool/search": poolSearch, "/api/days": guestDays }[url.pathname.replace(/\/$/, "")];
     const session = url.pathname.match(/^\/api\/checkout\/([^/]+)\/?$/)?.[1];
@@ -281,6 +303,8 @@ export default {
       if (request.method !== "GET") return new Response("Method not allowed.", { status: 405, headers: { Allow: "GET" } });
       return session ? checkoutStatus(env, ctx, session) : read!(request, env);
     }
+
+    if (/^\/api\/nerds-of-fashion\/chart\/?$/.test(url.pathname)) return nerdsChart(request, env, ctx);
 
     const starting = /^\/api\/checkout\/?$/.test(url.pathname);
     const form = url.pathname.match(/^\/api\/forms\/([a-z]+)\/?$/)?.[1];

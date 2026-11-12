@@ -76,3 +76,12 @@ describe("newsletter consent", () => {
     expect(response.status).toBe(400);
   });
 });
+
+test("the fashion intent route answers with keywords when Jev has no key", async () => {
+  const { db } = testDb();
+  const request = new Request("https://build40for40.com/api/nerds-of-fashion/intent", { method: "POST", body: JSON.stringify({ q: "where did punk start?" }) });
+  const response = await worker.fetch(request as never, { DB: db } as Env, { waitUntil: () => {} } as unknown as ExecutionContext);
+
+  expect(response.status).toBe(200);
+  expect(await response.json()).toMatchObject({ fallback: true, trend: { id: "punk" }, components: [{ id: "globe", score: 1, available: true }, {}, {}, {}] });
+});
