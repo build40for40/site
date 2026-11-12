@@ -1,7 +1,6 @@
 import { inject, type InjectionKey, type Ref } from "vue";
 import { FIRST_YEAR, NOW_YEAR } from "./data";
 
-export type Route = "home" | "explore" | "draw";
 export const BORN_KEY = "nof-born";
 
 export interface RouteApi {
