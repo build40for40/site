@@ -1,8 +1,9 @@
 // Builds the Trend Atlas globe page from the fashion dataset.
 //
-// Reads public/nerds-of-fashion/fashion.json and globe/arrivals-pilot.json
+// Reads public/nerds-of-fashion/fashion.json, globe/arrivals-pilot.json
 // (sourced arrival years for eight trends, from the day9 repo's
-// arrivals-pilot branch), downloads one small V&A photo per trend into
+// arrivals-pilot branch) and globe/origins.json (sourced birthplaces, rival
+// claims and roots for the origins pilot, built by globe/origins/), downloads one small V&A photo per trend into
 // raw/globe/ (gitignored), and writes one self-contained HTML file to
 // raw/globe/trend-atlas.html, ready to publish as an artifact.
 //
@@ -15,6 +16,9 @@ const HERE = 'datasets/fashion/globe';
 const RAW = 'datasets/fashion/raw/globe';
 const ben = JSON.parse(readFileSync('public/nerds-of-fashion/fashion.json', 'utf8'));
 const pilot = JSON.parse(readFileSync(`${HERE}/arrivals-pilot.json`, 'utf8'));
+const origins = JSON.parse(readFileSync(`${HERE}/origins.json`, 'utf8'));
+const gazetteer = JSON.parse(readFileSync(`${HERE}/origins/places.json`, 'utf8')).places;
+const researched = JSON.parse(readFileSync(`${HERE}/origins/pilot.json`, 'utf8')).trends;
 mkdirSync(`${RAW}/vam`, { recursive: true });
 
 // 1. Trends: a birthplace, the places each one reached, and when.
@@ -32,7 +36,7 @@ for (const t of ben.trends) {
   for (const k in ps) ps[k].sort((a, b) => a[0] - b[0]);
   g.sort((a, b) => a[0] - b[0]);
   const first = Object.entries(ps).map(([k, v]) => [k, v[0][0]]).sort((a, b) => a[1] - b[1]);
-  const x = { id: t.id, n: t.name, c: t.category, d: t.description, ps, g, de: {}, o: [], y: null };
+  const x = { id: t.id, n: t.name, c: t.category, d: t.description, ps, g, de: {}, o: [], y: null, first };
   const s0 = t.sources[0];
   if (s0) { x.q = s0.quote.length > 220 ? s0.quote.slice(0, 217).replace(/\s+\S*$/, '') + '…' : s0.quote; x.u = s0.url; }
   // A named country only counts as the birthplace if the trend is recorded there before it is recorded as worldwide.
@@ -44,6 +48,60 @@ for (const t of ben.trends) {
   }
   T[t.id] = x;
 }
+
+// 1b. Sourced origins: what each trend's own Wikipedia article says about where it
+// started (origin), who else claims it (rival) and what it was borrowed from (root).
+// A sourced origin beats the country rule above, which stays as the fallback.
+const XPLACES = {}; // places beyond the fixed list that become dots with a wardrobe
+const RANK = { high: 0, medium: 1, low: 2 };
+const nodeFor = (r) => {
+  const g = gazetteer[r.place];
+  if (g.in) return g.in;
+  const k = 'x-' + r.place.toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  XPLACES[k] = [r.place, [r.lon, r.lat]];
+  return k;
+};
+// One claim as the page wants it: name, [lon, lat], year, precision, who, confidence, quote, link.
+const claim = (r) => {
+  const g = gazetteer[r.place];
+  return { n: r.place, c: [r.lon, r.lat], y: r.year, p: r.year_precision ? r.year_precision[0] : null, w: r.who, cf: r.confidence, q: r.source_sentence, u: r.source_url, west: g.in || g.west ? 1 : 0 };
+};
+const clamp = (y) => Math.min(2026, Math.max(1920, y));
+const tally = { agrees: 0, overruled: 0, fresh: 0, rootOnly: 0 };
+for (const id of new Set(origins.map((r) => r.trend_id))) {
+  const t = T[id], mine = origins.filter((r) => r.trend_id === id);
+  const o = mine.find((r) => r.kind === 'origin');
+  const recorded = Math.min(...t.first.map((f) => f[1]), ...(t.g.length ? [t.g[0][0]] : []), 2026);
+  // Journeys to every named country except `k`, when the old rule's birthplace no longer holds.
+  const rejourney = (k) => {
+    const own = t.ps[k];
+    t.de = {};
+    for (const [c, y] of t.first) if (c !== k) t.de[c] = { y, late: own && y > own[0][1] + 5 ? 1 : 0, ...(y < t.y ? { early: 1 } : {}) };
+  };
+  if (o) {
+    const k = nodeFor(o);
+    t.b = claim(o);
+    if (t.o.includes(k)) {
+      tally.agrees++;
+      for (const other of t.o) if (other !== k) t.de[other] = { y: t.y, late: 0 };
+    } else {
+      tally[t.o.length ? 'overruled' : 'fresh']++;
+      // Its year on the timeline: the sourced year if there is one (the timeline starts in 1920), else the earliest record anywhere.
+      t.y = o.year != null ? Math.min(clamp(o.year), t.ps[k] ? t.ps[k][0][0] : Infinity) : recorded;
+      rejourney(k);
+    }
+    t.o = [k];
+  }
+  t.v = mine.filter((r) => r.kind === 'rival').map(claim);
+  t.r = mine.filter((r) => r.kind === 'root').sort((a, b) => RANK[a.confidence] - RANK[b.confidence]).map(claim);
+  // A root and no birthplace at all: the root is the only anchor we have, so it stands in.
+  if (!t.o.length && t.r.length) {
+    const k = nodeFor(mine.find((r) => r.kind === 'root' && r.place === t.r[0].n));
+    t.o = [k]; t.ro = 1; t.y = recorded; tally.rootOnly++;
+    rejourney(k);
+  }
+}
+for (const t of Object.values(T)) delete t.first;
 // The pilot: sourced arrival years for places beyond Ben's four countries.
 const PLACE = { 'United Kingdom': 'uk', London: 'uk', Paris: 'fr', France: 'fr', 'United States': 'us', 'New York City': 'us', Seattle: 'us', Tokyo: 'jp', Japan: 'jp',
   'Mexico City': 'mex', Germany: 'de', Melbourne: 'mel', Australia: 'mel', Italy: 'it', 'Soviet Union': 'su', Tanzania: 'tz', 'Vatican City': 'va',
@@ -94,7 +152,7 @@ for (const [id, e] of Object.entries(ex)) {
 // 3. The page: shell + script, with the coastlines, trends and photos inlined.
 const inline = (v) => JSON.stringify(v).replace(/<\//g, '<\\/');
 let page = readFileSync(`${HERE}/page.html`, 'utf8') + readFileSync(`${HERE}/page.js`, 'utf8');
-for (const [k, v] of [['LAND', JSON.parse(readFileSync(`${HERE}/land-110m.json`, 'utf8'))], ['DATA', list], ['THUMBS', thumbs]]) {
+for (const [k, v] of [['LAND', JSON.parse(readFileSync(`${HERE}/land-110m.json`, 'utf8'))], ['DATA', list], ['THUMBS', thumbs], ['XPLACES', XPLACES]]) {
   if (!page.includes(`/*${k}*/null`)) throw new Error(`placeholder ${k} missing`);
   page = page.replace(`/*${k}*/null`, () => inline(v));
 }
@@ -103,12 +161,29 @@ writeFileSync(`${RAW}/trend-atlas.html`, page);
 // Coverage, so the page's claims can be checked against the data.
 const total = ben.trends.length;
 const pct = (n) => `${n} (${Math.round((n / total) * 100)}%)`;
-const solid = (t) => Object.values(t.de).filter((d) => !d.late && d.c !== 'low').length;
+const solid = (t) => Object.values(t.de).filter((d) => !d.late && !d.early && d.c !== 'low').length;
 console.log(`Dataset trends:                 ${total}`);
 console.log(`With a birthplace (on globe):   ${pct(list.filter((t) => ben.trends.some((b) => b.id === t.id)).length)}`);
 console.log(`  ...and at least one journey:  ${pct(list.filter((t) => Object.keys(t.de).length).length)}`);
 console.log(`  ...and a well dated journey:  ${pct(list.filter((t) => solid(t) >= 1).length)}`);
 console.log(`  ...and three or more of them: ${pct(list.filter((t) => solid(t) >= 3).length)}`);
 console.log(`No named country at all:        ${pct(ben.trends.filter((b) => b.periods.every((p) => p.region === 'global')).length)}`);
+// The origins pilot: how much of the globe now rests on a sourced sentence.
+const inData = list.filter((t) => ben.trends.some((b) => b.id === t.id));
+const kinds = (k) => new Set(origins.filter((r) => r.kind === k).map((r) => r.trend_id)).size;
+const beyond = new Set(origins.filter((r) => !gazetteer[r.place].in).map((r) => r.place)).size;
+console.log(`Origins pilot, trends read:     ${researched.length} (${researched.filter((r) => r.title).length} have an article of their own)`);
+console.log(`  sourced rows:                 ${origins.length} (${origins.filter((r) => r.confidence !== 'low').length} medium or high confidence)`);
+console.log(`  gained a sourced origin:      ${kinds('origin')}`);
+console.log(`  gained a rival claim:         ${kinds('rival')}`);
+console.log(`  gained a root:                ${kinds('root')}`);
+console.log(`Birthplace from a source:       ${pct(inData.filter((t) => t.b).length)}`);
+console.log(`  ...same country as the rule:  ${tally.agrees}`);
+console.log(`  ...overrules the rule:        ${tally.overruled}`);
+console.log(`  ...new on the globe:          ${tally.fresh}`);
+console.log(`Birthplace from the old rule:   ${pct(inData.filter((t) => !t.b && !t.ro).length)}`);
+console.log(`On the globe by a root alone:   ${pct(tally.rootOnly)}`);
+console.log(`Sent home beyond the West:      ${pct(inData.filter((t) => t.r && t.r.length && !t.ro && (!t.b || t.b.west)).length)}`);
+console.log(`Sourced places outside the four countries: ${beyond}`);
 console.log(`Photos embedded:                ${Object.keys(thumbs).length}`);
 console.log(`Wrote ${RAW}/trend-atlas.html (${(page.length / 1024).toFixed(0)} KB)`);

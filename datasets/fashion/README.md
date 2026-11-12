@@ -82,11 +82,38 @@ It reads `public/nerds-of-fashion/fashion.json` and writes `raw/globe/trend-atla
 
 - `build.mjs`: works out birthplaces and journeys, embeds the photos, and inlines everything into the page. It prints how much of the dataset the globe covers.
 - `page.html` and `page.js`: the page shell and its script. Edit these to change how it looks or behaves.
+- `origins.json`: sourced birthplaces, rival claims and roots for the 86 trends of the origins pilot (see below). `rejected.json` holds every claim that was thrown out, and why.
 - `arrivals-pilot.json`: sourced arrival years for eight trends in places beyond the dataset's four countries, copied from the `arrivals-pilot` branch of the `day9` repo.
 - `land-110m.json`: coastlines from Natural Earth, via the `world-atlas` package.
 
 The rules, which are choices and not facts:
 
-- **Birthplace** is the named country (UK, US, France or Italy) where a trend is first recorded, but only when that is no later than its first worldwide period. Otherwise the country is just where a later revival was written up, and the trend is left off the globe. About 40% of trends pass.
+- **Birthplace, the fallback rule:** the named country (UK, US, France or Italy) where a trend is first recorded, but only when that is no later than its first worldwide period. Otherwise the country is just where a later revival was written up, and the trend is left off the globe. About 40% of trends pass. The page labels these "rough guess".
+- **Birthplace, sourced:** when `origins.json` has an `origin` row for a trend, that place, year and credit win over the fallback rule and the page labels it "sourced", with the quote. If the place is inside one of the four countries the trend still belongs to that country's wardrobe, and the dot is drawn at the exact spot. Anywhere else becomes a new place on the globe. Its year on the timeline is the sourced year (never before 1920, where the timeline starts), or the earliest record anywhere if the source gives no year.
+- **Rival claims** (`rival` rows) are shown as contenders beside the origin, each with its own quote, under "it depends who you ask". Journeys are still drawn from the origin, because a line has to start somewhere.
+- **Roots** (`root` rows) are where the look was borrowed from. Each draws a dotted line from the root to the birthplace. "Send it home" pulls the journeys back to the birthplace and then walks the trend on to its first root (the best sourced one), so the birthplace loses it too. That only happens when the birthplace is in the West. A trend born outside it (the kaftan in West Asia) is already home, and its root is listed as the route it took.
+- **A root and no birthplace:** the trend goes on the globe at its root, labelled "roots only".
+- **On record earlier:** when a sourced origin overrules the fallback rule, the other country's older record stays as a dashed line marked "on record earlier" (punk: sourced to the UK in the mid 1970s, on record in the US from 1970).
 - **A journey** is another country's first period. It is drawn dashed as "picked up later" when it starts more than five years after the birthplace's first wave ended, because that is a revival and not travel.
 - **A place is lit** in a year when one of its periods covers that year. Places from the pilot have no end date, so they stay lit from their arrival year.
+
+### The origins pilot
+
+`origins.json` answers three questions for 86 trends, from each trend's own English Wikipedia article and not the decade summaries the rest of the dataset uses: where did it start and who gets the credit (`origin`), who else claims it (`rival`), and what was it borrowed from (`root`). Every row has the place with its latitude and longitude, a year with its precision (`year`, `decade` or `century`, or null), who is credited, a confidence, the article link and the exact sentence. Years BC are negative.
+
+The 86 are the trends the globe build listed as having a well dated journey, plus every trend whose name hints at roots outside the UK, the US, France and Italy (`origins/pilot.json`).
+
+```sh
+node datasets/fashion/globe/origins/fetch.mjs      # 1. cache each article as text in raw/origins/
+                                                   # 2. answer origins/prompt.md for each article, into origins/extracted/
+node datasets/fashion/globe/origins/check.mjs      # 3. check every claim against its article, by rule
+                                                   # 4. hand review: a verdict for every surviving claim in origins/review.json
+node datasets/fashion/globe/origins/assemble.mjs   # 5. write globe/origins.json and globe/rejected.json
+```
+
+- **Step 2 is a language model, steps 3 to 5 are not.** On 12 Nov 2026 the prompt was answered by Claude Sonnet subagents in Claude Code, one answer file per trend. No API key was needed and none is in the scripts.
+- **The rules in `check.mjs`:** the quote must be in the cached article word for word and under 400 characters, the place must be narrower than a continent, the quote must state the year, decade or century it is filed under, and a rival needs an origin to rival.
+- **The hand review** (`origins/review.json`) gives every surviving claim a verdict and a reason. It can refile a real quote (an "earliest evidence anywhere" origin becomes a root) or lower its confidence. It never edits a quote. Coordinates in `origins/places.json` are typed in by hand.
+- **Confidence is a rule:** high for an exact year with no hedging in the quote, low when the quote hedges ("is said to", "claimed") or gives no better than a century or no date, medium otherwise.
+- **Result:** 112 claims extracted, 2 rejected by rule, 12 by hand, 98 kept. 49 trends gained an origin, 8 a rival claim and 27 a root. 26 got nothing.
+- **Where it fails:** trends with no article of their own (the New Look, slim-cut suits, velvet blazers, makeup for men), trends whose title lands on a broader article (work boots, peasant blouse, hoop earrings, Levi's 501, tweed jacket), and articles that tell the story without naming a place in one sentence (cardigan, afro, braids, tie-dye, leather jacket). Peoples and regions are a point on the map only by convention. Half the kept rows are low confidence, mostly because they carry no date.

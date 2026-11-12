@@ -8,7 +8,9 @@ const PLACES = {
 };
 const CAT = { garment: '#ff7fcf', subculture: '#f0503c', accessory: '#e0b800', hair: '#9a6bff', footwear: '#3cc4dc', silhouette: '#4f86f7', pattern: '#3fc380', fabric: '#1fb5a3', makeup: '#f59a23', colour: '#d06bd8' };
 const HOME = { uk: '#ff7fcf', us: '#3cc4dc', fr: '#e0b800', it: '#3fc380', jp: '#9a6bff' };
-const FEATURED = ['miniskirt', 'punk', 'new-look', 'mod', 'hippie', 'grunge', 'hip-hop', 'power-suit', 'disco', 'bell-bottoms', 'teddy-boys', 'goth', 'harajuku'];
+const CORE = new Set(['uk', 'us', 'fr', 'it']);
+Object.assign(PLACES, XPLACES);
+const FEATURED = ['miniskirt', 'paisley', 'hawaiian-shirt', 'harem-pants', 'dashiki', 'punk', 'new-look', 'jeans', 'grunge', 'hip-hop', 'zoot-suit', 'bell-bottoms', 'harajuku'];
 const FIRST = 1920, LAST = 2026;
 TRENDS.sort((a, b) => a.n.localeCompare(b.n));
 for (const t of TRENDS) t.col = CAT[t.c] || '#9aa6c4';
@@ -18,6 +20,27 @@ const $ = (id) => document.getElementById(id);
 const names = (ids) => ids.map((p) => PLACES[p][0]).join(' and ');
 const yr = (d) => (d.dec ? Math.floor(d.y / 10) * 10 + 's' : String(d.y));
 $('n-trends').textContent = TRENDS.length;
+$('n-src').textContent = TRENDS.filter((t) => t.b).length;
+$('n-root').textContent = TRENDS.filter((t) => t.r && t.r.length).length;
+
+// Sourced claims (t.b the birthplace, t.v its rivals, t.r its roots) carry their own name, point and date.
+const ord = (n) => n + (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th');
+function when(c) {
+  if (c.y == null) return '';
+  if (c.p === 'c') return c.y < 0 ? ord(Math.ceil(-c.y / 100)) + ' century BC' : ord(Math.floor(c.y / 100) + 1) + ' century';
+  if (c.p === 'd') return Math.floor(c.y / 10) * 10 + 's';
+  return c.y < 0 ? -c.y + ' BC' : String(c.y);
+}
+const far = (a, b) => d3.geoDistance(a, b) > 0.004;
+const bornAt = (t) => (t.b ? t.b.c : t.ro ? t.r[0].c : PLACES[t.o[0]][1]);
+const bornName = (t) => (t.b ? t.b.n : t.ro ? t.r[0].n : names(t.o));
+// The root a trend goes home to: only when it was born in the West and borrowed from further off.
+const rootOf = (t) => (t.r && t.r.length && !t.ro && (!t.b || t.b.west) && far(t.r[0].c, bornAt(t)) ? t.r[0] : null);
+// How far the journeys have been pulled back (0 to 1), and how far the trend has gone on to its root.
+const pulled = (t) => (t && rootOf(t) ? Math.min(1, S.home * 2) : S.home);
+const onward = (t) => (rootOf(t) ? Math.max(0, S.home * 2 - 1) : 0);
+// With everything sent home, does this place keep this trend?
+const keeps = (t, p) => t.o.includes(p) && !rootOf(t);
 
 const inAny = (list, y) => list.some(([s, e]) => s <= y && y <= e);
 const everywhere = (t, y) => inAny(t.g, y);
@@ -40,7 +63,8 @@ function bestYear(t) {
 }
 
 const S = { sel: 'miniskirt', year: 1967, home: 0, city: 'uk', rot: [0, -30, 0], zoom: 1, q: '' };
-const facing = (id) => { const c = PLACES[id][1]; return [-c[0], -c[1] * 0.6, 0]; };
+const facingAt = (c) => [-c[0], -c[1] * 0.6, 0];
+const facing = (id) => facingAt(PLACES[id][1]);
 
 const canvas = $('globe'), ctx = canvas.getContext('2d');
 const proj = d3.geoOrthographic().clipAngle(90).precision(0.4);
@@ -61,14 +85,14 @@ function arcLine(a, b, frac) {
   for (let i = 0; i <= n; i++) pts.push(f((i / n) * frac));
   return { type: 'LineString', coordinates: pts };
 }
-const fracOf = (d) => Math.max(0, Math.min(1, S.year - (d.y - 1))) * (1 - S.home);
+const fracOf = (d, t) => Math.max(0, Math.min(1, S.year - (d.y - 1))) * (1 - pulled(t));
 
 // Every journey made by a given year, grouped by route, for the all trends view.
 function flows(y) {
   const m = {};
   for (const t of TRENDS) for (const p in t.de) {
     const d = t.de[p];
-    if (d.late || d.y > y) continue;
+    if (d.late || d.early || d.y > y) continue;
     const k = t.o[0] + '>' + p;
     m[k] = (m[k] || 0) + 1;
   }
@@ -90,7 +114,7 @@ function draw() {
   }
 
   ctx.lineCap = 'round';
-  const lit = {}, big = {};
+  const lit = {}, big = {}, pins = [];
   if (all) {
     const m = flows(y);
     for (const k in m) {
@@ -99,20 +123,43 @@ function draw() {
       ctx.beginPath(); path(arcLine(PLACES[a][1], PLACES[b][1], 1 - S.home));
       ctx.strokeStyle = HOME[a] || '#9aa6c4'; ctx.globalAlpha = 0.75; ctx.lineWidth = 1 + Math.sqrt(m[k]) * 1.2; ctx.stroke();
     }
+    // What the West borrowed: one dotted line per trend, from its birthplace back to its root.
+    for (const x of TRENDS) {
+      const r = rootOf(x);
+      if (!r) continue;
+      ctx.beginPath(); path(arcLine(bornAt(x), r.c, 1));
+      ctx.setLineDash([1, 5]); ctx.strokeStyle = v('--q'); ctx.globalAlpha = 0.3 + 0.6 * S.home; ctx.lineWidth = 1.4; ctx.stroke();
+      pins.push({ c: r.c, kind: 'root', on: S.home > 0.5 });
+    }
+    ctx.setLineDash([]);
     for (const p in PLACES) {
-      const n = TRENDS.filter((x) => active(x, p, y) && (S.home < 0.5 || x.o.includes(p))).length;
+      const n = TRENDS.filter((x) => active(x, p, y) && (S.home < 0.5 || keeps(x, p))).length;
       if (n) { lit[p] = HOME[p] || v('--text'); big[p] = 3 + Math.sqrt(n) * 1.1; }
     }
   } else {
+    const from = bornAt(t), root = rootOf(t), on = onward(t);
     for (const p in t.de) {
-      const d = t.de[p], f = fracOf(d);
+      const d = t.de[p], f = fracOf(d, t);
       if (f <= 0) continue;
-      ctx.beginPath(); path(arcLine(PLACES[t.o[0]][1], PLACES[p][1], f));
-      ctx.setLineDash(d.late || d.c === 'low' ? [2, 6] : []);
+      ctx.beginPath(); path(arcLine(from, PLACES[p][1], f));
+      ctx.setLineDash(d.late || d.early || d.c === 'low' ? [2, 6] : []);
       ctx.strokeStyle = t.col; ctx.globalAlpha = 0.95; ctx.lineWidth = 2.2; ctx.stroke();
     }
+    // Roots: a dotted line from each root to the birthplace. Sending it home walks the first one back.
+    for (const r of t.ro ? [] : t.r || []) {
+      if (!far(r.c, from)) continue;
+      ctx.beginPath(); path(arcLine(r.c, from, 1));
+      ctx.setLineDash([1, 5]); ctx.strokeStyle = v('--q'); ctx.globalAlpha = 0.9; ctx.lineWidth = 1.8; ctx.stroke();
+    }
     ctx.setLineDash([]);
-    for (const p in PLACES) if (active(t, p, y) && (S.home < 0.5 || t.o.includes(p))) lit[p] = t.col;
+    if (root && on > 0) {
+      ctx.beginPath(); path(arcLine(from, root.c, on));
+      ctx.strokeStyle = t.col; ctx.globalAlpha = 0.95; ctx.lineWidth = 3; ctx.stroke();
+    }
+    for (const p in PLACES) if (active(t, p, y) && (S.home < 0.5 || (t.o.includes(p) && on < 1))) lit[p] = t.col;
+    if (t.b && far(t.b.c, PLACES[t.o[0]][1])) pins.push({ c: t.b.c, kind: 'born', label: t.b.n, on: on < 1 });
+    for (const r of t.v || []) pins.push({ c: r.c, kind: 'rival', label: far(r.c, from) ? r.n + '?' : '' });
+    for (const r of t.r || []) pins.push({ c: r.c, kind: 'root', label: far(r.c, PLACES[t.o[0]][1]) ? r.n : '', on: r === root && on >= 1 });
   }
   ctx.globalAlpha = 1;
 
@@ -128,7 +175,22 @@ function draw() {
     ctx.fillStyle = lit[id] || v('--muted'); ctx.globalAlpha = lit[id] ? 1 : 0.5; ctx.fill(); ctx.globalAlpha = 1;
     if (isO) { ctx.beginPath(); ctx.arc(x, yy, 10, 0, 7); ctx.strokeStyle = t.col; ctx.lineWidth = 1.5; ctx.stroke(); }
     if (isSel) { ctx.beginPath(); ctx.arc(x, yy, (big[id] || 6) + 7, 0, 7); ctx.strokeStyle = v('--text'); ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]); }
-    if (isSel || isO) labels.push([PLACES[id][0], x, yy]);
+    if (isSel || isO) labels.push([isO && t.b && !far(t.b.c, c) ? t.b.n : PLACES[id][0], x, yy]);
+  }
+  // Sourced points that are not a place with a wardrobe: the exact birthplace, rival claimants (hollow), roots (diamonds).
+  const seen = new Set();
+  for (const pin of pins) {
+    if (d3.geoDistance(pin.c, centre) > Math.PI / 2 - 0.05) continue;
+    const [x, yy] = proj(pin.c);
+    ctx.beginPath();
+    if (pin.kind === 'root') { ctx.moveTo(x, yy - 7); ctx.lineTo(x + 7, yy); ctx.lineTo(x, yy + 7); ctx.lineTo(x - 7, yy); ctx.closePath(); } else ctx.arc(x, yy, pin.kind === 'born' ? 6 : 5, 0, 7);
+    const col = pin.kind === 'root' ? v('--q') : t.col;
+    ctx.fillStyle = pin.kind === 'rival' ? v('--bg') : pin.on === false ? v('--muted') : pin.kind === 'root' && pin.on ? t ? t.col : col : col;
+    ctx.globalAlpha = pin.kind === 'root' && !pin.on && all ? 0.6 : 1; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.stroke();
+    if (pin.kind === 'born') { ctx.beginPath(); ctx.arc(x, yy, 10, 0, 7); ctx.stroke(); }
+    const key = Math.round(x / 8) + ',' + Math.round(yy / 8);
+    if (pin.label && !seen.has(key)) { seen.add(key); labels.push([pin.label, x, yy]); }
   }
   for (const [label, x, yy] of labels) {
     const w = ctx.measureText(label).width, left = x + 20 + w > W, tx = left ? x - 20 - w : x + 20;
@@ -186,7 +248,7 @@ function refresh() {
   $('year').value = y; $('s-year').textContent = y; $('c-year').textContent = y;
   $('home').textContent = homeOn ? 'Let it spread again' : all ? 'Send them all home' : 'Send it home';
   $('log').innerHTML = ''; $('routes').innerHTML = '';
-  $('t-pic').hidden = true; $('t-src').hidden = all; $('t-cat').hidden = all; $('routes').hidden = !all; $('t-back').textContent = '';
+  $('t-pic').hidden = true; $('t-birth').hidden = all; $('t-src').hidden = all; $('t-cat').hidden = all; $('routes').hidden = !all; $('t-back').textContent = '';
 
   if (all) {
     const m = flows(y), trips = homeOn ? 0 : Object.values(m).reduce((a, b) => a + b, 0);
@@ -206,8 +268,10 @@ function refresh() {
     }
   } else {
     const t = byId[S.sel];
-    const n = homeOn ? t.o.filter((p) => active(t, p, y)).length : litCount(t, y);
-    $('l-born').textContent = 'Born in'; $('s-born').textContent = names(t.o);
+    const n = homeOn ? (rootOf(t) ? 0 : t.o.filter((p) => active(t, p, y)).length) : litCount(t, y);
+    const root = rootOf(t);
+    $('l-born').textContent = homeOn && root ? 'Sent home to' : t.ro ? 'Roots in' : t.v && t.v.length ? 'Born in, they say' : 'Born in';
+    $('s-born').textContent = homeOn && root ? root.n : bornName(t);
     $('l-count').textContent = 'In fashion in';
     $('s-count').textContent = !homeOn && everywhere(t, y) ? 'Everywhere' : n + (n === 1 ? ' place' : ' places');
     $('t-name').textContent = t.n; $('t-blurb').textContent = t.d;
@@ -220,10 +284,12 @@ function refresh() {
     }
     const src = $('t-src');
     if (t.q) { src.textContent = 'Wikipedia: “' + t.q + '” '; src.append(link(t.u, 'Source')); } else src.hidden = true;
+    drawBirth(t);
     $('log-tag').textContent = 'Where it went';
-    for (const p of t.o) addLog(p, PLACES[p][0] + ' ' + t.y, t.col, t.y > y, false);
+    for (const r of t.ro ? [] : t.r || []) addLog(null, 'From ' + r.n, 'var(--q)', false, true);
+    for (const p of t.o) addLog(p, t.b ? (t.b.n + ' ' + when(t.b)).trim() : t.ro ? t.r[0].n + ', its root' : PLACES[p][0] + ' ' + t.y, t.col, !t.b && !t.ro && t.y > y, false);
     Object.entries(t.de).sort((a, b) => a[1].y - b[1].y).forEach(([p, d]) =>
-      addLog(p, PLACES[p][0] + ' ' + yr(d) + (d.late ? ', picked up later' : ''), t.col, homeOn || d.y > y, d.late || d.c === 'low'));
+      addLog(p, PLACES[p][0] + ' ' + yr(d) + (d.late ? ', picked up later' : d.early ? ', on record earlier' : ''), t.col, homeOn || d.y > y, d.late || d.early || d.c === 'low'));
     if (t.g.length) addLog(null, 'Everywhere ' + t.g[0][0], t.col, homeOn || t.g[0][0] > y, false);
     const back = [];
     for (const p in t.ps) if (t.ps[p].length > 1) back.push(PLACES[p][0] + ' ' + t.ps[p].slice(1).map(([s, e]) => (s === e ? s : s + ' to ' + e)).join(', '));
@@ -235,15 +301,47 @@ function refresh() {
   const recent = (t) => { const ps = t.ps[p]; const hit = ps && ps.find(([s, e]) => s <= y && y <= e); return hit ? hit[0] : t.de[p] ? t.de[p].y : t.y; };
   const here = TRENDS.filter((t) => active(t, p, y)).sort((a, b) => recent(b) - recent(a));
   const own = here.filter((t) => t.o.includes(p)), got = here.filter((t) => !t.o.includes(p));
+  const kept = own.filter((t) => keeps(t, p));
   const also = TRENDS.filter((t) => everywhere(t, y) && !active(t, p, y)).length;
   $('c-name').textContent = PLACES[p][0];
-  fill($('c-own'), own, (t) => row(t, 'since ' + recent(t), false, null), 'Nothing on record that year.');
-  fill($('c-got'), got, (t) => row(t, homeOn ? 'sent home to ' + names(t.o) : 'from ' + names(t.o) + ', ' + recent(t), homeOn, t.de[p]), 'Nothing borrowed that we can prove.');
+  fill($('c-own'), own, (t) => { const r = rootOf(t); return row(t, homeOn && r ? 'sent home to ' + r.n : r ? 'since ' + recent(t) + ', roots in ' + r.n : 'since ' + recent(t), homeOn && !!r, null); }, 'Nothing on record that year.');
+  fill($('c-got'), got, (t) => row(t, homeOn ? 'sent home to ' + (rootOf(t) || { n: bornName(t) }).n : 'from ' + bornName(t) + ', ' + recent(t), homeOn, t.de[p]), 'Nothing borrowed that we can prove.');
   const total = here.length;
   $('c-sum').textContent = (!total ? 'Nothing recorded as in fashion here that year.'
-    : homeOn ? (own.length ? 'With the borrowed pieces sent home, it keeps ' + own.length + ' of ' + total + '.' : 'With the borrowed pieces sent home, it has nothing left to wear. Awkward.')
+    : homeOn ? (kept.length ? 'With the borrowed pieces sent home, it keeps ' + kept.length + ' of ' + total + '.' : 'With the borrowed pieces sent home, it has nothing left to wear. Awkward.')
     : got.length + ' of the ' + total + ' ' + (total === 1 ? 'trend' : 'trends') + ' in fashion here came from somewhere else.')
     + (also ? ' Another ' + also + ' were in fashion everywhere.' : '');
+}
+// The "where it started" block: a sourced birthplace with its quote, the contenders when
+// the claim is disputed, what it was borrowed from, or the old country rule as a fallback.
+function drawBirth(t) {
+  const box = $('t-birth'); box.innerHTML = '';
+  const add = (cls, text) => { const el = document.createElement(cls === 'tag' ? 'div' : 'p'); el.className = cls; el.textContent = text; box.append(el); return el; };
+  const pill = (el, text) => { const s = document.createElement('span'); s.className = 'shaky'; s.textContent = text; el.append(' ', s); };
+  const one = (c, lead) => {
+    const p = add('claim', '');
+    const b = document.createElement('b'); b.textContent = [lead + c.n, when(c)].filter(Boolean).join(', '); p.append(b);
+    if (c.w) p.append(' · ' + c.w);
+    if (c.cf === 'low') pill(p, 'shaky');
+    const q = add('ev', 'Wikipedia: “' + c.q + '” '); q.append(link(c.u, 'Source'));
+  };
+  if (t.b && t.v.length) {
+    pill(add('tag', 'Who wore it first? It depends who you ask'), 'sourced');
+    [t.b, ...t.v].forEach((c) => one(c, ''));
+  } else if (t.b) {
+    pill(add('tag', 'Where it started'), 'sourced');
+    one(t.b, '');
+  } else if (t.ro) {
+    pill(add('tag', 'Where it started'), 'roots only');
+    add('ev', 'No source names a Western birthplace, so the globe starts it at its root.');
+  } else {
+    pill(add('tag', 'Where it started'), 'rough guess');
+    add('ev', names(t.o) + ', around ' + t.y + '. That is only the first country our dataset records it in. Nobody has checked its own article yet.');
+  }
+  if (t.r && t.r.length) {
+    add('tag', 'Borrowed from');
+    t.r.forEach((c) => one(c, ''));
+  }
 }
 function link(url, text) {
   const a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = text;
@@ -275,21 +373,27 @@ function fill(ul, list, make, empty) {
   if (list.length > 8) { const li = document.createElement('li'); li.className = 'more'; li.textContent = 'and ' + (list.length - 8) + ' more'; ul.append(li); }
 }
 
-function spinTo(id) { tween('rot', facing(id), 900, () => S.rot, (r) => { S.rot = r; }); }
+function spinAt(c) { tween('rot', facingAt(c), 900, () => S.rot, (r) => { S.rot = r; }); }
+function spinTo(id) { spinAt(PLACES[id][1]); }
 function pickCity(id, spin) { S.city = id; if (spin) spinTo(id); uiKey = ''; refresh(); }
 function pickTrend(id, keepPlace) {
   S.sel = id; tweens.delete('year'); tweens.delete('home'); S.home = 0;
   if (id !== 'all') {
     const t = byId[id];
     if (!keepPlace) { S.year = bestYear(t); S.city = t.o[0]; }
-    spinTo(t.o[0]);
+    spinAt(bornAt(t));
   }
   drawPicker(); uiKey = ''; refresh();
 }
 
 $('q').addEventListener('input', (e) => { S.q = e.target.value; drawPicker(); });
 $('year').addEventListener('input', (e) => { tweens.delete('year'); S.year = +e.target.value; refresh(); });
-$('home').addEventListener('click', () => tween('home', S.home > 0.5 ? 0 : 1, 1100, () => S.home, (h) => { S.home = h; }));
+$('home').addEventListener('click', () => {
+  const t = byId[S.sel], out = S.home > 0.5, root = t && rootOf(t);
+  // A trend with a root has further to go: back to its birthplace, then on to where it was borrowed from.
+  if (root) spinAt(out ? bornAt(t) : d3.geoInterpolate(bornAt(t), root.c)(0.6));
+  tween('home', out ? 0 : 1, root ? 2400 : 1100, () => S.home, (h) => { S.home = h; });
+});
 $('play').addEventListener('click', () => {
   const a = S.sel === 'all' ? FIRST : Math.max(FIRST, byId[S.sel].y - 1);
   tweens.delete('home'); S.home = 0; S.year = a;

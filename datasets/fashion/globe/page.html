@@ -1,4 +1,4 @@
-<title>Trend Atlas</title>
+<title>Trend Atlas Origins</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap">
 <style>
@@ -25,6 +25,7 @@
   --logo-bg: #081633; --q: #002d69; color-scheme: light;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.55;
   padding-block: 20px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 a { color: var(--link); }
@@ -54,6 +55,11 @@ canvas:focus-visible, button:focus-visible, input:focus-visible, a:focus-visible
 .hint { text-align: center; color: var(--muted); font-size: 12px; margin: 0; }
 .key { display: inline-block; width: 22px; border-top: 2px solid var(--muted); vertical-align: middle; margin: 0 4px 2px 0; }
 .key.dash { border-top-style: dashed; margin-left: 10px; }
+.key.dot { border-top-style: dotted; border-top-color: var(--q); margin-left: 10px; }
+.birth { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.birth[hidden] { display: none; }
+.birth .claim { color: var(--text); margin-top: 4px; }
+.birth .ev { color: var(--muted); font-size: 12px; }
 .time { display: flex; align-items: center; gap: 10px; }
 .time span { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 .time input { flex: 1; min-width: 0; accent-color: var(--lime); }
@@ -66,7 +72,7 @@ canvas:focus-visible, button:focus-visible, input:focus-visible, a:focus-visible
 .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-width: 0; }
 .stat small { display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
-.stat strong { display: block; font-size: clamp(15px, 4vw, 21px); font-weight: 800; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; line-height: 1.2; margin-top: 2px; }
+.stat strong { display: block; font-size: clamp(14px, 3.6vw, 21px); font-weight: 800; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; line-height: 1.2; margin-top: 2px; }
 .side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 h2 { font-size: 15px; margin: 0; font-weight: 800; }
@@ -112,8 +118,8 @@ footer p { margin: 0; max-width: 80ch; }
   <header>
     <span class="logo" aria-label="40 for 40"><span class="a">40</span><span class="b">(</span><span class="c">40</span><span class="b">)</span></span>
     <h1>Who wore it first?</h1>
-    <p class="lede">Every trend has a home town. Pick one, watch it travel, then send it packing and see what each place has left to wear.</p>
-    <p class="sample"><b>Real data, with gaps.</b> <span id="n-trends">346</span> trends from the Day 9 fashion dataset, placed where Wikipedia's fashion histories first record them: the UK, the US, France or Italy. Eight also carry sourced arrival dates for more places, from newspaper archives. A missing line means we found no source, not that the trend never got there.</p>
+    <p class="lede">Every trend has a home town, and half of them are lying about it. Pick one, watch it travel, then send it all the way home and see what each place has left to wear.</p>
+    <p class="sample"><b>Real data, with gaps.</b> <span id="n-trends">185</span> trends from the Day 9 fashion dataset. For <span id="n-src">49</span> of them the birthplace comes from a sentence in the trend's own Wikipedia article, with the rival claims beside it, and <span id="n-root">27</span> also say what the look was borrowed from. The rest are a rough guess: the first country (UK, US, France or Italy) our dataset records them in. Every card says which. A missing line means we found no source, not that the trend never got there.</p>
   </header>
 
   <div class="find">
@@ -128,7 +134,7 @@ footer p { margin: 0; max-width: 80ch; }
         <canvas id="globe" tabindex="0" role="img" aria-label="Globe showing where a fashion trend started and where it travelled. Use the arrow keys to spin it."></canvas>
         <div class="zoom"><button type="button" id="zout" aria-label="Zoom out">−</button><button type="button" id="zin" aria-label="Zoom in">+</button></div>
       </div>
-      <p class="hint">Drag to spin. Tap a place to open its wardrobe.<br><span class="key"></span>travelled<span class="key dash"></span>shaky, or picked up much later<span class="ring"></span>in fashion everywhere</p>
+      <p class="hint">Drag to spin. Tap a place to open its wardrobe.<br><span class="key"></span>travelled<span class="key dash"></span>shaky, or picked up much later<span class="key dot"></span>borrowed from<span class="ring"></span>in fashion everywhere</p>
       <div class="time">
         <span>1920</span>
         <input type="range" id="year" min="1920" max="2026" step="1" value="1967" aria-label="Year">
@@ -152,6 +158,7 @@ footer p { margin: 0; max-width: 80ch; }
         <p id="t-blurb"></p>
         <figure class="pic" id="t-pic" hidden><img id="t-img" alt=""><figcaption id="t-cap"></figcaption></figure>
         <p id="t-src"></p>
+        <div class="birth" id="t-birth"></div>
         <div class="tag" id="log-tag">Where it went</div>
         <div class="log" id="log"></div>
         <div class="routes" id="routes" hidden></div>
@@ -170,7 +177,7 @@ footer p { margin: 0; max-width: 80ch; }
 
   <footer>
     <p>Day 9 of 40 for 40. A place lights up while a trend is recorded as in fashion there, and goes dark when it falls out. Dates come from decade by decade histories, so treat a year as "around then". Music words (punk, hip hop, grunge) date the scene more than the clothes.</p>
-    <p>Trends, dates and quotes: the Day 9 fashion dataset, built from Wikipedia's fashion history articles (CC BY-SA 4.0). Extra arrival dates: Wikipedia in many languages and newspaper archives at the national libraries of the Netherlands, Norway, Luxembourg and Estonia and the Deutsche Digitale Bibliothek. Photos © Victoria and Albert Museum, London. Coastlines from Natural Earth.</p>
+    <p>Trends, dates and quotes: the Day 9 fashion dataset, built from Wikipedia's fashion history articles (CC BY-SA 4.0). Birthplaces, rival claims and roots: each trend's own Wikipedia article, quoted word for word and checked by hand. Extra arrival dates: Wikipedia in many languages and newspaper archives at the national libraries of the Netherlands, Norway, Luxembourg and Estonia and the Deutsche Digitale Bibliothek. Photos © Victoria and Albert Museum, London. Coastlines from Natural Earth.</p>
   </footer>
 </div>
 
@@ -180,3 +187,4 @@ footer p { margin: 0; max-width: 80ch; }
 const LAND = /*LAND*/null;
 const TRENDS = /*DATA*/null;
 const THUMBS = /*THUMBS*/null;
+const XPLACES = /*XPLACES*/null;
