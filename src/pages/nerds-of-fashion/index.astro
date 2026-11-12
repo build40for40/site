@@ -1,0 +1,35 @@
+---
+import PostHog from "../../components/posthog.astro";
+import NerdsApp from "../../nerds/NerdsApp.vue";
+import "../../styles/global.css";
+
+const title = "Nerds of Fashion: a century of trends, in numbers";
+const description = "Sabermetrics for fashion. A hundred years of trends, comebacks, shapes and colours, starting with the year you were born. Day 9 of 40 for 40.";
+const url = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en-GB" class="scheme-dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={url} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="40 for 40" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={url} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="theme-color" content="#0e0d12" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" />
+    <PostHog />
+  </head>
+  <body class="min-h-dvh overflow-x-hidden bg-nof-night font-nof-body text-nof-text antialiased [&_:focus-visible]:outline-2 [&_:focus-visible]:outline-offset-2 [&_:focus-visible]:outline-nof-pink">
+    <NerdsApp client:only="vue" />
+  </body>
+</html>
