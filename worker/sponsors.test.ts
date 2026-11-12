@@ -41,12 +41,12 @@ test("problem and guest-day APIs apply email grouping without exposing emails", 
     [3, "Ada", "other@example.com", 8000],
     [4, null, "ada@example.com", 14000],
     [5, null, "ada@example.com", 400],
-  ] as const) sqlite.prepare("INSERT INTO payments (id, problem_id, day, name, email, amount, currency, livemode, paid_at) VALUES (?, ?, 11, ?, ?, ?, 'usd', 0, 't')").run(`cs_${i}`, id, name, email, amount);
+  ] as const) sqlite.prepare("INSERT INTO payments (id, problem_id, day, name, email, amount, currency, livemode, paid_at) VALUES (?, ?, 14, ?, ?, ?, 'usd', 0, 't')").run(`cs_${i}`, id, name, email, amount);
   const problem = (await listProblems(db, { offset: 0, limit: 1, sponsorSecret: "secret" })).ideas[0];
   const response = await worker.fetch(new Request("https://example.com/api/days"), { DB: db, STRIPE_SECRET_KEY: "secret" } as Env, {} as ExecutionContext);
   const days = await response.json() as { sponsors: Record<number, unknown[]> };
   expect(problem.sponsors).toHaveLength(4);
-  expect(days.sponsors[11]).toEqual(problem.sponsors);
+  expect(days.sponsors[14]).toEqual(problem.sponsors);
   expect(JSON.stringify(problem)).not.toContain("@");
   expect(JSON.stringify(days)).not.toContain("@");
 });

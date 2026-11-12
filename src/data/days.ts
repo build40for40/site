@@ -60,7 +60,7 @@ export interface PoolIdea {
 
 export type Phase = "before" | "live" | "after";
 
-export const GUEST_DAYS = new Set([11]);
+export const GUEST_DAYS = new Set([14]);
 export const DEFAULT_AMOUNT = 40;
 
 const DAY_MS = 86_400_000;
