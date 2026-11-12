@@ -2,7 +2,7 @@
 
 The dataset behind Day 9: about 400 Western fashion trends from the 1920s to today, when each was in style, when it came back, and the evidence for it from books, museums and catwalks. It's high fashion as much as street style: what was in, not what everyone wore.
 
-Everything ends up in one static file, `public/day9/fashion.json`, which the site serves as is. There's no backend.
+Everything ends up in one static file, `public/nerds-of-fashion/fashion.json`, which the site serves as is. There's no backend.
 
 ## What's in the file
 
