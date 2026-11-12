@@ -3,7 +3,7 @@
 // Reads public/nerds-of-fashion/fashion.json, globe/arrivals-pilot.json
 // (sourced arrival years for eight trends, from the day9 repo's
 // arrivals-pilot branch) and globe/origins.json (sourced birthplaces, rival
-// claims and roots for the origins pilot, built by globe/origins/), downloads one small V&A photo per trend into
+// claims and roots from the origins research, built by globe/origins/), downloads one small V&A photo per trend into
 // raw/globe/ (gitignored), and writes one self-contained HTML file to
 // raw/globe/trend-atlas.html, ready to publish as an artifact, plus a
 // standalone copy at public/nerds-of-fashion/atlas.html that the site serves.
@@ -182,11 +182,11 @@ console.log(`  ...and at least one journey:  ${pct(list.filter((t) => Object.key
 console.log(`  ...and a well dated journey:  ${pct(list.filter((t) => solid(t) >= 1).length)}`);
 console.log(`  ...and three or more of them: ${pct(list.filter((t) => solid(t) >= 3).length)}`);
 console.log(`No named country at all:        ${pct(ben.trends.filter((b) => b.periods.every((p) => p.region === 'global')).length)}`);
-// The origins pilot: how much of the globe now rests on a sourced sentence.
+// The origins research: how much of the globe now rests on a sourced sentence.
 const inData = list.filter((t) => ben.trends.some((b) => b.id === t.id));
 const kinds = (k) => new Set(origins.filter((r) => r.kind === k).map((r) => r.trend_id)).size;
 const beyond = new Set(origins.filter((r) => !gazetteer[r.place].in).map((r) => r.place)).size;
-console.log(`Origins pilot, trends read:     ${researched.length} (${researched.filter((r) => r.title).length} have an article of their own)`);
+console.log(`Origins research, trends read:  ${researched.length} (${researched.filter((r) => r.title).length} have an article of their own)`);
 console.log(`  sourced rows:                 ${origins.length} (${origins.filter((r) => r.confidence !== 'low').length} medium or high confidence)`);
 console.log(`  gained a sourced origin:      ${kinds('origin')}`);
 console.log(`  gained a rival claim:         ${kinds('rival')}`);

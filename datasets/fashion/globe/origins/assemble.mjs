@@ -1,4 +1,5 @@
-// Step 5: turn the checked and hand reviewed claims into globe/origins.json and globe/rejected.json.
+// Step 5: turn the checked and hand reviewed claims into globe/origins.json (and its copy, the
+// dataset part parts/origins.json) and globe/rejected.json.
 //
 // Reads origins/checked.json (from check.mjs), origins/review.json (the hand review: a verdict
 // and reason for every claim that passed the rules, with optional corrections) and
@@ -47,11 +48,13 @@ for (const id of new Set(rows.map((r) => r.trend_id))) {
 if (problems.length) { console.error(problems.join('\n')); process.exit(1); }
 rows.sort((a, b) => order[a.trend_id] - order[b.trend_id] || KIND[a.kind] - KIND[b.kind]);
 writeFileSync(`${OUT}/origins.json`, JSON.stringify(rows, null, 2) + '\n');
+// The same rows as a dataset part, so scripts/assemble.mjs can fold them into fashion.json.
+writeFileSync('datasets/fashion/parts/origins.json', JSON.stringify(rows, null, 2) + '\n');
 writeFileSync(`${OUT}/rejected.json`, JSON.stringify(rejected, null, 2) + '\n');
 
 const has = (k) => new Set(rows.filter((r) => r.kind === k).map((r) => r.trend_id)).size;
 const read = PILOT.filter((t) => t.title).length;
-console.log(`Pilot trends:            ${PILOT.length} (${read} with an article to read)`);
+console.log(`Trends researched:       ${PILOT.length} (${read} with an article to read)`);
 console.log(`Claims kept:             ${rows.length} of ${checked.length} extracted`);
 console.log(`  rejected by a rule:    ${rejected.filter((r) => r.stage === 'rule').length}`);
 console.log(`  rejected by hand:      ${rejected.filter((r) => r.stage === 'hand review').length}`);
