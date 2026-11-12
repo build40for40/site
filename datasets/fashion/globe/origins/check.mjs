@@ -17,7 +17,7 @@ const suffix = (n) => (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 1
 function yearInQuote(c, q) {
   const y = Math.abs(c.year);
   if (c.year_precision === 'year') return new RegExp(`(^|\\D)${y}(\\D|$)`).test(q);
-  if (c.year_precision === 'decade') { const d = Math.floor(y / 10) * 10; return q.includes(`${d}s`) || q.includes(`${d}'s`) || (d % 100 !== 0 && new RegExp(`(^|\\W)'?${d % 100}s`).test(q)); }
+  if (c.year_precision === 'decade') { const d = Math.floor(y / 10) * 10; return q.includes(`${d}s`) || q.includes(`${d}'s`) || (d % 100 !== 0 && new RegExp(`(^|\\W)'?${d % 100}'?s`).test(q)); }
   if (c.year_precision === 'century') { const n = Math.floor(y / 100) + (c.year < 0 ? 0 : 1); return q.toLowerCase().includes(`${n}${suffix(n)}`) || q.toLowerCase().includes(ORD[n] || '\u0000'); }
   return false;
 }

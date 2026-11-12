@@ -11,6 +11,20 @@ export type Family = "clothes" | "scenes" | "kit" | "face";
 
 export interface Period { start: number; end: number; region: Region }
 export interface Example { id: string; title: string; designer?: string; place?: string; year: number; image: string; url: string }
+// A sourced claim about where a trend started (origin), who else claims it (rival) or what it
+// was borrowed from (root). Years can be long before 1920 and are negative for BC.
+export interface Origin {
+  kind: "origin" | "rival" | "root";
+  place: string;
+  lat: number;
+  lon: number;
+  year: number | null;
+  yearPrecision: "year" | "decade" | "century" | null;
+  who: string | null;
+  confidence: "high" | "medium" | "low";
+  quote: string;
+  url: string;
+}
 export interface Trend {
   id: string;
   name: string;
@@ -24,6 +38,7 @@ export interface Trend {
   ngram: Partial<Record<"en-GB" | "en-US", number[]>> | null;
   counts: { vam?: Record<string, number>; met?: Record<string, number>; runway?: Record<string, number> };
   examples: Example[];
+  origins: Origin[];
 }
 export interface Revival {
   trend: string | null;
