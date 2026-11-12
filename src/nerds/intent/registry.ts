@@ -36,6 +36,15 @@ const asksColour = has(/\b(colou?rs?|pantone|shade|shades|hue|hues|palette)\b/);
 const asksShape = has(/\b(silhouettes?|shape|shapes|hemlines?|hems?|waists?|waistline|shoulders?|skirt length)\b/);
 const asksMuseum = has(/\b(museums?|v&a|victoria and albert|the met|archive|archives|collection|collections|designers?|couture)\b/);
 const asksWords = has(/\b(books?|written|wrote|word|words|mentions?|mentioned|ngram|called|jumper|sweater)\b/);
+const asksWait = has(/\b(how long|how many years|wait|waits|take to)\b/);
+const asksRule = has(/\b(rule|cycle|cycles|(20|twenty|30|thirty)[- ]years?)\b/);
+const asksRhythm = has(/\b(clockwork|rhythm|regular|regularly|evenly|in circles|spiral)\b/);
+const asksLate = has(/\b(late|later|lag|lags|behind|delay|delayed|trail|trails|catch up)\b/);
+const asksBritish = has(/\b(british|britain|uk|english|england)\b/);
+const asksAmerican = has(/\b(american|america|usa|states)\b/);
+const asksFading = has(/\b(going out|on the way out|on its way out|fading|dying|over soon|still be in)\b/);
+const asksTrust = has(/\b(accurate|accuracy|trust|trusted|reliable|backtest|backtested|calibrated|calibration|how good|how sure|tested)\b/);
+const asksModel = has(/\b(forecast|forecasts|prediction|predictions|model|guess|guesses|odds)\b/);
 const asksKinds = has(/\b(hair|make-?up|shoes|footwear|accessories|subcultures?|categories|kinds?|types?)\b/);
 
 // One entry per view in src/nerds/views, by its id, plus the ones people ask for that aren't built yet.
@@ -60,7 +69,7 @@ export const components = [
         },
       },
     },
-    fallback: ({ text }) => asksWhere(text),
+    fallback: ({ text }) => asksWhere(text) && !asksWords(text),
   },
   {
     id: "board",
@@ -130,19 +139,86 @@ export const components = [
       comeback: {
         instructions: "Does the person who typed `search` want to know whether or when a garment or look will be in fashion again in the coming years?",
         criteria: {
-          true: "They ask about the future: whether something is coming back, when it will return or what will be worn next.",
-          false: "They ask only about the past or the present, such as when something was worn or where it started.",
+          true: "They name a garment or look and ask whether it is coming back or when it will return.",
+          false: "They ask only about the past or the present, or they ask what will be worn next without naming a garment or look.",
         },
       },
       wait: {
         instructions: "Does the person who typed `search` want to know how many years fashion trends take to come back?",
         criteria: {
-          true: "They ask how long a look stays away before it returns, or whether fashion runs on a cycle of a fixed number of years.",
-          false: "They ask about one moment in time, or about something other than the wait between comebacks.",
+          true: "They ask how long a look stays away before it returns, or what the usual wait between comebacks is.",
+          false: "They ask about one moment in time, or whether a named rule such as the 20 year cycle is true.",
         },
       },
     },
-    fallback: ({ text }) => asksFuture(text),
+    fallback: ({ text, trend }) => asksFuture(text) && (trend || asksWait(text)) && !asksRule(text) && !asksTrust(text),
+  },
+  {
+    id: "comeback-odds",
+    label: "the comeback odds board",
+    available: true,
+    questions: {
+      next: {
+        instructions: "Does the person who typed `search` want to know which fashion trends are likely to come back in the next few years?",
+        criteria: {
+          true: "They ask what is due a comeback, which looks are about to return or what will be in fashion in a coming year such as 2028, without asking about one named garment.",
+          false: "They ask whether one named garment or look will return, or they ask only about the past or the present.",
+        },
+      },
+      fading: {
+        instructions: "Does the person who typed `search` want to know which of today's fashion trends are about to go out of style?",
+        criteria: {
+          true: "They ask what is on its way out, what people will stop wearing soon or how much longer a current look will last.",
+          false: "They ask about looks that went out of fashion in the past, or about what is coming back.",
+        },
+      },
+    },
+    fallback: ({ text, trend }) => (asksFading(text) || (asksFuture(text) && !trend && !asksWait(text))) && !asksRule(text) && !asksRhythm(text) && !asksTrust(text),
+  },
+  {
+    id: "cycle",
+    label: "the 20 year rule on trial",
+    available: true,
+    questions: {
+      rule: {
+        instructions: "Does the person who typed `search` want to know whether the saying that fashion repeats every 20 to 30 years is true?",
+        criteria: {
+          true: "They mention a rule or cycle of a set number of years, such as the 20 year rule, and ask whether fashion really follows it.",
+          false: "They ask how long comebacks take without mentioning a rule or a set number of years, or they ask whether one named garment will return.",
+        },
+      },
+    },
+    fallback: ({ text }) => asksRule(text) && !asksRhythm(text),
+  },
+  {
+    id: "spiral",
+    label: "the comeback spiral",
+    available: true,
+    questions: {
+      rhythm: {
+        instructions: "Does the person who typed `search` want to know whether fashion comebacks happen at regular intervals?",
+        criteria: {
+          true: "They ask whether trends return like clockwork, whether fashion goes round in circles, or whether one look's comebacks are evenly spaced.",
+          false: "They ask how many years a comeback takes, whether a 20 year rule is true, or about a single comeback.",
+        },
+      },
+    },
+    fallback: ({ text }) => asksRhythm(text),
+  },
+  {
+    id: "backtest",
+    label: "the forecast's school report",
+    available: true,
+    questions: {
+      trust: {
+        instructions: "Does the person who typed `search` want to know how accurate this site's fashion comeback forecast is?",
+        criteria: {
+          true: "They ask whether the predictions can be trusted, how the forecast was tested or how often its past guesses came true.",
+          false: "They ask what the forecast says will come back, and nothing about how reliable it is.",
+        },
+      },
+    },
+    fallback: ({ text }) => asksTrust(text) && asksModel(text),
   },
   {
     id: "colour",
@@ -197,12 +273,42 @@ export const components = [
       written: {
         instructions: "Does the person who typed `search` want to know how much a garment or look was written about?",
         criteria: {
-          true: "They ask how often it appeared in books, when the word for it took off, or how British and American writers named it.",
+          true: "They ask how often it appeared in books or when the word for it took off.",
           false: "They ask when or where it was worn, and nothing about writing, books or words.",
         },
       },
     },
-    fallback: ({ text }) => asksWords(text),
+    fallback: ({ text }) => asksWords(text) && !asksLate(text) && !(asksBritish(text) && asksAmerican(text)),
+  },
+  {
+    id: "lag",
+    label: "the late books chart",
+    available: true,
+    questions: {
+      delay: {
+        instructions: "Does the person who typed `search` want to know how long after a look is first worn books write about it the most?",
+        criteria: {
+          true: "They ask whether books or writers are late to fashion trends, or how many years the writing trails behind what people wear.",
+          false: "They ask how often one garment was written about, and nothing about a delay between wearing it and writing about it.",
+        },
+      },
+    },
+    fallback: ({ text }) => asksWords(text) && asksLate(text),
+  },
+  {
+    id: "uk-vs-us",
+    label: "Britain against America in print",
+    available: true,
+    questions: {
+      atlantic: {
+        instructions: "Does the person who typed `search` want to compare how British books and American books wrote about a fashion?",
+        criteria: {
+          true: "They ask how writing about a look differed between Britain and America, such as which country's books took it up first or kept at it longer.",
+          false: "They ask about books from one country or books in general, or they ask where a look was worn and nothing about writing.",
+        },
+      },
+    },
+    fallback: ({ text }) => asksWords(text) && asksBritish(text) && asksAmerican(text),
   },
   {
     id: "trend-card",

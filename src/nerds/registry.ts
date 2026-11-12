@@ -21,7 +21,6 @@ export const PLANNED: Planned[] = [
   { id: "periodic-table", tab: "trends", title: "Periodic table of trends", blurb: "Every element of style, by category and decade" },
   { id: "trading-cards", tab: "trends", title: "Trend trading cards", blurb: "Stats on the back, collect the set" },
   { id: "hype-cycle", tab: "trends", title: "The hype cycle", blurb: "Every trend's ride from cool to cringe to classic" },
-  { id: "comeback-odds", tab: "comebacks", title: "Comeback odds board", blurb: "Bookies' odds on what's back next" },
   { id: "revival-pairs", tab: "comebacks", title: "Then and now", blurb: "The original and its revival, side by side" },
   { id: "pantone-wall", tab: "colour", title: "Pantone wall", blurb: "Every Colour of the Year, and who actually wore it" },
   { id: "colour-moods", tab: "colour", title: "Colour moods", blurb: "Do bright decades follow grim ones?" },
@@ -31,5 +30,4 @@ export const PLANNED: Planned[] = [
   { id: "fabric-shift", tab: "museums", title: "Silk to polyester", blurb: "What a century of clothes was made of" },
   { id: "catwalk-tags", tab: "museums", title: "Catwalk tags", blurb: "What runway cameras saw, look by look since 1988" },
   { id: "word-births", tab: "words", title: "First words", blurb: "The year each fashion word first hit print" },
-  { id: "uk-vs-us", tab: "words", title: "Jumper vs sweater", blurb: "British and American books, never agreeing" },
 ];
