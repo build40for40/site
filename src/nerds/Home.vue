@@ -154,7 +154,7 @@ const pct = (value: number) => `${Math.round(value * 100)}%`;
             <template v-if="m.pantone">Pantone's {{ m.pantone.name }}</template>
             <template v-else-if="m.decade">the {{ Math.floor(m.year / 10) * 10 }}s museum pieces lean {{ m.decade.word }}</template>
             ·
-            <button type="button" class="underline hover:text-nof-text" @click="go({ tab: 'explore', view: 'board', year: String(m.year) })">See {{ m.year }} on the Big Board</button>
+            <button type="button" class="underline hover:text-nof-text" @click="go({ view: 'board', year: String(m.year) })">See {{ m.year }} on the Big Board</button>
           </p>
         </div>
         <figure v-if="m.example" class="border-t border-nof-line sm:border-t-0 sm:border-l">
@@ -188,19 +188,4 @@ const pct = (value: number) => `${Math.round(value * 100)}%`;
   </section>
 
   <StoryOfTheDay :nerds="nerds" />
-
-  <section class="mx-auto mt-24 max-w-6xl px-4">
-    <div class="grid gap-4 sm:grid-cols-2">
-      <button type="button" class="rounded-3xl border border-nof-line bg-nof-panel p-6 text-left hover:border-nof-muted" @click="go({ tab: 'explore' })">
-        <p class="font-mono text-xs uppercase tracking-[0.2em] text-nof-muted">For the properly curious</p>
-        <p class="mt-2 font-nof-display text-3xl font-black">Explore the archive →</p>
-        <p class="mt-1 text-nof-sub">Trends, shapes, comebacks, colour, the world and the museums, each with its own set of charts.</p>
-      </button>
-      <button type="button" class="rounded-3xl border border-nof-pink/60 bg-nof-panel p-6 text-left hover:border-nof-pink" @click="go({ tab: 'draw' })">
-        <p class="font-mono text-xs uppercase tracking-[0.2em] text-nof-pink">Ask Claude</p>
-        <p class="mt-2 font-nof-display text-3xl font-black">Draw your own infographic →</p>
-        <p class="mt-1 text-nof-sub">Ask any question of a hundred years of fashion and get a chart nobody else has.</p>
-      </button>
-    </div>
-  </section>
 </template>

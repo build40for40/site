@@ -68,7 +68,7 @@ function read(id: string) {
     <div class="flex flex-wrap items-center gap-3 border-t border-nof-line pt-6 text-sm">
       <span class="text-nof-muted">More stories:</span>
       <button v-for="s in others" :key="s.id" type="button" class="rounded-full border border-nof-line px-3 py-1.5 text-nof-sub hover:border-nof-muted hover:text-nof-text" @click="read(s.id)">{{ s.title }}</button>
-      <button v-if="view" type="button" class="ml-auto rounded-full bg-nof-text px-4 py-2 font-semibold text-nof-night" @click="go({ tab: 'explore', view: story.view, story: null })">Open {{ view.title }} →</button>
+      <button v-if="view" type="button" class="ml-auto rounded-full bg-nof-text px-4 py-2 font-semibold text-nof-night" @click="go({ view: story.view, story: null })">Open {{ view.title }} →</button>
     </div>
   </section>
 </template>

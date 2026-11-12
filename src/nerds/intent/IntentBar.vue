@@ -1,109 +1,124 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref, useId } from "vue";
+import { onBeforeUnmount, onMounted, ref, useId } from "vue";
 import { createIntentResolver, pickComponents } from "./client";
 import { clean } from "./query";
 import { MAX_QUERY, type IntentResult } from "./registry";
 import { intentEvents } from "./track";
 
-const props = withDefaults(defineProps<{ label?: string; examples?: string[]; endpoint?: string }>(), {
-  label: "Ask a century of fashion anything",
-  examples: () => ["Where did punk start?", "Are flares coming back?", "What was in during the 60s?", "When were shoulder pads a thing?"],
+const props = withDefaults(defineProps<{ nudges?: string[]; endpoint?: string; debounceMs?: number; minLive?: number }>(), {
+  nudges: () => ["Where did punk start?", "Are flares coming back?", "What was in during the 60s?", "When were shoulder pads a thing?", "Did punk or goth last longer?"],
+  debounceMs: 350,
+  minLive: 3,
 });
-const emit = defineEmits<{ resolved: [result: IntentResult]; cleared: [] }>();
+const emit = defineEmits<{ resolved: [result: IntentResult]; draw: [query: string]; cleared: [] }>();
+const query = defineModel<string>({ default: "" });
 
 const id = useId();
-const query = ref("");
-const state = ref<"idle" | "loading" | "error">("idle");
-const input = ref<HTMLInputElement>();
-const resolver = createIntentResolver({ endpoint: props.endpoint });
+const busy = ref(false);
+const nudge = ref(0);
+const whileTyping = createIntentResolver({ endpoint: props.endpoint, debounceMs: props.debounceMs });
+const onSubmit = createIntentResolver({ endpoint: props.endpoint });
+let last: { q: string; result: IntentResult } | undefined;
 
-async function ask(example = false) {
-  const q = clean(query.value);
-  if (!q) return clear();
-  state.value = "loading";
-  intentEvents.submitted(q, example);
+const matches = (result: IntentResult) => pickComponents(result).show.length > 0;
+
+/** True when a view was opened, false when nothing fits, undefined when a newer search took over. */
+async function resolve(resolver: typeof whileTyping, q: string) {
+  busy.value = true;
   const started = performance.now();
   try {
     const result = await resolver.run(q);
-    if (!result) return;
-    state.value = "idle";
+    if (!result) return undefined;
+    busy.value = false;
+    last = { q, result };
+    if (!matches(result)) return false;
     intentEvents.resolved(result, Math.round(performance.now() - started));
     for (const c of pickComponents(result).show) intentEvents.shown(c.id, result);
     emit("resolved", result);
+    return true;
   } catch (error) {
-    state.value = "error";
+    busy.value = false;
     intentEvents.failed(error instanceof Error ? error.message : String(error), q.length);
+    return false;
   }
 }
 
-function tryExample(example: string) {
-  query.value = example;
-  ask(true);
+function typed() {
+  onSubmit.cancel();
+  const q = clean(query.value);
+  if (!q) return clear();
+  if (q.length < props.minLive) {
+    whileTyping.cancel();
+    busy.value = false;
+    return;
+  }
+  void resolve(whileTyping, q);
+}
+
+async function submit() {
+  const q = clean(query.value);
+  if (!q) return;
+  whileTyping.cancel();
+  intentEvents.submitted(q, false);
+  const found = last?.q === q ? matches(last.result) : await resolve(onSubmit, q);
+  busy.value = false;
+  if (found === false) emit("draw", q);
 }
 
 function clear() {
-  resolver.cancel();
+  whileTyping.cancel();
+  onSubmit.cancel();
   query.value = "";
-  state.value = "idle";
+  busy.value = false;
   emit("cleared");
-  input.value?.focus();
 }
 
-onBeforeUnmount(() => resolver.cancel());
+let rotate: ReturnType<typeof setInterval> | undefined;
+onMounted(() => {
+  rotate = setInterval(() => {
+    if (!query.value) nudge.value = (nudge.value + 1) % props.nudges.length;
+  }, 4000);
+});
+onBeforeUnmount(() => {
+  clearInterval(rotate);
+  whileTyping.cancel();
+  onSubmit.cancel();
+});
 </script>
 
 <template>
-  <form role="search" class="flex min-w-0 flex-col gap-3 text-nof-text" :aria-busy="state === 'loading'" @submit.prevent="ask()">
-    <label :for="id" class="text-[15px] leading-snug font-semibold">{{ label }}</label>
-    <div class="flex gap-1.5">
-      <div class="relative min-w-0 flex-1">
-        <input
-          :id="id"
-          ref="input"
-          v-model="query"
-          type="search"
-          name="q"
-          enterkeyhint="search"
-          autocomplete="off"
-          :maxlength="MAX_QUERY"
-          placeholder="Where did punk start?"
-          class="w-full appearance-none rounded-full border border-nof-line bg-nof-night py-2.5 pr-11 pl-4 text-base text-nof-text placeholder:text-nof-muted focus-visible:border-nof-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nof-pink [&::-webkit-search-cancel-button]:hidden"
-        />
-        <button
-          v-if="query"
-          type="button"
-          aria-label="Clear the search"
-          class="absolute top-1/2 right-1 grid size-9 -translate-y-1/2 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 text-nof-sub hover:text-nof-text focus-visible:outline-2 focus-visible:outline-nof-pink"
-          @click="clear"
-        >
-          <svg aria-hidden="true" viewBox="0 0 24 24" class="size-4 fill-none stroke-current stroke-2 [stroke-linecap:round]"><path d="M6 6l12 12M18 6 6 18" /></svg>
-        </button>
-      </div>
-      <button
-        type="submit"
-        :disabled="state === 'loading'"
-        class="shrink-0 cursor-pointer rounded-full border-0 bg-nof-pink px-5 text-[15px] font-semibold text-nof-pink-ink hover:bg-nof-pink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nof-pink disabled:cursor-wait disabled:opacity-70"
-      >
-        Ask
-      </button>
-    </div>
-
-    <ul v-if="examples.length" aria-label="Try one of these" class="m-0 flex list-none flex-wrap gap-1.5 p-0">
-      <li v-for="example in examples" :key="example">
-        <button
-          type="button"
-          data-example
-          class="cursor-pointer rounded-full border border-nof-line bg-transparent px-3 py-2 text-left text-sm text-nof-sub hover:border-nof-text hover:text-nof-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nof-pink"
-          @click="tryExample(example)"
-        >
-          {{ example }}
-        </button>
-      </li>
-    </ul>
-
-    <p role="status" class="m-0 min-h-5 text-sm text-nof-sub">
-      <template v-if="state === 'loading'">Rummaging through 100 years of wardrobes…</template>
-      <template v-else-if="state === 'error'">That one tripped over its own flares. Give it another go?</template>
-    </p>
+  <form role="search" class="relative min-w-0 text-nof-text" :aria-busy="busy" @submit.prevent="submit">
+    <label :for="id" class="sr-only">Search a century of fashion</label>
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 fill-none stroke-current stroke-2 transition-colors [stroke-linecap:round]"
+      :class="busy ? 'animate-pulse text-nof-pink' : 'text-nof-muted'"
+    >
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m16 16 4.5 4.5" />
+    </svg>
+    <input
+      :id="id"
+      v-model="query"
+      type="search"
+      name="q"
+      enterkeyhint="search"
+      autocomplete="off"
+      :maxlength="MAX_QUERY"
+      :placeholder="nudges[nudge]"
+      class="w-full appearance-none rounded-full border border-nof-line/60 bg-transparent py-1.5 pr-9 pl-9 text-base text-nof-text transition-colors placeholder:text-nof-muted hover:border-nof-line focus-visible:border-nof-muted [&::-webkit-search-cancel-button]:hidden"
+      @input="typed"
+    />
+    <button
+      v-if="query"
+      type="button"
+      aria-label="Clear the search"
+      class="absolute top-1/2 right-0.5 grid size-9 -translate-y-1/2 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 text-nof-muted hover:text-nof-text"
+      @click="clear"
+    >
+      <svg aria-hidden="true" viewBox="0 0 24 24" class="size-3.5 fill-none stroke-current stroke-2 [stroke-linecap:round]"><path d="M6 6l12 12M18 6 6 18" /></svg>
+    </button>
+    <p role="status" class="sr-only">{{ busy ? "Searching" : "" }}</p>
   </form>
 </template>

@@ -282,7 +282,7 @@ async function nerdsDraw(request: Request, env: Env, ctx: ExecutionContext) {
   const url = new URL(request.url);
   const origin = request.headers.get("Origin");
   if (origin && origin !== url.origin) return text("Forbidden.", 403);
-  if (!env.ANTHROPIC_API_KEY) return problem("Claude's off duty on this server. Try one of the examples.", 503);
+  if (!env.ANTHROPIC_API_KEY) return problem("Claude's off duty on this server.", 503);
   let question = "";
   try {
     question = String(((await request.json()) as { question?: unknown }).question ?? "").trim();

@@ -2,26 +2,32 @@
 import { computed, onMounted, onUnmounted, provide, ref, shallowRef } from "vue";
 import { loadNerds, type Nerds } from "./data";
 import Home from "./Home.vue";
-import Explore from "./Explore.vue";
+import Stage from "./Stage.vue";
+import Methods from "./Methods.vue";
 import Draw from "./Draw.vue";
 import { pickComponents } from "./intent/client";
 import IntentBar from "./intent/IntentBar.vue";
-import { components, type IntentResult } from "./intent/registry";
+import type { IntentResult } from "./intent/registry";
 import { viewById } from "./registry";
-import { BORN_KEY, readBorn, routeKey, type Route } from "./route";
+import { BORN_KEY, readBorn, routeKey } from "./route";
 
 const nerds = shallowRef<Nerds>();
 const failed = ref("");
 const params = ref<Record<string, string>>({});
 const born = ref<number | null>(null);
+const query = ref("");
 
 const read = () => {
   params.value = Object.fromEntries(new URLSearchParams(location.search));
 };
 
-const tab = computed<Route>(() => {
-  const value = params.value.tab;
-  return value === "explore" || value === "draw" ? value : "home";
+const screen = computed(() => {
+  const { view, q } = params.value;
+  if (view === "methods") return { key: "methods" };
+  const found = viewById(view ?? "");
+  if (found) return { key: `view:${found.id}`, view: found };
+  if (q) return { key: `draw:${q}`, q };
+  return { key: "home" };
 });
 
 /** Change the URL. `push` adds a history entry for real navigation; filters just replace. */
@@ -44,40 +50,19 @@ function setBorn(year: number | null) {
 
 provide(routeKey, { params, go, born, setBorn });
 
-const nav: { id: Route; label: string }[] = [
-  { id: "home", label: "You" },
-  { id: "explore", label: "Explore" },
-  { id: "draw", label: "Draw your own" },
-];
+const SCREEN_PARAMS = ["tab", "set", "view", "q", "trend", "trends", "year", "decade", "place", "family", "corpus", "forecast", "story"];
+const blank = () => Object.fromEntries(SCREEN_PARAMS.map((key) => [key, null]));
 
-function open(id: Route) {
-  go({ tab: id === "home" ? null : id, view: null }, true);
+/** Swap what's on screen. Leaving home is a step back can undo; one search screen replacing another isn't. */
+function swap(next: Record<string, string | null>) {
+  go({ ...blank(), ...next }, screen.value.key === "home");
   scrollTo({ top: 0 });
 }
 
-const note = ref("");
-const also = ref<string[]>([]);
-const VIEW_PARAMS = ["trend", "trends", "year", "decade", "place", "family", "corpus", "forecast", "story", "set"];
-
-/** A search either opens the view Jev picked, or has a chart drawn in place of whatever is showing. */
-function searched(result: IntentResult) {
-  const { show, comingSoon } = pickComponents(result);
-  const cleared = Object.fromEntries(VIEW_PARAMS.map((key) => [key, null]));
-  also.value = show.slice(1, 4).map((c) => c.id);
-  scrollTo({ top: 0 });
-  if (!show.length) {
-    const wanted = components.find((c) => c.id === comingSoon[0]?.id)?.label;
-    note.value = wanted ? `That wants ${wanted}, which we haven't built yet, so here's a chart drawn for you.` : "Nothing on the rails for that, so here's a chart drawn for you.";
-    go({ ...cleared, tab: "draw", view: null, q: result.q });
-    return;
-  }
-  note.value = "";
+function matched(result: IntentResult) {
   const year = result.year ?? (result.decade === null ? null : result.decade + 5);
-  go({
-    ...cleared,
-    tab: "explore",
-    view: show[0].id,
-    q: null,
+  swap({
+    view: pickComponents(result).show[0].id,
     trend: result.trend?.id ?? null,
     trends: result.trend?.id ?? null,
     year: year === null ? null : String(year),
@@ -85,13 +70,16 @@ function searched(result: IntentResult) {
   });
 }
 
-function cleared() {
-  note.value = "";
-  also.value = [];
+function home() {
+  query.value = "";
+  if (screen.value.key === "home") return scrollTo({ top: 0 });
+  go(blank());
+  scrollTo({ top: 0 });
 }
 
 onMounted(async () => {
   read();
+  query.value = params.value.q ?? "";
   born.value = readBorn();
   addEventListener("popstate", read);
   try {
@@ -104,55 +92,41 @@ onUnmounted(() => removeEventListener("popstate", read));
 </script>
 
 <template>
-  <header class="sticky top-0 z-30 border-b border-nof-line/70 bg-nof-night/85 backdrop-blur">
-    <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-      <button type="button" class="flex items-baseline gap-2 text-left" @click="open('home')">
-        <span class="font-nof-display text-2xl leading-none font-black italic tracking-tight sm:text-3xl">Nerds <span class="text-nof-pink">of</span> Fashion</span>
+  <header class="sticky top-0 z-30 border-b border-nof-line/40 bg-nof-night/85 backdrop-blur">
+    <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2.5">
+      <button type="button" class="shrink-0 text-left font-nof-display text-2xl leading-none font-black italic tracking-tight sm:text-3xl" aria-label="Nerds of Fashion, home" @click="home">
+        <span class="sm:hidden">N<span class="text-nof-pink">o</span>F</span>
+        <span class="hidden sm:inline">Nerds <span class="text-nof-pink">of</span> Fashion</span>
       </button>
-      <nav aria-label="Nerds of Fashion" class="flex gap-1 text-sm font-semibold">
-        <button
-          v-for="item in nav"
-          :key="item.id"
-          type="button"
-          class="rounded-full px-3 py-1.5 transition"
-          :class="tab === item.id ? 'bg-nof-text text-nof-night' : 'text-nof-sub hover:bg-nof-raised'"
-          :aria-current="tab === item.id ? 'page' : undefined"
-          @click="open(item.id)"
-        >
-          <span v-if="item.id === 'draw'" class="hidden sm:inline">{{ item.label }}</span>
-          <span v-if="item.id === 'draw'" class="sm:hidden">Draw</span>
-          <span v-else>{{ item.label }}</span>
-        </button>
-      </nav>
+      <IntentBar v-model="query" class="flex-1 sm:max-w-sm" @resolved="matched" @draw="swap({ q: $event })" @cleared="home" />
     </div>
   </header>
 
-  <section class="border-b border-nof-line/70 px-4 py-4" aria-label="Ask a question">
-    <div class="mx-auto max-w-3xl">
-      <IntentBar label="Ask a hundred years of wardrobes anything" @resolved="searched" @cleared="cleared" />
-      <p v-if="note" role="status" class="mt-2 text-sm text-nof-gold">{{ note }}</p>
-      <p v-if="also.length" class="mt-2 flex flex-wrap items-center gap-2 text-sm text-nof-muted">
-        Also fits:
-        <button v-for="id in also" :key="id" type="button" class="rounded-full border border-nof-line px-3 py-1 text-nof-sub hover:border-nof-muted hover:text-nof-text" @click="go({ tab: 'explore', view: id })">{{ viewById(id)?.title ?? id }}</button>
-      </p>
-    </div>
-  </section>
-
   <main class="min-h-[70dvh]">
     <p v-if="failed" class="mx-auto max-w-xl px-4 py-24 text-center text-nof-sub">The wardrobe's stuck shut. Try a refresh. <span class="block pt-2 font-mono text-xs text-nof-muted">{{ failed }}</span></p>
-    <p v-else-if="!nerds" class="py-32 text-center font-nof-display text-2xl italic text-nof-muted">Unpacking a hundred years of wardrobes…</p>
-    <template v-else>
-      <Home v-if="tab === 'home'" :nerds="nerds" />
-      <Explore v-else-if="tab === 'explore'" :nerds="nerds" />
-      <Draw v-else :nerds="nerds" />
-    </template>
+    <p v-else-if="!nerds" class="py-32 text-center font-nof-display text-2xl italic text-nof-muted">Unpacking…</p>
+    <Transition
+      v-else
+      mode="out-in"
+      enter-active-class="transition duration-500 ease-out motion-reduce:transition-none"
+      enter-from-class="translate-y-3 opacity-0 blur-sm"
+      leave-active-class="transition duration-200 ease-in motion-reduce:transition-none"
+      leave-to-class="-translate-y-2 opacity-0 blur-sm"
+    >
+      <div :key="screen.key">
+        <Methods v-if="screen.key === 'methods'" :nerds="nerds" />
+        <Stage v-else-if="screen.view" :nerds="nerds" :view="screen.view" />
+        <Draw v-else-if="screen.q" :nerds="nerds" :q="screen.q" />
+        <Home v-else :nerds="nerds" />
+      </div>
+    </Transition>
   </main>
 
   <footer class="mt-20 border-t border-nof-line px-4 py-10 text-sm text-nof-muted">
     <div class="mx-auto max-w-6xl space-y-2">
       <p>
         Built live on <a class="underline hover:text-nof-text" href="/">40 for 40</a>, day 9. Data from Wikipedia (CC BY-SA 4.0), Google Books Ngram (CC BY 3.0), the V&amp;A, the Met (CC0), Vogue Runway tag counts and Pantone.
-        <button type="button" class="underline hover:text-nof-text" @click="go({ tab: 'explore', view: 'methods' })">How we got the numbers</button>
+        <button type="button" class="underline hover:text-nof-text" @click="swap({ view: 'methods' })">How we got the numbers</button>
       </p>
       <p>Mostly high fashion as written about and kept in museums, not what everyone wore. Your birth year never leaves your browser.</p>
     </div>
