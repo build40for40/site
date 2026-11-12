@@ -88,6 +88,18 @@ Reads `public/nerds-of-fashion/fashion.json` and writes `public/nerds-of-fashion
 - A few periods and revival originals start before 1920, so clamp them to the timeline.
 - The scope is Western: the UK, the US, France and Italy, plus looks not tied to one place.
 
+## Who Wore It First?
+
+`story/` builds Room VII of the exhibition: pick a look and a globe tells its origin story in a few stops (borrowed from, born, disputed, travelled, everywhere, back again), with the quotes and sources behind a tap. It is a deliberately simpler take on the Trend Atlas below, built from the same research.
+
+```sh
+node datasets/fashion/story/build.mjs
+```
+
+It reads `public/nerds-of-fashion/fashion.json` and `globe/arrivals-pilot.json`, and writes `raw/story/who-wore-it-first.html` (the page as a Claude artifact, gitignored) and `public/nerds-of-fashion/who-wore-it-first.html` (the same page with a document shell, served at `/nerds-of-fashion/who-wore-it-first`). The served file is committed, so rerun the build and commit it after changing `story/page.html` or the data. The build prints how many looks get each kind of stop.
+
+A look only gets a stop when there is a source for it, so stories vary in length. When no origin is sourced, "born" falls back to the first country the dataset records the look in, and says it is a guess.
+
 ## The Trend Atlas globe
 
 `globe/` builds a single self-contained page: a globe showing where each trend was born, where it travelled, when it came back, and what each place was wearing in any year. It was published as a Claude artifact on Day 9.
@@ -96,7 +108,7 @@ Reads `public/nerds-of-fashion/fashion.json` and writes `public/nerds-of-fashion
 node datasets/fashion/globe/build.mjs
 ```
 
-It reads `public/nerds-of-fashion/fashion.json` and writes `raw/globe/trend-atlas.html` (gitignored). It also writes `public/nerds-of-fashion/atlas.html`, the same page with a document shell, which the site serves at `/nerds-of-fashion/atlas`. That file is committed, so rerun the build and commit it after changing the page or the data. The first run downloads one small V&A photo per trend into `raw/globe/vam/`.
+It reads `public/nerds-of-fashion/fashion.json` and writes `raw/globe/trend-atlas.html` (gitignored). The site no longer serves this page: `public/nerds-of-fashion/atlas.html` now redirects to Who Wore It First?. Run the build with `--site` to write the full atlas over that redirect again.
 
 - `build.mjs`: works out birthplaces and journeys, embeds the photos, and inlines everything into the page. It prints how much of the dataset the globe covers.
 - `page.html` and `page.js`: the page shell and its script. Edit these to change how it looks or behaves.

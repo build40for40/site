@@ -5,8 +5,8 @@
 // arrivals-pilot branch) and globe/origins.json (sourced birthplaces, rival
 // claims and roots from the origins research, built by globe/origins/), downloads one small V&A photo per trend into
 // raw/globe/ (gitignored), and writes one self-contained HTML file to
-// raw/globe/trend-atlas.html, ready to publish as an artifact, plus a
-// standalone copy at public/nerds-of-fashion/atlas.html that the site serves.
+// raw/globe/trend-atlas.html, ready to publish as an artifact. The site
+// serves ../story instead; see the note near the end of this file.
 //
 // Usage, from the repo root: node datasets/fashion/globe/build.mjs
 // Node with no dependencies. Deterministic once the photos are cached.
@@ -159,18 +159,21 @@ for (const [k, v] of [['LAND', JSON.parse(readFileSync(`${HERE}/land-110m.json`,
 }
 writeFileSync(`${RAW}/trend-atlas.html`, page);
 
-// The same page as a standalone file the site serves at /nerds-of-fashion/atlas.
-// An artifact gets its document shell and a small reset from the host, so add both here.
-const cut = page.indexOf('<div class="wrap">');
+// The site no longer serves this page: "Who Wore It First?" (../story) replaced it, and
+// public/nerds-of-fashion/atlas.html now just redirects there. Pass --site to write the
+// full atlas over that redirect again.
 const SITE = 'public/nerds-of-fashion/atlas.html';
-writeFileSync(
-  SITE,
-  '<!doctype html>\n<html lang="en-GB">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n' +
-    '<meta name="description" content="Where fashion trends were born, what they were borrowed from and where they went. Day 9 of 40 for 40.">\n' +
-    '<link rel="icon" type="image/svg+xml" href="/favicon.svg">\n' +
-    '<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>\n' +
-    page.slice(0, cut) + '</head>\n<body>\n' + page.slice(cut) + '\n</body>\n</html>\n',
-);
+if (process.argv.includes('--site')) {
+  const cut = page.indexOf('<div class="wrap">');
+  writeFileSync(
+    SITE,
+    '<!doctype html>\n<html lang="en-GB">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n' +
+      '<meta name="description" content="Where fashion trends were born, what they were borrowed from and where they went. Day 9 of 40 for 40.">\n' +
+      '<link rel="icon" type="image/svg+xml" href="/favicon.svg">\n' +
+      '<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>\n' +
+      page.slice(0, cut) + '</head>\n<body>\n' + page.slice(cut) + '\n</body>\n</html>\n',
+  );
+}
 
 // Coverage, so the page's claims can be checked against the data.
 const total = ben.trends.length;
@@ -200,4 +203,4 @@ console.log(`On the globe by a root alone:   ${pct(tally.rootOnly)}`);
 console.log(`Sent home beyond the West:      ${pct(inData.filter((t) => t.r && t.r.length && !t.ro && (!t.b || t.b.west)).length)}`);
 console.log(`Sourced places outside the four countries: ${beyond}`);
 console.log(`Photos embedded:                ${Object.keys(thumbs).length}`);
-console.log(`Wrote ${RAW}/trend-atlas.html (${(page.length / 1024).toFixed(0)} KB) and ${SITE}`);
+console.log(`Wrote ${RAW}/trend-atlas.html (${(page.length / 1024).toFixed(0)} KB)${process.argv.includes('--site') ? ` and ${SITE}` : ''}`);
