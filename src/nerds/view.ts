@@ -6,16 +6,6 @@ import type { Nerds } from "./data";
 
 export type Tab = "trends" | "shapes" | "comebacks" | "colour" | "world" | "museums" | "words";
 
-export const TABS: { id: Tab; label: string; blurb: string }[] = [
-  { id: "trends", label: "Trends", blurb: "Four hundred trends, when they were on and how loud" },
-  { id: "shapes", label: "Shapes", blurb: "What women's bodies were told to look like, decade by decade" },
-  { id: "comebacks", label: "Comebacks", blurb: "Nothing dies in fashion. It just waits about 33 years" },
-  { id: "colour", label: "Colour", blurb: "The colours each decade couldn't stop wearing" },
-  { id: "world", label: "World", blurb: "Where trends started and how fast they got everywhere else" },
-  { id: "museums", label: "Museums", blurb: "What the V&A and the Met kept, and what it tells us" },
-  { id: "words", label: "Words", blurb: "A century of fashion as written about in books" },
-];
-
 export interface ViewContext {
   nerds: Nerds;
   /** The reader's birth year, if they told us. Only ever kept in their browser. */
@@ -47,12 +37,4 @@ export interface View {
   /** Lower comes first in its tab. */
   order?: number;
   mount(el: HTMLElement, context: ViewContext): Mounted;
-}
-
-/** Views we haven't built yet, so the catalogue shows where this is going. */
-export interface Planned {
-  id: string;
-  tab: Tab;
-  title: string;
-  blurb: string;
 }

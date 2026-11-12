@@ -4,13 +4,11 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import IntentBar from "./IntentBar.vue";
 import type { IntentResult } from "./registry";
 
-const result: IntentResult = {
+const match: IntentResult = {
   q: "where did punk start?",
   components: [
     { id: "globe", score: 0.8, available: true },
-    { id: "board", score: 0.75, available: false },
-    { id: "gaps", score: 0.02, available: false },
-    { id: "trend-card", score: 0.07, available: false },
+    { id: "trend-card", score: 0.75, available: false },
   ],
   trend: { id: "punk", name: "Punk", score: 1 },
   year: null,
@@ -18,16 +16,17 @@ const result: IntentResult = {
   ms: 140,
   fallback: false,
 };
+const noMatch: IntentResult = { ...match, q: "my nan's party frock", components: [{ id: "globe", score: 0.1, available: true }], trend: null };
 
 let wrapper: VueWrapper | undefined;
 const capture = vi.fn();
 const fetcher = vi.fn();
 const events = () => capture.mock.calls.map(([event]) => event);
-const status = () => wrapper!.find("[role=status]").text();
+const bar = () => (wrapper = mount(IntentBar, { props: { debounceMs: 0 } }));
 
 beforeEach(() => {
   capture.mockClear();
-  fetcher.mockReset().mockImplementation(async () => Response.json(result));
+  fetcher.mockReset().mockImplementation(async () => Response.json(match));
   vi.stubGlobal("fetch", fetcher);
   window.posthog = { capture };
 });
@@ -38,51 +37,56 @@ afterEach(() => {
   delete window.posthog;
 });
 
-test("labels the input and submits what was typed", async () => {
-  wrapper = mount(IntentBar);
-  const input = wrapper.find("input");
-  expect(wrapper.find(`label[for="${input.attributes("id")}"]`).exists()).toBe(true);
+test("labels the input and nudges with a placeholder", () => {
+  const input = bar().find("input");
+  expect(wrapper!.find(`label[for="${input.attributes("id")}"]`).exists()).toBe(true);
+  expect(input.attributes("placeholder")).toBe("Where did punk start?");
+  expect(wrapper!.find("button[type=submit]").exists()).toBe(false);
+});
 
-  await input.setValue("  where did punk start? ");
-  await wrapper.find("form").trigger("submit");
-  expect(status()).toContain("Rummaging");
+test("opens a match while typing, without a submit", async () => {
+  await bar().find("input").setValue("  where did punk start? ");
   await flushPromises();
 
   expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ q: "where did punk start?" });
-  expect(wrapper.emitted("resolved")).toEqual([[result]]);
-  expect(status()).toBe("");
-  expect(events()).toEqual(["fashion_search_submitted", "fashion_intent_resolved", "fashion_component_wanted", "fashion_component_shown"]);
-  expect(capture.mock.calls[0][1]).toMatchObject({ example: false });
+  expect(wrapper!.emitted("resolved")).toEqual([[match]]);
+  expect(events()).toEqual(["fashion_intent_resolved", "fashion_component_wanted", "fashion_component_shown"]);
 });
 
-test("a tapped example fills the input and asks straight away", async () => {
-  wrapper = mount(IntentBar, { props: { examples: ["Are flares coming back?"] } });
-  await wrapper.find("[data-example]").trigger("click");
+test("stays quiet while typing when nothing fits, then draws on submit", async () => {
+  fetcher.mockImplementation(async () => Response.json(noMatch));
+  await bar().find("input").setValue("my nan's party frock");
   await flushPromises();
+  expect(wrapper!.emitted()).not.toHaveProperty("resolved");
+  expect(wrapper!.emitted()).not.toHaveProperty("draw");
 
-  expect(wrapper.find("input").element.value).toBe("Are flares coming back?");
-  expect(wrapper.emitted("resolved")).toHaveLength(1);
-  expect(capture.mock.calls[0]).toEqual(["fashion_search_submitted", { query: "Are flares coming back?", query_length: 23, example: true }]);
+  await wrapper!.find("form").trigger("submit");
+  await flushPromises();
+  expect(wrapper!.emitted("draw")).toEqual([["my nan's party frock"]]);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(events()).toEqual(["fashion_search_submitted"]);
 });
 
-test("says so when it fails, and emits nothing", async () => {
+test("draws on submit when the search itself fails", async () => {
   fetcher.mockImplementation(async () => new Response("", { status: 502 }));
-  wrapper = mount(IntentBar);
-  await wrapper.find("input").setValue("punk");
-  await wrapper.find("form").trigger("submit");
+  await bar().find("input").setValue("punk");
+  await wrapper!.find("form").trigger("submit");
   await flushPromises();
 
-  expect(status()).toContain("another go");
-  expect(wrapper.emitted("resolved")).toBeUndefined();
-  expect(events()).toEqual(["fashion_search_submitted", "fashion_intent_failed"]);
+  expect(wrapper!.emitted("draw")).toEqual([["punk"]]);
+  expect(wrapper!.emitted()).not.toHaveProperty("resolved");
+});
+
+test("waits for a few letters before searching", async () => {
+  await bar().find("input").setValue("pu");
+  await flushPromises();
+  expect(fetcher).not.toHaveBeenCalled();
 });
 
 test("clearing empties the input and tells the page", async () => {
-  wrapper = mount(IntentBar);
-  await wrapper.find("input").setValue("punk");
-  await wrapper.find("[aria-label='Clear the search']").trigger("click");
+  await bar().find("input").setValue("pu");
+  await wrapper!.find("[aria-label='Clear the search']").trigger("click");
 
-  expect(wrapper.find("input").element.value).toBe("");
-  expect(wrapper.emitted("cleared")).toHaveLength(1);
-  expect(fetcher).not.toHaveBeenCalled();
+  expect(wrapper!.find("input").element.value).toBe("");
+  expect(wrapper!.emitted("cleared")).toHaveLength(1);
 });

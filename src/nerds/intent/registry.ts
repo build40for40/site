@@ -311,6 +311,52 @@ export const components = [
     fallback: ({ text }) => asksWords(text) && asksBritish(text) && asksAmerican(text),
   },
   {
+    id: "arcs",
+    label: "Everything Comes Back",
+    available: true,
+    questions: {
+      comeback: {
+        instructions: "Does the person who typed `search` want to know which looks have come back, or how long comebacks take?",
+        criteria: {
+          true: "They ask about comebacks, revivals or the gap before a look returns, past or future.",
+          false: "They ask about something other than looks returning.",
+        },
+      },
+    },
+    // Keywords already send comebacks to the gaps view, so only Jev picks this one.
+    fallback: () => false,
+  },
+  {
+    id: "ebb",
+    label: "The Ebb and Flow",
+    available: true,
+    questions: {
+      overview: {
+        instructions: "Does the person who typed `search` want an overview of which trends rose and fell across the century?",
+        criteria: {
+          true: "They ask what was in over time, which trends defined each decade, or how fashion changed overall.",
+          false: "They ask about one specific trend's detail, place, colour or shape.",
+        },
+      },
+    },
+    fallback: () => false,
+  },
+  {
+    id: "hear",
+    label: "Hear the Century",
+    available: true,
+    questions: {
+      sound: {
+        instructions: "Does the person who typed `search` want to hear fashion, or ask about sound or music?",
+        criteria: {
+          true: "They mention sound, music, listening, hearing or playing something.",
+          false: "They mention nothing about sound or music.",
+        },
+      },
+    },
+    fallback: ({ text }) => /\b(sound|sounds|music|hear|listen|play|audio|song)\b/.test(text),
+  },
+  {
     id: "trend-card",
     label: "a trend card",
     available: false,

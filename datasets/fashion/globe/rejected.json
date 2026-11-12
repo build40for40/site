@@ -138,5 +138,85 @@
     "reason": "Native America is one of three examples of 'non-Western cultures' in a sentence that says 'probably'. Not a borrowing from one place.",
     "source_url": "https://en.wikipedia.org/wiki/Love_beads",
     "source_sentence": "The love bead trend probably evolved from the hippie fascination with non-Western cultures, such as those of Africa, India, and Native America, which make common use of similar beads."
+  },
+  {
+    "trend_id": "acid-wash",
+    "kind": "root",
+    "place": "Surfers",
+    "year": 1960,
+    "stage": "hand review",
+    "reason": "Surfers are a crowd, not a place. The quote names no place.",
+    "source_url": "https://en.wikipedia.org/wiki/Stone_washing",
+    "source_sentence": "The process became popular in the 1980s, as acid jeans gained popularity; however, stone washing has roots going back to 1960s surfer apparel."
+  },
+  {
+    "trend_id": "bell-bottoms",
+    "kind": "root",
+    "place": "sailors",
+    "year": 1800,
+    "stage": "hand review",
+    "reason": "Sailors are a trade, not a place. The quote names two navies and no place.",
+    "source_url": "https://en.wikipedia.org/wiki/Bell-bottoms",
+    "source_sentence": "In the early 19th century, when standardised uniforms for British ratings in the Royal Navy or enlisted men in the U.S. Navy did not as yet exist, some sailors adopted a style of wide trousers ending in bell-shaped cuffs."
+  },
+  {
+    "trend_id": "cocktail-dress",
+    "kind": "origin",
+    "place": "France",
+    "year": null,
+    "stage": "hand review",
+    "reason": "Says French designers made their own version. It does not say where the dress started.",
+    "source_url": "https://en.wikipedia.org/wiki/Cocktail_dress",
+    "source_sentence": "Since cocktail parties originated in the United States, French designers created their own version of a cocktail dress."
+  },
+  {
+    "trend_id": "patches",
+    "kind": "root",
+    "place": "Mediterranean",
+    "year": null,
+    "stage": "hand review",
+    "reason": "The Mediterranean is the first of five regions in a list. Not a borrowing from one place.",
+    "source_url": "https://en.wikipedia.org/wiki/Embroidered_patch",
+    "source_sentence": "Embroidered patches—an important identification tool for military and other uniformed personnel—trace their roots thousands of years ago to ancient cultures of the Mediterranean, Mideast, China, India and South America, where the art of decorating fabric with thread stitching originated."
+  },
+  {
+    "trend_id": "pillbox-hat",
+    "kind": "root",
+    "place": "Roman Empire",
+    "year": null,
+    "stage": "hand review",
+    "reason": "A Roman cap that looked similar. The quote does not connect it to the hat.",
+    "source_url": "https://en.wikipedia.org/wiki/Pillbox_hat",
+    "source_sentence": "During the late Roman Empire, the pileus pannonicus or \"Pannonian cap\", a type of headgear similar to the modern pillbox, was worn by Roman soldiers."
+  },
+  {
+    "trend_id": "polka-dots",
+    "kind": "root",
+    "place": "Central Europe",
+    "year": null,
+    "stage": "hand review",
+    "reason": "The quote itself calls the link to the Central European dance mostly discredited.",
+    "source_url": "https://en.wikipedia.org/wiki/Polka_dot",
+    "source_sentence": "It was also at this time, the name “polka dots\" is believed to be connected to an Central European dance called the polka, though the reasons behind this association are varied and mostly discredited."
+  },
+  {
+    "trend_id": "velvet",
+    "kind": "root",
+    "place": "Kashmir",
+    "year": null,
+    "stage": "hand review",
+    "reason": "About velvet reaching Baghdad and Al-Andalus, not the West picking it up.",
+    "source_url": "https://en.wikipedia.org/wiki/Velvet",
+    "source_sentence": "Velvet was introduced to Baghdad during the rule of Harun al-Rashid (786–809) by Kashmiri merchants and to Al-Andalus by Ziryab."
+  },
+  {
+    "trend_id": "wrap-dress",
+    "kind": "root",
+    "place": "China",
+    "year": null,
+    "stage": "hand review",
+    "reason": "About ancient Chinese garments reaching Japan, not the West's wrap dress.",
+    "source_url": "https://en.wikipedia.org/wiki/Wrap_dress",
+    "source_sentence": "Wrap-style garments which were tied with sash have very ancient origins in China and were later introduced in Japan influencing the design of the kimono."
   }
 ]

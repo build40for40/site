@@ -294,11 +294,13 @@ function draw() {
       ctx.stroke();
       ctx.setLineDash([]);
     } else {
-      ctx.fillStyle = c.text;
+      ctx.fillStyle = c.land;
       ctx.fill();
-      ctx.strokeStyle = c.tile;
+      ctx.globalAlpha = 0.6;
+      ctx.strokeStyle = c.edge;
       ctx.lineWidth = 0.7;
       ctx.stroke();
+      ctx.globalAlpha = 1;
     }
   }
   ctx.beginPath();
@@ -347,7 +349,7 @@ function draw() {
       ctx.beginPath();
       ctx.moveTo(v.ax, v.ay);
       ctx.lineTo(v.x, v.y);
-      ctx.strokeStyle = fc ? c.yellow : c.night;
+      ctx.strokeStyle = fc ? c.yellow : c.text;
       ctx.globalAlpha = 0.7;
       ctx.lineWidth = 1;
       ctx.stroke();
@@ -520,7 +522,7 @@ onMounted(async () => {
   spin = !reduced;
   const css = getComputedStyle(document.documentElement);
   const token = (name: string) => css.getPropertyValue(`--color-${name}`).trim();
-  colours = { night: token("nof-night"), tile: token("nof-raised"), edge: token("nof-muted"), text: token("nof-text"), lime: token("nof-pink"), pink: token("nof-pink"), yellow: token("nof-gold") };
+  colours = { night: token("nof-night"), tile: token("nof-raised"), land: token("nof-line"), edge: token("nof-muted"), text: token("nof-text"), lime: token("nof-pink"), pink: token("nof-pink"), yellow: token("nof-gold") };
   layout(true);
   window.addEventListener("resize", onResize);
   window.addEventListener("pointermove", pointerMove);
