@@ -59,13 +59,13 @@ const ROOMS = [
     text: "Press play and every trend makes its own noise as it comes into style. Jackets zip, boots stomp, skirts swish and punks play a power chord. Or switch to the tuned version, where heavy coats sound low and bikinis sound light.",
   },
   {
-    id: "atlas",
+    id: "who-wore-it-first",
     no: "VII",
     title: "Who Wore It",
     em: "First?",
-    index: "Where trends started, and where they went",
-    text: "Spin the globe and follow each trend from the city that started it to everywhere that caught it next. Dug out of old newspapers and Wikipedia in every language by Samira.",
-    href: "/nerds-of-fashion/atlas",
+    index: "Every look's origin story, told in a few stops",
+    text: "Pick a look and the globe tells its story: what it was borrowed from, where it was born, who else claims it, where it went and when it came back. Dug out of old newspapers and Wikipedia in every language by Samira.",
+    href: "/nerds-of-fashion/who-wore-it-first",
   },
 ].map((room) => ({ ...room, view: "href" in room ? undefined : viewById(room.id) }));
 
@@ -116,7 +116,7 @@ onBeforeUnmount(() => stopCurtain?.());
       <div class="border-y border-nof-line bg-nof-panel">
         <div class="mx-auto max-w-[1280px]">
           <a v-if="'href' in room" :href="room.href" class="group flex flex-wrap items-center justify-between gap-4 px-4 py-14 no-underline sm:px-8">
-            <span class="font-nof-display text-[clamp(28px,4vw,48px)] italic transition group-hover:translate-x-1.5 group-hover:text-nof-pink motion-reduce:transition-none">Enter the atlas →</span>
+            <span class="font-nof-display text-[clamp(28px,4vw,48px)] italic transition group-hover:translate-x-1.5 group-hover:text-nof-pink motion-reduce:transition-none">Enter Who Wore It First? →</span>
             <span class="font-mono text-xs text-nof-muted">Its own page, so the globe gets the whole screen</span>
           </a>
           <ViewHost v-else-if="room.view" :nerds="nerds" :view="room.view" :born="born" :params="{}" />
