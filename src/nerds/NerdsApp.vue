@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, provide, ref, shallowRef } from "vue";
 import { loadNerds, type Nerds } from "./data";
-import Home from "./Home.vue";
+import Exhibition from "./Exhibition.vue";
 import Explore from "./Explore.vue";
 import Draw from "./Draw.vue";
 import { BORN_KEY, readBorn, routeKey, type Route } from "./route";
@@ -40,10 +40,11 @@ function setBorn(year: number | null) {
 
 provide(routeKey, { params, go, born, setBorn });
 
+// The archive and Draw pages still work at their links; they're just off the menu for now.
 const nav: { id: Route; label: string }[] = [
-  { id: "home", label: "You" },
-  { id: "explore", label: "Explore" },
-  { id: "draw", label: "Draw your own" },
+  { id: "home", label: "The exhibition" },
+  { id: "explore", label: "Archive" },
+  { id: "draw", label: "Draw" },
 ];
 
 function open(id: Route) {
@@ -65,7 +66,7 @@ onUnmounted(() => removeEventListener("popstate", read));
 </script>
 
 <template>
-  <header class="sticky top-0 z-30 border-b border-nof-line/70 bg-nof-night/85 backdrop-blur">
+  <header v-if="tab !== 'home'" class="sticky top-0 z-30 border-b border-nof-line/70 bg-nof-night/85 backdrop-blur">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
       <button type="button" class="flex items-baseline gap-2 text-left" @click="open('home')">
         <span class="font-nof-display text-2xl leading-none font-black italic tracking-tight sm:text-3xl">Nerds <span class="text-nof-pink">of</span> Fashion</span>
@@ -80,9 +81,7 @@ onUnmounted(() => removeEventListener("popstate", read));
           :aria-current="tab === item.id ? 'page' : undefined"
           @click="open(item.id)"
         >
-          <span v-if="item.id === 'draw'" class="hidden sm:inline">{{ item.label }}</span>
-          <span v-if="item.id === 'draw'" class="sm:hidden">Draw</span>
-          <span v-else>{{ item.label }}</span>
+          {{ item.label }}
         </button>
       </nav>
     </div>
@@ -92,19 +91,19 @@ onUnmounted(() => removeEventListener("popstate", read));
     <p v-if="failed" class="mx-auto max-w-xl px-4 py-24 text-center text-nof-sub">The wardrobe's stuck shut. Try a refresh. <span class="block pt-2 font-mono text-xs text-nof-muted">{{ failed }}</span></p>
     <p v-else-if="!nerds" class="py-32 text-center font-nof-display text-2xl italic text-nof-muted">Unpacking a hundred years of wardrobes…</p>
     <template v-else>
-      <Home v-if="tab === 'home'" :nerds="nerds" />
+      <Exhibition v-if="tab === 'home'" :nerds="nerds" />
       <Explore v-else-if="tab === 'explore'" :nerds="nerds" />
       <Draw v-else :nerds="nerds" />
     </template>
   </main>
 
-  <footer class="mt-20 border-t border-nof-line px-4 py-10 text-sm text-nof-muted">
-    <div class="mx-auto max-w-6xl space-y-2">
-      <p>
-        Built live on <a class="underline hover:text-nof-text" href="/">40 for 40</a>, day 9. Data from Wikipedia (CC BY-SA 4.0), Google Books Ngram (CC BY 3.0), the V&amp;A, the Met (CC0), Vogue Runway tag counts and Pantone.
-        <button type="button" class="underline hover:text-nof-text" @click="go({ tab: 'explore', view: 'methods' })">How we got the numbers</button>
-      </p>
-      <p>Mostly high fashion as written about and kept in museums, not what everyone wore. Your birth year never leaves your browser.</p>
-    </div>
+  <footer class="mx-auto mt-20 grid max-w-[1280px] gap-2 px-4 pt-16 pb-12 text-sm text-nof-muted">
+    <p class="font-nof-display text-[clamp(28px,4vw,44px)] leading-[1.1] text-nof-text italic">Nerds of Fashion</p>
+    <p>
+      Built live on <a class="underline hover:text-nof-text" href="/">40 for 40</a>, day 9. Data from <b class="font-medium text-nof-sub">Wikipedia</b> (CC BY-SA 4.0), <b class="font-medium text-nof-sub">Google Books Ngram</b> (CC BY 3.0), the <b class="font-medium text-nof-sub">V&amp;A</b>, <b class="font-medium text-nof-sub">the Met</b> (CC0), Vogue Runway tag counts and Pantone.
+      <button type="button" class="underline hover:text-nof-text" @click="go({ tab: 'explore', view: 'methods' })">How we got the numbers</button>
+    </p>
+    <p>Mostly high fashion as written about and kept in museums, not what everyone wore. Year colours before 2000 are the colour each decade's museum pieces lean towards, then Pantone's pick.</p>
+    <p><a href="#top" class="underline hover:text-nof-text">Back to the curtain ↑</a></p>
   </footer>
 </template>
