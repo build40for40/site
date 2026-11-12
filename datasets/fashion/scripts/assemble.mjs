@@ -32,10 +32,21 @@ async function readPart(name) {
   }
 }
 
-const [trendsPart, revivalsPart, ngram, vam, met, runway, pantone] = await Promise.all(
-  ["trends", "revivals", "ngram", "vam", "met", "runway", "pantone"].map(readPart),
+const [trendsPart, revivalsPart, ngram, vam, met, runway, pantone, originRows] = await Promise.all(
+  ["trends", "revivals", "ngram", "vam", "met", "runway", "pantone", "origins"].map(readPart),
 );
 const mappings = JSON.parse(await readFile(join(root, "mappings.json"), "utf8")).trends;
+
+// Sourced origins, rival claims and roots: parts/origins.json, written by
+// globe/origins/assemble.mjs (see the README). Added to each trend, nothing else changes.
+const KIND_ORDER = { origin: 0, rival: 1, root: 2 };
+const originsFor = (id) =>
+  (originRows ?? [])
+    .filter((r) => r.trend_id === id)
+    .map(({ kind, place, lat, lon, year, year_precision, who, confidence, source_url, source_sentence }) => ({
+      kind, place, lat, lon, year, yearPrecision: year_precision, who, confidence, url: source_url, quote: source_sentence,
+    }))
+    .sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind]);
 
 const byString = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 const decadeOf = (year) => Math.floor(year / 10) * 10;
@@ -209,6 +220,7 @@ const outTrends = trends
       subculture: t.subculture,
       description: t.description,
       sources: t.sources.map(({ article, url, quote }) => ({ article, url, quote })),
+      origins: originsFor(t.id),
       ngram: ngramFor(t.id),
       counts,
       examples: pickExamples(vamHits, t.periods),
@@ -261,6 +273,14 @@ const sources = [
     licence: "CC BY-SA 4.0",
     credit: "Wikipedia contributors, the decade in fashion and subculture articles",
     covers: `${YEARS.from} to ${Math.max(...trendYears)}: trend names, dates, regions, quotes and revivals`,
+  },
+  originRows && {
+    id: "wikipedia-origins",
+    name: "Wikipedia articles on individual garments and styles",
+    url: "https://en.wikipedia.org/wiki/Category:History_of_clothing_(Western_fashion)",
+    licence: "CC BY-SA 4.0",
+    credit: "Wikipedia contributors, each trend's own article (linked on every row)",
+    covers: `${new Set(originRows.map((r) => r.trend_id)).size} trends: where each started, rival claims and what it was borrowed from, each with the sentence that says so`,
   },
   ngram && {
     id: "ngram",
@@ -315,8 +335,10 @@ const caveats = [
   "The scope is Western fashion: the UK, the US, France and Italy, plus looks not tied to one place.",
   "A few trend periods and revival originals start before 1920. Clamp them to the timeline if needed.",
   "Revivals with a null trend are era-wide comebacks such as 1970s styles; the subject field says what came back.",
+  "Origins are only what one Wikipedia sentence says, checked word for word and reviewed by hand. An empty origins list means nobody found a quotable sentence, not that the trend has no history. Low confidence means the sentence hedges or gives no date. Origin years can be long before 1920 and are negative for BC. Coordinates for regions and peoples are a convention, not a fact.",
 ];
-for (const name of ["trends", "revivals", "ngram", "vam", "met", "runway", "pantone"])
+
+for (const name of ["trends", "revivals", "ngram", "vam", "met", "runway", "pantone", "origins"])
   if (warnings.includes(`parts/${name}.json is missing`))
     caveats.push(`The ${name} part was missing when this file was built, so its data is empty here.`);
 
@@ -359,6 +381,7 @@ console.log(
     `${outTrends.length} trends, ${revivals.length} revivals`,
     `ngram data: ${outTrends.filter((t) => t.ngram).length}`,
     `counts: vam ${withCounts("vam")}, met ${withCounts("met")}, runway ${withCounts("runway")}, any ${outTrends.filter((t) => Object.keys(t.counts).length).length}`,
+    `origins: ${outTrends.filter((t) => t.origins.length).length} trends, ${outTrends.reduce((n, t) => n + t.origins.length, 0)} rows`,
     `examples: ${outTrends.filter((t) => t.examples.length).length} trends, ${outTrends.reduce((n, t) => n + t.examples.length, 0)} objects`,
   ].join("\n"),
 );
