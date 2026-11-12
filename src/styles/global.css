@@ -36,11 +36,6 @@
   --color-queued: oklch(0.66 0.06 265);
   --color-guest: oklch(0.84 0.15 88);
 
-  /* Chart series, in this fixed order, checked for colour-blind separation on night-panel. */
-  --color-series-1: #3987e5;
-  --color-series-2: #d95926;
-  --color-series-3: #199e70;
-  --color-series-4: #c98500;
 
   --color-pop-red: oklch(0.66 0.22 25);
   --color-pop-orange: oklch(0.75 0.18 55);

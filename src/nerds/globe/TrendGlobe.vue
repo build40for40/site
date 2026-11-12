@@ -17,7 +17,8 @@ import {
   type Trend,
 } from "./data";
 
-const props = defineProps<{ focusTrend?: string | null; focusYear?: number | null }>();
+const props = defineProps<{ dataset?: Dataset; focusTrend?: string | null; focusYear?: number | null }>();
+const emit = defineEmits<{ year: [year: number]; trend: [id: string | null] }>();
 
 interface Shown {
   key: string;
@@ -500,12 +501,14 @@ const detail = computed(() => {
 });
 
 watch([candidates, isForecast], () => kick(90));
+watch(year, (y) => emit("year", y));
+watch(selected, (s) => emit("trend", s?.trend.id ?? null));
 watch([selected, list], () => requestAnimationFrame(() => layout()), { flush: "post" });
 watch(
   () => [props.focusTrend, props.focusYear, data.value] as const,
   ([id, y]) => {
     if (!data.value) return;
-    const trend = id ? data.value.trends.find((t) => t.id === id) : null;
+    const trend = id && id !== selected.value?.trend.id ? data.value.trends.find((t) => t.id === id) : null;
     const debut = trend && pins.value.find((p) => p.trend.id === trend.id && p.home)?.spans[0][0];
     if (y ?? debut) setYear((y ?? debut)!);
     if (trend) open(trend);
@@ -517,7 +520,7 @@ onMounted(async () => {
   spin = !reduced;
   const css = getComputedStyle(document.documentElement);
   const token = (name: string) => css.getPropertyValue(`--color-${name}`).trim();
-  colours = { night: token("night"), tile: token("night-tile"), edge: token("night-muted"), text: token("night-text"), lime: token("brand-lime"), pink: token("brand-pink"), yellow: token("brand-yellow") };
+  colours = { night: token("nof-night"), tile: token("nof-raised"), edge: token("nof-muted"), text: token("nof-text"), lime: token("nof-pink"), pink: token("nof-pink"), yellow: token("nof-gold") };
   layout(true);
   window.addEventListener("resize", onResize);
   window.addEventListener("pointermove", pointerMove);
@@ -528,7 +531,7 @@ onMounted(async () => {
   const json = (name: string) => fetch(`/nerds-of-fashion/${name}.json`).then((r) => (r.ok ? r.json() : Promise.reject(r.status)));
   json("land-110m").then((j) => ((land = j), kick()), () => kick());
   try {
-    [data.value, forecasts.value] = await Promise.all([json("fashion"), json("forecast")]);
+    [data.value, forecasts.value] = await Promise.all([props.dataset ?? json("fashion"), json("forecast")]);
   } catch {
     failed.value = true;
   }
@@ -546,7 +549,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex h-full flex-col bg-night text-night-text">
+  <div class="flex h-full flex-col bg-nof-night text-nof-text">
     <div ref="stage" class="relative min-h-0 flex-1 touch-none overflow-hidden select-none" :class="dragging ? 'cursor-grabbing' : 'cursor-grab'" @pointerdown="stageDown" @wheel="wheel">
       <canvas ref="canvas" class="absolute inset-0 size-full" aria-hidden="true"></canvas>
 
@@ -554,10 +557,10 @@ onBeforeUnmount(() => {
         v-for="s in shown"
         :key="s.key"
         type="button"
-        class="absolute top-0 left-0 grid cursor-pointer place-items-center overflow-hidden rounded-full border-2 p-0 text-[11px] font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime"
+        class="absolute top-0 left-0 grid cursor-pointer place-items-center overflow-hidden rounded-full border-2 p-0 text-[11px] font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nof-pink"
         :class="[
-          s.more ? 'border-night-edge bg-night-panel text-night-text' : s.state.kind === 'in' ? 'border-brand-lime bg-night-panel text-night-text' : 'border-dashed border-brand-yellow bg-night text-brand-yellow',
-          selected?.pin?.key === s.key && 'ring-4 ring-brand-pink',
+          s.more ? 'border-nof-line bg-nof-panel text-nof-text' : s.state.kind === 'in' ? 'border-nof-pink bg-nof-panel text-nof-text' : 'border-dashed border-nof-gold bg-nof-night text-nof-gold',
+          selected?.pin?.key === s.key && 'ring-4 ring-nof-text',
         ]"
         :style="{ width: `${s.size}px`, height: `${s.size}px`, transform: `translate(${s.x - s.size / 2}px, ${s.y - s.size / 2}px) scale(${s.scale})` }"
         :aria-label="s.label"
@@ -571,86 +574,86 @@ onBeforeUnmount(() => {
       </button>
 
       <div class="pointer-events-none absolute top-4 left-4 max-w-[70%] sm:max-w-sm" :class="narrow && (detail || list) && '[&>*:not(:first-child)]:hidden'" aria-live="polite">
-        <div class="text-5xl leading-none font-bold tabular-nums sm:text-7xl" :class="isForecast && 'text-brand-yellow'">{{ year }}</div>
+        <div class="text-5xl leading-none font-bold tabular-nums sm:text-7xl" :class="isForecast && 'text-nof-gold'">{{ year }}</div>
         <div class="mt-1 text-lg font-semibold sm:text-xl">{{ era.name }}</div>
-        <p class="m-0 mt-1 hidden text-xs text-night-sub sm:block sm:text-sm">{{ era.line }}</p>
-        <p v-if="failed" class="m-0 mt-2 text-xs text-brand-yellow">The data did not load. Give it a refresh.</p>
-        <p v-else-if="!data" class="m-0 mt-2 text-xs text-night-muted">Fetching a century of clothes…</p>
-        <p v-else-if="isForecast" class="m-0 mt-2 text-xs text-brand-yellow">
+        <p class="m-0 mt-1 hidden text-xs text-nof-sub sm:block sm:text-sm">{{ era.line }}</p>
+        <p v-if="failed" class="m-0 mt-2 text-xs text-nof-gold">The data did not load. Give it a refresh.</p>
+        <p v-else-if="!data" class="m-0 mt-2 text-xs text-nof-muted">Fetching a century of clothes…</p>
+        <p v-else-if="isForecast" class="m-0 mt-2 text-xs text-nof-gold">
           Guesses, not history. {{ counts.still }} probably still in, {{ counts.back }} with a 10%+ shot at a comeback, {{ counts.unknown }} unknown.
         </p>
-        <p v-else class="pointer-events-auto m-0 mt-2 text-xs text-night-muted" data-ui>
+        <p v-else class="pointer-events-auto m-0 mt-2 text-xs text-nof-muted" data-ui>
           {{ counts.in }} looks pinned to a country.
-          <button v-if="everywhere.length" type="button" class="cursor-pointer border-0 bg-transparent p-0 text-brand-lime underline" @click="openEverywhere">Plus {{ everywhere.length }} worn everywhere</button>
+          <button v-if="everywhere.length" type="button" class="cursor-pointer border-0 bg-transparent p-0 text-nof-pink underline" @click="openEverywhere">Plus {{ everywhere.length }} worn everywhere</button>
         </p>
       </div>
 
       <div class="absolute right-3 bottom-3 flex flex-col gap-1" data-ui>
-        <button type="button" class="size-9 cursor-pointer rounded-full border border-night-edge bg-night-panel text-night-text" aria-label="Zoom in" @click="zoomBy(1.6)">+</button>
-        <button type="button" class="size-9 cursor-pointer rounded-full border border-night-edge bg-night-panel text-night-text" aria-label="Zoom out" @click="zoomBy(1 / 1.6)">−</button>
-        <button type="button" class="size-9 cursor-pointer rounded-full border border-night-edge bg-night-panel text-night-text" aria-label="Reset the globe" @click="flyTo(HOME, 1, 700)">⟲</button>
+        <button type="button" class="size-9 cursor-pointer rounded-full border border-nof-line bg-nof-panel text-nof-text" aria-label="Zoom in" @click="zoomBy(1.6)">+</button>
+        <button type="button" class="size-9 cursor-pointer rounded-full border border-nof-line bg-nof-panel text-nof-text" aria-label="Zoom out" @click="zoomBy(1 / 1.6)">−</button>
+        <button type="button" class="size-9 cursor-pointer rounded-full border border-nof-line bg-nof-panel text-nof-text" aria-label="Reset the globe" @click="flyTo(HOME, 1, 700)">⟲</button>
       </div>
 
       <aside
         v-if="detail || list"
         ref="panel"
         data-ui
-        class="absolute inset-x-0 bottom-0 max-h-[58%] cursor-auto overflow-y-auto rounded-t-2xl border border-night-edge bg-night-panel p-4 select-text sm:inset-x-auto sm:top-3 sm:right-3 sm:bottom-3 sm:max-h-none sm:w-[360px] sm:rounded-2xl"
+        class="absolute inset-x-0 bottom-0 max-h-[58%] cursor-auto overflow-y-auto rounded-t-2xl border border-nof-line bg-nof-panel p-4 select-text sm:inset-x-auto sm:top-3 sm:right-3 sm:bottom-3 sm:max-h-none sm:w-[360px] sm:rounded-2xl"
         :aria-label="detail ? 'Trend details' : 'Trends'"
       >
-        <button type="button" class="float-right size-8 cursor-pointer rounded-full border border-night-edge bg-night text-night-text" aria-label="Close" @click="close">✕</button>
+        <button type="button" class="float-right size-8 cursor-pointer rounded-full border border-nof-line bg-nof-night text-nof-text" aria-label="Close" @click="close">✕</button>
 
         <template v-if="detail">
           <div class="flex items-center gap-3">
-            <div class="grid size-20 shrink-0 place-items-center overflow-hidden rounded-full border-2 border-brand-lime bg-night text-xl font-bold">
+            <div class="grid size-20 shrink-0 place-items-center overflow-hidden rounded-full border-2 border-nof-pink bg-nof-night text-xl font-bold">
               <img v-if="detail.img" :src="detail.img" :alt="detail.example?.title ?? detail.trend.name" class="size-full object-cover" @error="broken = new Set(broken).add(detail.trend.id)" />
               <template v-else>{{ monogram(detail.trend.name) }}</template>
             </div>
             <div class="min-w-0">
               <h2 class="m-0 text-xl leading-tight font-bold">{{ detail.trend.name }}</h2>
-              <p class="m-0 mt-1 text-xs text-night-muted">{{ detail.trend.category }}<template v-if="detail.pin"> · {{ detail.pin.place.name }}</template></p>
+              <p class="m-0 mt-1 text-xs text-nof-muted">{{ detail.trend.category }}<template v-if="detail.pin"> · {{ detail.pin.place.name }}</template></p>
             </div>
           </div>
-          <p class="mt-3 mb-0 text-sm font-semibold" :class="isForecast ? 'text-brand-yellow' : 'text-brand-lime'">{{ detail.when }}</p>
-          <p class="mt-2 mb-0 text-sm text-night-sub">{{ detail.trend.description }}</p>
-          <blockquote v-if="detail.source" class="mx-0 mt-3 mb-0 border-0 border-l-2 border-night-edge pl-3 text-xs text-night-sub">
+          <p class="mt-3 mb-0 text-sm font-semibold" :class="isForecast ? 'text-nof-gold' : 'text-nof-pink'">{{ detail.when }}</p>
+          <p class="mt-2 mb-0 text-sm text-nof-sub">{{ detail.trend.description }}</p>
+          <blockquote v-if="detail.source" class="mx-0 mt-3 mb-0 border-0 border-l-2 border-nof-line pl-3 text-xs text-nof-sub">
             “{{ detail.source.quote }}”
-            <a :href="detail.source.url" target="_blank" rel="noopener" class="mt-1 block text-brand-lime">Read “{{ detail.source.article }}” on Wikipedia ↗</a>
+            <a :href="detail.source.url" target="_blank" rel="noopener" class="mt-1 block text-nof-pink">Read “{{ detail.source.article }}” on Wikipedia ↗</a>
           </blockquote>
-          <p v-if="detail.img && detail.example" class="mt-2 mb-0 text-[11px] text-night-muted">
-            Picture: <a :href="detail.example.url" target="_blank" rel="noopener" class="text-night-sub">{{ detail.example.title }}, {{ detail.example.year }}</a>. © Victoria and Albert Museum, London.
+          <p v-if="detail.img && detail.example" class="mt-2 mb-0 text-[11px] text-nof-muted">
+            Picture: <a :href="detail.example.url" target="_blank" rel="noopener" class="text-nof-sub">{{ detail.example.title }}, {{ detail.example.year }}</a>. © Victoria and Albert Museum, London.
           </p>
 
           <h3 class="mt-4 mb-1 text-sm font-semibold">{{ detail.waves.length }} {{ detail.waves.length === 1 ? "wave" : "waves" }} so far</h3>
           <svg viewBox="0 0 330 78" role="img" :aria-label="`Waves of ${detail.trend.name} from 1920 to now`" class="w-full">
-            <path v-if="detail.area" :d="detail.area" class="fill-night-edge stroke-night-muted" stroke-width="1" />
-            <rect :x="detail.x(now + 1)" y="2" :width="330 - detail.x(now + 1)" height="56" rx="3" class="fill-transparent stroke-brand-yellow" stroke-dasharray="3 3" />
-            <line x1="0" x2="330" y1="50" y2="50" class="stroke-night-edge" />
-            <rect v-for="(w, i) in detail.waves" :key="i" :x="w.x" y="44" :width="w.w" height="12" rx="4" class="fill-brand-lime" />
-            <line :x1="detail.x(year + 0.5)" :x2="detail.x(year + 0.5)" y1="0" y2="60" class="stroke-night-text" stroke-width="1.5" />
-            <text v-for="y in [1920, 1945, 1970, 1995]" :key="y" :x="detail.x(y)" y="74" class="fill-night-muted text-[10px]">{{ y }}</text>
-            <text x="330" y="74" text-anchor="end" class="fill-brand-yellow text-[10px]">forecast</text>
+            <path v-if="detail.area" :d="detail.area" class="fill-nof-line stroke-nof-muted" stroke-width="1" />
+            <rect :x="detail.x(now + 1)" y="2" :width="330 - detail.x(now + 1)" height="56" rx="3" class="fill-transparent stroke-nof-gold" stroke-dasharray="3 3" />
+            <line x1="0" x2="330" y1="50" y2="50" class="stroke-nof-line" />
+            <rect v-for="(w, i) in detail.waves" :key="i" :x="w.x" y="44" :width="w.w" height="12" rx="4" class="fill-nof-pink" />
+            <line :x1="detail.x(year + 0.5)" :x2="detail.x(year + 0.5)" y1="0" y2="60" class="stroke-nof-text" stroke-width="1.5" />
+            <text v-for="y in [1920, 1945, 1970, 1995]" :key="y" :x="detail.x(y)" y="74" class="fill-nof-muted text-[10px]">{{ y }}</text>
+            <text x="330" y="74" text-anchor="end" class="fill-nof-gold text-[10px]">forecast</text>
           </svg>
-          <p class="m-0 text-[11px] text-night-muted">Blocks are the years it was in. The faint curve is how much British books went on about it, which usually runs late.</p>
+          <p class="m-0 text-[11px] text-nof-muted">Blocks are the years it was in. The faint curve is how much British books went on about it, which usually runs late.</p>
 
           <h3 class="mt-4 mb-1 text-sm font-semibold">Forecast, {{ now + 1 }} to {{ last }}</h3>
-          <div class="rounded-xl border border-dashed border-brand-yellow p-3">
+          <div class="rounded-xl border border-dashed border-nof-gold p-3">
             <template v-if="!detail.f || detail.f.status === 'unknown'">
-              <div class="text-lg font-bold text-brand-yellow">Unknown</div>
-              <p class="m-0 mt-1 text-xs text-night-sub">Only one recorded wave, so there is no gap to learn a cycle from. No number, no pretending.</p>
+              <div class="text-lg font-bold text-nof-gold">Unknown</div>
+              <p class="m-0 mt-1 text-xs text-nof-sub">Only one recorded wave, so there is no gap to learn a cycle from. No number, no pretending.</p>
             </template>
             <template v-else>
               <div class="text-xs font-semibold">{{ detail.f.status === "in" ? "In right now. Chance it is still in:" : "Out right now. Chance it has come back:" }}</div>
               <div v-for="r in detail.rows" :key="r.y" class="mt-2 grid grid-cols-[3.5rem_1fr_2.5rem] items-center gap-2 text-xs tabular-nums">
                 <span>{{ detail.f.status === "in" ? "" : "by " }}{{ r.y }}</span>
-                <span class="h-2 overflow-hidden rounded-full bg-night"><i class="block h-full bg-brand-yellow" :style="{ width: `${Math.max(1, r.p * 100)}%` }"></i></span>
+                <span class="h-2 overflow-hidden rounded-full bg-nof-night"><i class="block h-full bg-nof-gold" :style="{ width: `${Math.max(1, r.p * 100)}%` }"></i></span>
                 <b class="text-right">{{ percent(r.p) }}</b>
               </div>
-              <p class="m-0 mt-2 text-[11px] text-night-sub">
+              <p class="m-0 mt-2 text-[11px] text-nof-sub">
                 Its waves usually sit about {{ detail.f.typicalGap }} years apart<template v-if="detail.f.medianReturn">, so the best guess for a return is around {{ detail.f.medianReturn }}</template>.
               </p>
             </template>
-            <p v-if="forecasts" class="m-0 mt-2 text-[11px] text-night-muted">
+            <p v-if="forecasts" class="m-0 mt-2 text-[11px] text-nof-muted">
               Pinch of salt: tested on the past, this guess picks the real comeback {{ Math.round(forecasts.meta.backtest.auc * 100) }}% of the time, where a coin toss gets 50%.
             </p>
           </div>
@@ -658,11 +661,11 @@ onBeforeUnmount(() => {
 
         <template v-else-if="list">
           <h2 class="m-0 text-lg font-bold">{{ list.title }}</h2>
-          <p class="m-0 mt-1 text-xs text-night-muted">{{ list.trends.length }} looks. Tap one for the full story.</p>
+          <p class="m-0 mt-1 text-xs text-nof-muted">{{ list.trends.length }} looks. Tap one for the full story.</p>
           <ul class="m-0 mt-3 flex list-none flex-col gap-1 p-0">
             <li v-for="t in list.trends" :key="t.id">
-              <button type="button" class="flex w-full cursor-pointer items-baseline justify-between gap-3 rounded-lg border border-night-line bg-night px-3 py-2 text-left text-sm text-night-text hover:border-brand-lime" @click="open(t)">
-                <span>{{ t.name }}</span><span class="shrink-0 text-[11px] text-night-muted">{{ t.category }}</span>
+              <button type="button" class="flex w-full cursor-pointer items-baseline justify-between gap-3 rounded-lg border border-nof-line bg-nof-night px-3 py-2 text-left text-sm text-nof-text hover:border-nof-pink" @click="open(t)">
+                <span>{{ t.name }}</span><span class="shrink-0 text-[11px] text-nof-muted">{{ t.category }}</span>
               </button>
             </li>
           </ul>
@@ -670,18 +673,18 @@ onBeforeUnmount(() => {
       </aside>
     </div>
 
-    <div class="border-t border-night-line bg-night-panel px-4 pt-3 pb-4" data-ui>
+    <div class="border-t border-nof-line bg-nof-panel px-4 pt-3 pb-4" data-ui>
       <div class="flex items-center gap-2">
-        <button type="button" class="size-10 cursor-pointer rounded-full border-0 bg-brand-lime font-bold text-brand-lime-ink hover:bg-brand-lime-hover" :aria-label="playing ? 'Pause' : 'Play through the years'" @click="togglePlay">{{ playing ? "❚❚" : "▶" }}</button>
-        <button type="button" class="size-9 cursor-pointer rounded-full border border-night-edge bg-night text-night-text" aria-label="Back one year" @click="(stop(), setYear(year - 1))">‹</button>
-        <button type="button" class="size-9 cursor-pointer rounded-full border border-night-edge bg-night text-night-text" aria-label="Forward one year" @click="(stop(), setYear(year + 1))">›</button>
-        <span class="min-w-0 text-[11px] text-night-muted">
+        <button type="button" class="size-10 cursor-pointer rounded-full border-0 bg-nof-pink font-bold text-nof-pink-ink hover:bg-nof-pink" :aria-label="playing ? 'Pause' : 'Play through the years'" @click="togglePlay">{{ playing ? "❚❚" : "▶" }}</button>
+        <button type="button" class="size-9 cursor-pointer rounded-full border border-nof-line bg-nof-night text-nof-text" aria-label="Back one year" @click="(stop(), setYear(year - 1))">‹</button>
+        <button type="button" class="size-9 cursor-pointer rounded-full border border-nof-line bg-nof-night text-nof-text" aria-label="Forward one year" @click="(stop(), setYear(year + 1))">›</button>
+        <span class="min-w-0 text-[11px] text-nof-muted">
           {{ isForecast ? "Dashed means guessed. Bigger means likelier. A ? means unknown." : "Lit pictures were in fashion that year. Drag the globe, tap a picture." }}
         </span>
       </div>
       <div
         ref="track"
-        class="relative mt-3 h-14 cursor-ew-resize touch-none rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-lime"
+        class="relative mt-3 h-14 cursor-ew-resize touch-none rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-nof-pink"
         role="slider"
         tabindex="0"
         aria-label="Year"
@@ -697,15 +700,15 @@ onBeforeUnmount(() => {
             v-for="b in bars"
             :key="b.y"
             class="absolute bottom-0 block"
-            :class="b.y > now ? 'bg-brand-yellow' : b.y % 10 === 0 ? 'bg-night-text' : 'bg-night-muted'"
+            :class="b.y > now ? 'bg-nof-gold' : b.y % 10 === 0 ? 'bg-nof-text' : 'bg-nof-muted'"
             :style="{ left: `${xOf(b.y)}%`, width: `${((b.y > now ? stretch : 1) / total) * 76}%`, height: `${b.h}%`, transform: 'translateX(-50%)' }"
           ></i>
         </div>
-        <div class="absolute inset-x-0 top-8 h-px bg-night-edge"></div>
-        <div class="absolute top-0 h-8 rounded-sm border border-dashed border-brand-yellow" :style="{ left: `${(history / total) * 100}%`, right: 0 }"></div>
-        <span v-for="t in ticks" :key="t.y" class="absolute top-9 -translate-x-1/2 text-[10px] tabular-nums" :class="t.future ? 'text-brand-yellow' : 'text-night-muted'" :style="{ left: `${xOf(t.y)}%` }">{{ t.label }}</span>
-        <div class="absolute top-0 h-8 w-0.5 -translate-x-1/2" :class="isForecast ? 'bg-brand-yellow' : 'bg-brand-lime'" :style="{ left: `${xOf(year)}%` }">
-          <b class="absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full rounded px-1.5 text-[11px] tabular-nums" :class="isForecast ? 'bg-brand-yellow text-ink' : 'bg-brand-lime text-brand-lime-ink'">{{ year }}</b>
+        <div class="absolute inset-x-0 top-8 h-px bg-nof-line"></div>
+        <div class="absolute top-0 h-8 rounded-sm border border-dashed border-nof-gold" :style="{ left: `${(history / total) * 100}%`, right: 0 }"></div>
+        <span v-for="t in ticks" :key="t.y" class="absolute top-9 -translate-x-1/2 text-[10px] tabular-nums" :class="t.future ? 'text-nof-gold' : 'text-nof-muted'" :style="{ left: `${xOf(t.y)}%` }">{{ t.label }}</span>
+        <div class="absolute top-0 h-8 w-0.5 -translate-x-1/2" :class="isForecast ? 'bg-nof-gold' : 'bg-nof-pink'" :style="{ left: `${xOf(year)}%` }">
+          <b class="absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full rounded px-1.5 text-[11px] tabular-nums" :class="isForecast ? 'bg-nof-gold text-nof-night' : 'bg-nof-pink text-nof-pink-ink'">{{ year }}</b>
         </div>
       </div>
     </div>

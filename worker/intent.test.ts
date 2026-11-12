@@ -26,22 +26,21 @@ const quiet = { index, log: () => {} };
 
 describe("resolveIntent", () => {
   test("scores every component by its best answer, best first", async () => {
-    const classifier = fakeClassifier({ globe__where: 0.2, globe__wearing: 0.91, forecast__comeback: 0.4 });
+    const classifier = fakeClassifier({ globe__where: 0.2, globe__place: 0.91, gaps__comeback: 0.4, gaps__wait: 0.1 });
     const result = await resolveIntent("what was in during the 60s", { ...quiet, classifier });
 
     expect(result).toMatchObject({
       q: "what was in during the 60s",
-      components: [
-        { id: "globe", score: 0.91, available: true },
-        { id: "forecast", score: 0.4, available: false },
-        { id: "timeline", score: 0, available: false },
-        { id: "trend-card", score: 0, available: false },
-      ],
       trend: null,
       year: null,
       decade: 1960,
       fallback: false,
     });
+    expect(result.components.slice(0, 3)).toEqual([
+      { id: "globe", score: 0.91, available: true },
+      { id: "gaps", score: 0.4, available: true },
+      { id: "board", score: 0, available: true },
+    ]);
   });
 
   test("takes a trend named outright without asking about it", async () => {
@@ -73,11 +72,11 @@ describe("resolveIntent", () => {
     for (const classifier of [down, undefined]) {
       const result = await resolveIntent("are flares coming back?", { ...quiet, classifier });
       expect(result).toMatchObject({ fallback: true, trend: { id: "bell-bottoms", score: 1 }, year: null, decade: null });
-      expect(result.components[0]).toEqual({ id: "forecast", score: 1, available: false });
+      expect(result.components[0]).toEqual({ id: "gaps", score: 1, available: true });
       expect(result.components.filter((c) => c.score > 0)).toHaveLength(1);
     }
     const era = await resolveIntent("what was in during the 60s", quiet);
-    expect(era.components[0]).toEqual({ id: "globe", score: 1, available: true });
+    expect(era.components[0]).toEqual({ id: "dancefloor", score: 1, available: true });
   });
 
   test("reuses cached answers and never caches a fallback", async () => {

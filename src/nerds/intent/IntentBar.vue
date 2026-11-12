@@ -53,7 +53,7 @@ onBeforeUnmount(() => resolver.cancel());
 </script>
 
 <template>
-  <form role="search" class="flex min-w-0 flex-col gap-3 text-night-text" :aria-busy="state === 'loading'" @submit.prevent="ask()">
+  <form role="search" class="flex min-w-0 flex-col gap-3 text-nof-text" :aria-busy="state === 'loading'" @submit.prevent="ask()">
     <label :for="id" class="text-[15px] leading-snug font-semibold">{{ label }}</label>
     <div class="flex gap-1.5">
       <div class="relative min-w-0 flex-1">
@@ -67,13 +67,13 @@ onBeforeUnmount(() => resolver.cancel());
           autocomplete="off"
           :maxlength="MAX_QUERY"
           placeholder="Where did punk start?"
-          class="w-full appearance-none rounded-full border border-night-edge bg-night py-2.5 pr-11 pl-4 text-base text-night-text placeholder:text-night-muted focus-visible:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime [&::-webkit-search-cancel-button]:hidden"
+          class="w-full appearance-none rounded-full border border-nof-line bg-nof-night py-2.5 pr-11 pl-4 text-base text-nof-text placeholder:text-nof-muted focus-visible:border-nof-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nof-pink [&::-webkit-search-cancel-button]:hidden"
         />
         <button
           v-if="query"
           type="button"
           aria-label="Clear the search"
-          class="absolute top-1/2 right-1 grid size-9 -translate-y-1/2 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 text-night-sub hover:text-night-text focus-visible:outline-2 focus-visible:outline-brand-lime"
+          class="absolute top-1/2 right-1 grid size-9 -translate-y-1/2 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 text-nof-sub hover:text-nof-text focus-visible:outline-2 focus-visible:outline-nof-pink"
           @click="clear"
         >
           <svg aria-hidden="true" viewBox="0 0 24 24" class="size-4 fill-none stroke-current stroke-2 [stroke-linecap:round]"><path d="M6 6l12 12M18 6 6 18" /></svg>
@@ -82,7 +82,7 @@ onBeforeUnmount(() => resolver.cancel());
       <button
         type="submit"
         :disabled="state === 'loading'"
-        class="shrink-0 cursor-pointer rounded-full border-0 bg-brand-lime px-5 text-[15px] font-semibold text-brand-lime-ink hover:bg-brand-lime-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime disabled:cursor-wait disabled:opacity-70"
+        class="shrink-0 cursor-pointer rounded-full border-0 bg-nof-pink px-5 text-[15px] font-semibold text-nof-pink-ink hover:bg-nof-pink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nof-pink disabled:cursor-wait disabled:opacity-70"
       >
         Ask
       </button>
@@ -93,7 +93,7 @@ onBeforeUnmount(() => resolver.cancel());
         <button
           type="button"
           data-example
-          class="cursor-pointer rounded-full border border-night-edge bg-transparent px-3 py-2 text-left text-sm text-night-sub hover:border-night-text hover:text-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime"
+          class="cursor-pointer rounded-full border border-nof-line bg-transparent px-3 py-2 text-left text-sm text-nof-sub hover:border-nof-text hover:text-nof-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nof-pink"
           @click="tryExample(example)"
         >
           {{ example }}
@@ -101,7 +101,7 @@ onBeforeUnmount(() => resolver.cancel());
       </li>
     </ul>
 
-    <p role="status" class="m-0 min-h-5 text-sm text-night-sub">
+    <p role="status" class="m-0 min-h-5 text-sm text-nof-sub">
       <template v-if="state === 'loading'">Rummaging through 100 years of wardrobes…</template>
       <template v-else-if="state === 'error'">That one tripped over its own flares. Give it another go?</template>
     </p>

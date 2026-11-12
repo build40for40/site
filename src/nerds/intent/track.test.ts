@@ -6,9 +6,9 @@ import { intentEvents } from "./track";
 const result: IntentResult = {
   q: "are flares coming back?",
   components: [
-    { id: "forecast", score: 0.89, available: false },
+    { id: "gaps", score: 0.89, available: false },
     { id: "globe", score: 0.72, available: true },
-    { id: "timeline", score: 0.11, available: false },
+    { id: "board", score: 0.11, available: false },
     { id: "trend-card", score: 0.05, available: false },
   ],
   trend: { id: "bell-bottoms", name: "Bell-bottoms and flares", score: 1 },
@@ -38,11 +38,11 @@ test("a resolved intent sends the scores, and one event for each component that 
     [
       "fashion_intent_resolved",
       {
-        scores: { forecast: 0.89, globe: 0.72, timeline: 0.11, "trend-card": 0.05 },
-        top_component: "forecast",
+        scores: { gaps: 0.89, globe: 0.72, board: 0.11, "trend-card": 0.05 },
+        top_component: "gaps",
         top_score: 0.89,
         shown: ["globe"],
-        coming_soon: ["forecast"],
+        coming_soon: ["gaps"],
         trend_id: "bell-bottoms",
         trend_score: 1,
         year: null,
@@ -52,7 +52,7 @@ test("a resolved intent sends the scores, and one event for each component that 
         fallback: false,
       },
     ],
-    ["fashion_component_wanted", { component: "forecast", score: 0.89, trend_id: "bell-bottoms", fallback: false }],
+    ["fashion_component_wanted", { component: "gaps", score: 0.89, trend_id: "bell-bottoms", fallback: false }],
   ]);
 });
 

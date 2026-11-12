@@ -4,7 +4,6 @@ import { categoriseProblem, verdict, type Sorted } from "./categories";
 import { StripeError, openCheckout, readCheckout, recordPayment, statusOf, summary, type CheckoutSession, type Sponsoring } from "./checkout";
 import { jevClassifier } from "./classifier";
 import { intentRoute } from "./intent";
-import { anthropicChartPlanner, answerWithChart, cleanQuestion } from "./nerds-chart";
 import { MAX_PROMPT, allowed, anthropicDrawer, trendIndex } from "./nerds";
 import { listProblems } from "./problems";
 import { searchIdeas } from "./search";
@@ -275,27 +274,10 @@ async function poolSearch(request: Request, env: Env) {
   return json({ query, ...(await searchIdeas(query, { db: env.DB, classifier, cache })) });
 }
 
-async function nerdsChart(request: Request, env: Env, ctx: ExecutionContext) {
-  if (request.method !== "POST") return new Response("Method not allowed.", { status: 405, headers: { Allow: "POST" } });
-  const origin = request.headers.get("Origin");
-  if (origin && origin !== new URL(request.url).origin) return text("Forbidden.", 403);
-  const body = (await request.json().catch(() => null)) as { q?: unknown } | null;
-  const question = cleanQuestion(body?.q);
-  if (!question) return text("Ask a question, please.", 400);
-
-  const planner = env.ANTHROPIC_API_KEY ? anthropicChartPlanner({ apiKey: env.ANTHROPIC_API_KEY }) : undefined;
-  const cache = typeof caches === "undefined" ? undefined : (caches as unknown as { default: Cache }).default;
-  const { cached = false, ...answer } = await answerWithChart(question, { planner, cache });
-  const outcome = { chart: answer.spec?.chart ?? null, trends: answer.spec?.trends ?? [], reason: answer.reason ?? null, model: answer.model ?? null, ms: answer.ms, cached };
-  console.log(JSON.stringify({ event: "nerds_chart", question_length: question.length, ...outcome }));
-  ctx.waitUntil(capture(env, "nerds_chart_planned", "$posthog_cookieless", { ...cookieless(request), question_length: question.length, ...outcome }).catch(() => {}));
-  return json(answer);
-}
-
 const problem = (error: string, status: number) => Response.json({ error }, { status, headers: { "Cache-Control": "no-store" } });
 
 // Nerds of Fashion: turn a question into a chart spec. See worker/nerds.ts.
-async function nerdsDraw(request: Request, env: Env) {
+async function nerdsDraw(request: Request, env: Env, ctx: ExecutionContext) {
   if (request.method !== "POST") return new Response("Method not allowed.", { status: 405, headers: { Allow: "POST" } });
   const url = new URL(request.url);
   const origin = request.headers.get("Origin");
@@ -309,11 +291,27 @@ async function nerdsDraw(request: Request, env: Env) {
   }
   if (!question) return problem("Ask us something first.", 400);
   if (question.length > MAX_PROMPT) return problem(`Keep it under ${MAX_PROMPT} characters, it's a chart not an essay.`, 400);
+  const cache = edgeCache();
+  const cacheKey = new Request(`https://nerds-draw.cache/?q=${encodeURIComponent(question.toLowerCase())}`);
+  const hit = await cache?.match(cacheKey).catch(() => undefined);
+  const report = (spec: { chart: string; trends: string[] }, ms: number, cached: boolean) => {
+    const outcome = { question_length: question.length, chart: spec.chart, trends: spec.trends, ms, cached };
+    console.log(JSON.stringify({ event: "nerds_draw", ...outcome }));
+    ctx.waitUntil(capture(env, "nerds_chart_drawn", "$posthog_cookieless", { ...cookieless(request), ...outcome }).catch(() => {}));
+  };
+  if (hit) {
+    const answer = (await hit.json()) as { spec: { chart: string; trends: string[] } };
+    report(answer.spec, 0, true);
+    return json(answer);
+  }
   if (!allowed(request.headers.get("CF-Connecting-IP") ?? "local")) return problem("You've drawn a lot this hour. Have a breather and try again later.", 429);
   try {
     const dataset = new URL("/nerds-of-fashion/fashion.json", url);
     const index = await trendIndex(() => (env.ASSETS ? env.ASSETS.fetch(dataset) : fetch(dataset)));
+    const started = Date.now();
     const spec = await anthropicDrawer({ apiKey: env.ANTHROPIC_API_KEY }).draw(question, index, request.signal);
+    report(spec, Date.now() - started, false);
+    if (cache) ctx.waitUntil(cache.put(cacheKey, Response.json({ spec }, { headers: { "Cache-Control": "max-age=86400" } })).catch(() => {}));
     return json({ spec });
   } catch (error) {
     console.error("nerds draw", error);
@@ -326,7 +324,7 @@ export default {
     const url = new URL(request.url);
     if (/^\/api\/stripe\/webhook\/?$/.test(url.pathname)) return stripeWebhook(request, env, ctx);
     if (/^\/api\/nerds-of-fashion\/intent\/?$/.test(url.pathname)) return intentRoute(request, { classifier: classifierFor(env), cache: edgeCache() });
-    if (/^\/api\/nerds-of-fashion\/draw\/?$/.test(url.pathname)) return nerdsDraw(request, env);
+    if (/^\/api\/nerds-of-fashion\/draw\/?$/.test(url.pathname)) return nerdsDraw(request, env, ctx);
 
     const read = { "/api/problems": problems, "/api/pool/search": poolSearch, "/api/days": guestDays }[url.pathname.replace(/\/$/, "")];
     const session = url.pathname.match(/^\/api\/checkout\/([^/]+)\/?$/)?.[1];
@@ -334,8 +332,6 @@ export default {
       if (request.method !== "GET") return new Response("Method not allowed.", { status: 405, headers: { Allow: "GET" } });
       return session ? checkoutStatus(env, ctx, session) : read!(request, env);
     }
-
-    if (/^\/api\/nerds-of-fashion\/chart\/?$/.test(url.pathname)) return nerdsChart(request, env, ctx);
 
     const starting = /^\/api\/checkout\/?$/.test(url.pathname);
     const form = url.pathname.match(/^\/api\/forms\/([a-z]+)\/?$/)?.[1];

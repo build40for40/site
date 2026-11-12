@@ -8,8 +8,8 @@ const result: IntentResult = {
   q: "where did punk start?",
   components: [
     { id: "globe", score: 0.8, available: true },
-    { id: "timeline", score: 0.75, available: false },
-    { id: "forecast", score: 0.02, available: false },
+    { id: "board", score: 0.75, available: false },
+    { id: "gaps", score: 0.02, available: false },
     { id: "trend-card", score: 0.07, available: false },
   ],
   trend: { id: "punk", name: "Punk", score: 1 },
