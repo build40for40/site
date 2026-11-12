@@ -6,7 +6,7 @@ import { gzipSync } from "node:zlib";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const repo = join(root, "..", "..");
 const partsDir = join(root, "parts");
-const outFile = join(repo, "public", "day9", "fashion.json");
+const outFile = join(repo, "public", "nerds-of-fashion", "fashion.json");
 
 const YEARS = { from: 1920, to: 2026 };
 const MAX_EXAMPLES = 6;
