@@ -90,3 +90,20 @@ test("clearing empties the input and tells the page", async () => {
   expect(wrapper!.find("input").element.value).toBe("");
   expect(wrapper!.emitted("cleared")).toHaveLength(1);
 });
+
+test("keeps and searches what a phone keyboard is still composing", async () => {
+  // Bound with v-model like the page does, so the model only catches up after a re-render.
+  wrapper = mount(IntentBar, {
+    props: { debounceMs: 0, modelValue: "", "onUpdate:modelValue": (q: string) => wrapper!.setProps({ modelValue: q }) },
+  });
+  const input = wrapper.find("input");
+  await input.trigger("compositionstart");
+  input.element.value = "where did punk";
+  await input.trigger("input");
+  await flushPromises();
+
+  expect(input.element.value).toBe("where did punk");
+  expect(wrapper!.emitted()).not.toHaveProperty("cleared");
+  expect(wrapper!.find("[aria-label='Clear the search']").exists()).toBe(true);
+  expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ q: "where did punk" });
+});
