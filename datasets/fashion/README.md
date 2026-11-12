@@ -78,7 +78,7 @@ The three `build-wiki` scripts turn hand-written extractions (the `.spec.txt` fi
 node datasets/fashion/globe/build.mjs
 ```
 
-It reads `public/nerds-of-fashion/fashion.json` and writes `raw/globe/trend-atlas.html` (gitignored). The first run downloads one small V&A photo per trend into `raw/globe/vam/`.
+It reads `public/nerds-of-fashion/fashion.json` and writes `raw/globe/trend-atlas.html` (gitignored). It also writes `public/nerds-of-fashion/atlas.html`, the same page with a document shell, which the site serves at `/nerds-of-fashion/atlas`. That file is committed, so rerun the build and commit it after changing the page or the data. The first run downloads one small V&A photo per trend into `raw/globe/vam/`.
 
 - `build.mjs`: works out birthplaces and journeys, embeds the photos, and inlines everything into the page. It prints how much of the dataset the globe covers.
 - `page.html` and `page.js`: the page shell and its script. Edit these to change how it looks or behaves.
