@@ -252,6 +252,18 @@ export const history: Record<number, ShippedIdea> = {
     screenshot: "/screenshots/nerds-of-fashion.webp",
     shorts: [],
   },
+  10: {
+    id: "0373b0dc-b0a1-4866-9cb6-dd59c84aa72d",
+    title: "Chipped nails",
+    problem: "My nails are always chipped",
+    owner: "Maia",
+    sponsors: [{ name: "Anonymous", amount: 40 }],
+    buildTime: "4:40:00",
+    appUrl: "https://build40for40.com/chipped/",
+    recordingUrl: "https://www.twitch.tv/build40for40",
+    screenshot: "/screenshots/chipped.webp",
+    shorts: [],
+  },
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");
