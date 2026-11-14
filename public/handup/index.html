@@ -165,6 +165,26 @@
   .compose button { flex: none; width: 44px; height: 44px; border-radius: 50%; border: none; background: var(--wa-green); color: var(--wa-green-ink); cursor: pointer; display: grid; place-items: center; }
   .compose button:disabled { opacity: 0.5; cursor: default; }
   .compose svg { width: 20px; height: 20px; fill: currentColor; }
+  /* The waiting list. "Try it yourself" opens this instead of the live chat while WAITLIST is on in the script. Sign-ups go to the site's access form. */
+  .wait { box-sizing: border-box; width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; border: 1px solid var(--panel-line); border-radius: 18px; background: var(--panel); color: var(--ink); box-shadow: 0 24px 60px rgba(40, 25, 10, 0.4); }
+  .wait::backdrop { background: rgba(30, 18, 10, 0.55); }
+  .wait .in { position: relative; padding: 26px 22px 20px; }
+  .wait .x { position: absolute; top: 6px; right: 6px; margin: 0; }
+  .wait .x button { width: 44px; height: 44px; border: 0; background: none; color: var(--soft-ink); font-size: 28px; line-height: 1; cursor: pointer; }
+  .wait .eyebrow { margin: 0; font-family: var(--caps); font-weight: 700; font-size: 13px; letter-spacing: 0.14em; color: var(--accent); }
+  .wait h2 { margin: 8px 40px 0 0; font-family: var(--display); font-weight: 700; font-size: 28px; line-height: 1.08; text-wrap: balance; }
+  .wait p { margin: 10px 0 0; }
+  .wait .soft { color: var(--soft-ink); font-size: 14px; }
+  .wait form.join { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
+  .wait label.f { display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 600; }
+  .wait input[type="text"], .wait input[type="email"] { box-sizing: border-box; width: 100%; font: inherit; font-size: 16px; color: var(--ink); background: var(--page); border: 1px solid var(--panel-line); border-radius: 10px; padding: 11px 12px; }
+  .wait label.c { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+  .wait label.c input { width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--accent); }
+  .wait .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .wait .go { font: inherit; font-weight: 700; font-size: 16px; min-height: 48px; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+  .wait .go:disabled { opacity: 0.6; cursor: wait; }
+  .wait .status { min-height: 1.2em; margin: 0; font-size: 14px; color: var(--accent); }
+  .wait a { color: inherit; }
 </style>
 </head>
 <body>
@@ -201,7 +221,7 @@
   <div class="log" id="livelog" hidden aria-live="polite"></div>
 
   <div class="bar" id="storybar">
-    <div class="chips"><span id="chips"><span class="hint"><i></i>Scroll to read on</span></span><button type="button" class="chip try" id="try">Try it yourself</button></div>
+    <div class="chips"><span id="chips"><span class="hint"><i></i>Scroll to read on</span></span><button type="button" class="chip try" id="try">Join the waiting list</button></div>
     <div class="note">Handup's real message shapes, with a made-up person and her made-up friends.</div>
   </div>
   <div class="bar" id="livebar" hidden>
@@ -216,6 +236,32 @@
 </div>
 </div>
 </div>
+
+<dialog class="wait" id="wait" aria-labelledby="wait-h">
+  <div class="in">
+    <form method="dialog" class="x"><button aria-label="Close">&times;</button></form>
+    <div id="wait-ask">
+      <p class="eyebrow">Waiting list</p>
+      <h2 id="wait-h">Due to insane demand we have to put up a waiting list.</h2>
+      <p>Leave your email and we'll let you in to Handup as soon as there's room.</p>
+      <form class="join" id="wait-form" action="/api/forms/access" method="post">
+        <input type="hidden" name="app" value="handup">
+        <div class="hp" aria-hidden="true"><label>Website <input name="website" tabindex="-1" autocomplete="off"></label></div>
+        <label class="f">Your name<input type="text" name="name" required maxlength="200" autocomplete="name"></label>
+        <label class="f">Email<input type="email" name="email" required maxlength="254" autocomplete="email"></label>
+        <label class="c"><input type="checkbox" name="newsletter" value="yes"><span>Send me the 40 for 40 newsletter too.</span></label>
+        <button class="go" type="submit">Join the waiting list</button>
+        <p class="status" id="wait-status" role="status"></p>
+      </form>
+    </div>
+    <div id="wait-done" hidden>
+      <p class="eyebrow">Sorted</p>
+      <h2>You're on the list.</h2>
+      <p>We'll email you the moment there's room. Thanks for being patient with all this insane demand.</p>
+    </div>
+    <p class="soft">We only use your details for the waiting list. See our <a href="/privacy/">privacy policy</a>.</p>
+  </div>
+</dialog>
 
 <!--
   THE SCRIPT. Edit only the block below to change the conversation.
@@ -317,6 +363,7 @@ handup: Sent a list by someone you love? Reply to them with the number, or just 
 (function () {
 
   var STEP = 150; // pixels of scrolling per message
+  var WAITLIST = true; // true: "Join the waiting list" opens the sign-up. false: the button is "Try it yourself" again and opens the live chat
   var WHATSAPP = ''; // Handup's number, digits only with the country code, once scaffolding has one. Empty means the button points at the stream instead
   var track = document.getElementById('track');
   var log = document.getElementById('log');
@@ -559,7 +606,29 @@ handup: Sent a list by someone you love? Reply to them with the number, or just 
       track.style.height = storyHeight; now.textContent = storyClock; remeasure();
     }
   }
-  document.getElementById('try').addEventListener('click', function () { live(true); });
+  // THE WAITING LIST. Sign-ups go to the site's access form, which redirects to #requested when there's no script.
+  var wait = document.getElementById('wait'), waitForm = document.getElementById('wait-form'), waitStatus = document.getElementById('wait-status');
+  function openWait() { if (wait.showModal) wait.showModal(); else wait.setAttribute('open', ''); }
+  function waitDone() { document.getElementById('wait-ask').hidden = true; document.getElementById('wait-done').hidden = false; }
+  wait.addEventListener('click', function (e) { if (e.target === wait) wait.close(); });
+  if (location.hash === '#requested') { waitDone(); openWait(); }
+  waitForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var button = waitForm.querySelector('.go');
+    button.disabled = true; waitStatus.textContent = 'Sending\u2026';
+    try {
+      var res = await fetch(waitForm.action, { method: 'POST', body: new FormData(waitForm), headers: { Accept: 'application/json' } });
+      if (!res.ok) throw new Error((await res.text()) || 'That didn\u2019t send. Try again in a moment.');
+      waitStatus.textContent = ''; waitDone();
+    } catch (err) {
+      waitStatus.textContent = err instanceof TypeError ? 'You look offline. Check your connection and try again.' : err.message;
+      button.disabled = false;
+    }
+  });
+
+  var tryBtn = document.getElementById('try');
+  if (!WAITLIST) tryBtn.textContent = 'Try it yourself';
+  tryBtn.addEventListener('click', function () { if (WAITLIST) openWait(); else live(true); });
   document.getElementById('back').addEventListener('click', function () { live(false); });
 })();
 </script>
