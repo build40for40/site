@@ -6,7 +6,7 @@ const url = new URL(Astro.url.pathname, Astro.site);
 // The demo video, once it's on YouTube: paste the video's id here (the part after v= in its link).
 const youtubeId = "";
 // The ElevenLabs agent for the "Talk to Glisten" button: paste its agent id here. Empty hides the button.
-const elevenLabsAgentId = "";
+const elevenLabsAgentId = "agent_4501m7jmjxjcejs9rvppebp5b9zy";
 ---
 
 <!doctype html>
@@ -379,7 +379,7 @@ footer a { color: var(--dim); }
     </script>
     {elevenLabsAgentId && (
       <>
-        <elevenlabs-convai agent-id={elevenLabsAgentId}></elevenlabs-convai>
+        <elevenlabs-convai agent-id={elevenLabsAgentId} dynamic-variables='{"child_name":"Mia","child_age":"5","grownup_label":"Mum","holiday_mode":"christmas"}'></elevenlabs-convai>
         <script is:inline src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
       </>
     )}
