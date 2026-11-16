@@ -68,15 +68,29 @@ header.top { display: flex; justify-content: space-between; align-items: baselin
 .mark svg { width: 20px; height: 20px; }
 .day { font-size: 16px; color: var(--dim); text-decoration: none; }
 .day:hover { color: var(--text); }
-.wrap { position: relative; z-index: 1; }
-#dust { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
-/* The story winds down the page, left, right, left, like a path through the dark. */
-.path { display: grid; gap: clamp(72px, 16vh, 150px); padding-block: clamp(56px, 12vh, 120px) clamp(80px, 16vh, 150px); }
-.stop { max-width: 27rem; font-size: clamp(20px, 2.1vw, 24px); line-height: 1.5; }
-.stop:nth-child(odd) { justify-self: start; }
-.stop:nth-child(even) { justify-self: end; }
-.stop.first { max-width: 38rem; }
-.stop .lit { color: var(--lit); }
+.hero { padding-block: clamp(56px, 10vw, 110px) 0; max-width: 38rem; }
+.sub { font-size: clamp(19px, 2vw, 22px); max-width: 30rem; margin-left: auto; }
+#sparkle { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+/* Gentle lines that lead the eye from the words down to the video, with a soft light that drifts along them. */
+.trail { position: relative; height: clamp(130px, 20vw, 230px); }
+.trail svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.trail path { fill: none; stroke-linecap: round; stroke-dasharray: var(--len, none); animation: draw 3.2s cubic-bezier(.4,0,.2,1) .3s both paused; }
+.trail.in path { animation-play-state: running; }
+.trail .main { stroke: url(#trail-gold); stroke-width: 1.6; }
+.trail .soft { stroke: url(#trail-lilac); stroke-width: 1; opacity: .55; animation-delay: .8s; }
+@keyframes draw { from { stroke-dashoffset: var(--len, 0); } to { stroke-dashoffset: 0; } }
+.glow { position: absolute; left: 0; top: 0; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; opacity: 0;
+  background: #fff8e6; box-shadow: 0 0 10px 4px rgba(247,236,210,.55), 0 0 34px 14px rgba(242,200,107,.28), 0 0 70px 30px rgba(201,182,240,.12); pointer-events: none; }
+.mote { position: absolute; width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 50%; opacity: 0; pointer-events: none;
+  animation: float var(--d, 7s) ease-in-out var(--delay, 0s) infinite; }
+.mote.gold { background: #f7e3b0; box-shadow: 0 0 8px 3px rgba(242,200,107,.35); }
+.mote.lilac { background: #e6dcfa; box-shadow: 0 0 8px 3px rgba(201,182,240,.35); }
+@keyframes float { 0% { opacity: 0; transform: translateY(6px) scale(.6); } 45% { opacity: .9; } 100% { opacity: 0; transform: translateY(-26px) scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .trail path { animation: none; stroke-dasharray: none; }
+  .mote { animation: none; opacity: .6; }
+  .glow { display: none; }
+}
 h1 { font-weight: 300; font-size: clamp(34px, 5vw, 54px); line-height: 1.12; color: var(--lit); text-wrap: balance; }
 .video {
   position: relative; aspect-ratio: 16 / 9; width: 100%; max-width: 100%;
@@ -90,7 +104,7 @@ h1 { font-weight: 300; font-size: clamp(34px, 5vw, 54px); line-height: 1.12; col
 .soon p { color: var(--lit); font-size: clamp(18px, 2.2vw, 24px); font-style: italic; }
 .soon span { color: var(--dim); font-size: 16px; }
 .caption { margin-top: 14px; font-size: 16px; color: var(--dim); }
-.join { margin-block: 88px 64px; padding: clamp(24px, 4vw, 44px); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; display: grid; gap: 28px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+.join { max-width: 36rem; margin-left: auto; grid-template-columns: 1fr !important; margin-block: 0 64px; padding: clamp(24px, 4vw, 44px); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; display: grid; gap: 28px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
 .join h2 { font-weight: 300; font-size: clamp(28px, 3.4vw, 38px); line-height: 1.15; color: var(--lit); text-wrap: balance; }
 .join .copy { display: grid; gap: 12px; }
 .access { display: grid; gap: 16px; }
@@ -114,14 +128,14 @@ footer { padding-block: 0 48px; font-size: 15px; color: var(--dim); display: fle
 footer a { color: var(--dim); }
 @media (max-width: 760px) {
   body { font-size: 19px; }
-  .stop:nth-child(n) { justify-self: start; }
-  .stop:nth-child(even) { padding-left: 12%; }
-    .join { grid-template-columns: 1fr; margin-top: 64px; }
+  .sub { max-width: 84%; }
+  .trail { height: 120px; }
+  .join { margin-top: 0; }
 }
     </style>
   </head>
   <body>
-    <canvas id="dust" aria-hidden="true"></canvas>
+    <canvas id="sparkle" aria-hidden="true"></canvas>
     <div class="wrap">
       <header class="top">
         <a class="mark" href="/glisten/">
@@ -131,14 +145,41 @@ footer a { color: var(--dim); }
         <a class="day" href="/">Day 11 of 40 for 40</a>
       </header>
 
-      <section class="path" aria-label="What Glisten is">
-        <div class="stop first"><h1>A fairy godmother who helps your kid find their birthday and Christmas wishes.</h1></div>
-        <p class="stop">Glisten is a screen-free fairy godmother who helps kids discover wonderful things they never knew existed.</p>
-        <p class="stop">Each kid gets their own <span class="lit">magic wand</span> to wake her up.</p>
-        <p class="stop">They tell her what they love, like animals or arts and crafts, and she suggests something new they might love for a future birthday or Christmas gift.</p>
-        <p class="stop">No shop, no catalogue.</p>
-        <p class="stop">Their wish list is then sent to you, mum, dad, and grandparents.</p>
+      <section class="hero">
+        <h1>A fairy godmother who helps your kid find their birthday and Christmas wishes.</h1>
       </section>
+
+      <div class="trail" data-from=".08" data-to=".62" aria-hidden="true">
+        <svg viewBox="0 0 1000 200" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="trail-gold" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="200">
+              <stop offset="0" stop-color="#f2c86b" stop-opacity="0" />
+              <stop offset=".3" stop-color="#f2c86b" stop-opacity=".55" />
+              <stop offset="1" stop-color="#f7ecd2" stop-opacity=".85" />
+            </linearGradient>
+            <linearGradient id="trail-lilac" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="200">
+              <stop offset="0" stop-color="#c9b6f0" stop-opacity="0" />
+              <stop offset=".4" stop-color="#c9b6f0" stop-opacity=".45" />
+              <stop offset="1" stop-color="#e6dcfa" stop-opacity=".6" />
+            </linearGradient>
+          </defs>
+          <path class="soft" d="M80 0 C80 120 600 80 620 200" />
+          <path class="main" d="M80 0 C80 120 620 80 620 200" />
+          <path class="soft" d="M80 0 C80 120 640 80 620 200" />
+        </svg>
+        <span class="glow"></span>
+      </div>
+
+      <p class="sub">Glisten is a screen-free fairy godmother who helps kids discover wonderful things they never knew existed. They wake her with their own magic wand, tell her what they love, and their wish list is sent to you.</p>
+
+      <div class="trail" data-from=".7" data-to=".2" aria-hidden="true">
+        <svg viewBox="0 0 1000 200" preserveAspectRatio="none">
+          <path class="soft" d="M720 0 C720 120 480 80 500 200" />
+          <path class="main" d="M720 0 C720 120 500 80 500 200" />
+          <path class="soft" d="M720 0 C720 120 520 80 500 200" />
+        </svg>
+        <span class="glow"></span>
+      </div>
 
       <section aria-label="Demo video">
         <div class="video">
@@ -160,6 +201,15 @@ footer a { color: var(--dim); }
         </div>
         <p class="caption">Built live on Twitch on Monday 16 November 2026.</p>
       </section>
+
+      <div class="trail" data-from=".2" data-to=".7" aria-hidden="true">
+        <svg viewBox="0 0 1000 200" preserveAspectRatio="none">
+          <path class="soft" d="M200 0 C200 120 680 80 700 200" />
+          <path class="main" d="M200 0 C200 120 700 80 700 200" />
+          <path class="soft" d="M200 0 C200 120 720 80 700 200" />
+        </svg>
+        <span class="glow"></span>
+      </div>
 
 
       <section class="join" aria-labelledby="join-h">
@@ -193,80 +243,113 @@ footer a { color: var(--dim); }
     </div>
 
     <script is:inline>
-// Fairy dust: a trail of glitter that follows the cursor, or winds left and right down the page as you scroll.
+// The trails: gentle curves from the headline across to the paragraph, then back to the video,
+// drawn to each box's real size, with motes that rise and fade along them and one soft light that
+// drifts down the first curve, then the second, every few seconds.
 (() => {
-  const canvas = document.getElementById('dust');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const trails = [...document.querySelectorAll('.trail')].map(box => ({
+    box, svg: box.querySelector('svg'), glow: box.querySelector('.glow'),
+    paths: box.querySelectorAll('path'), from: +box.dataset.from, to: +box.dataset.to,
+  }));
+  const offsets = [-22, 0, 22];
+  const shape = () => {
+    for (const tr of trails) {
+      const w = tr.box.clientWidth, h = tr.box.clientHeight;
+      tr.svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      tr.svg.querySelectorAll('linearGradient').forEach(g => g.setAttribute('y2', h));
+      document.querySelectorAll('#trail-gold, #trail-lilac').forEach(g => g.setAttribute('y2', Math.max(+g.getAttribute('y2') || 0, h)));
+      const sx = w * tr.from, ex = w * tr.to;
+      tr.paths.forEach((p, i) => {
+        const bend = offsets[i] * Math.sign(ex - sx || 1);
+        p.setAttribute('d', `M${sx} 0 C${sx} ${h * .62} ${ex - bend} ${h * .38} ${ex} ${h}`);
+        p.style.setProperty('--len', String(Math.ceil(p.getTotalLength()) + 2));
+      });
+      tr.box.querySelectorAll('.mote').forEach(m => m.remove());
+      const main = tr.paths[1], len = main.getTotalLength();
+      for (let i = 0; i < 10; i++) {
+        const pt = main.getPointAtLength(len * (.1 + Math.random() * .85));
+        const m = document.createElement('span');
+        m.className = 'mote ' + (i % 3 ? 'gold' : 'lilac');
+        m.style.left = (pt.x + (Math.random() - .5) * 46) + 'px';
+        m.style.top = (pt.y + (Math.random() - .5) * 30) + 'px';
+        m.style.setProperty('--d', (5 + Math.random() * 5).toFixed(1) + 's');
+        m.style.setProperty('--delay', (Math.random() * 6).toFixed(1) + 's');
+        tr.box.appendChild(m);
+      }
+    }
+  };
+  shape();
+  addEventListener('resize', shape);
+  const seen = new IntersectionObserver(entries => entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); seen.unobserve(en.target); } }), { threshold: .35 });
+  trails.forEach(tr => seen.observe(tr.box));
+  if (reduce) return;
+
+  const TRAVEL = 3400, REST = 3000, CYCLE = TRAVEL * trails.length + REST;
+  const first = performance.now() + 4200;
+  const ease = k => (k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+  const tick = now => {
+    const e = now - first;
+    trails.forEach((tr, i) => {
+      if (e < 0) return;
+      const local = (e % CYCLE) - i * TRAVEL;
+      if (local < 0 || local > TRAVEL) { tr.glow.style.opacity = '0'; return; }
+      const k = local / TRAVEL, main = tr.paths[1];
+      const pt = main.getPointAtLength(main.getTotalLength() * ease(k));
+      tr.glow.style.transform = `translate(${pt.x}px, ${pt.y}px)`;
+      tr.glow.style.opacity = String((i === 0 ? Math.min(1, k * 4) : 1) * (i === trails.length - 1 ? Math.min(1, (1 - k) * 4) : 1) * .95);
+    });
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+})();
+
+// Gentle magic dust: a few soft motes drift up and fade behind the cursor, or under a finger on a phone. Off with reduced motion.
+(() => {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const canvas = document.getElementById('sparkle');
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const COLORS = ['247,236,210', '242,200,107', '255,246,220', '246,213,138', '233,196,226'];
-  let w = 0, h = 0, dpr = 1;
-  const resize = () => {
-    dpr = Math.min(devicePixelRatio || 1, 2);
-    w = innerWidth; h = innerHeight;
-    canvas.width = w * dpr; canvas.height = h * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const sprite = (rgb) => {
+    const s = document.createElement('canvas'); s.width = s.height = 32;
+    const g = s.getContext('2d'), grd = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+    grd.addColorStop(0, `rgba(${rgb},1)`); grd.addColorStop(.25, `rgba(${rgb},.55)`); grd.addColorStop(1, `rgba(${rgb},0)`);
+    g.fillStyle = grd; g.fillRect(0, 0, 32, 32); return s;
   };
+  const sprites = [sprite('255,240,205'), sprite('242,200,107'), sprite('214,198,245')];
+  let w = 0, h = 0;
+  const resize = () => { const d = Math.min(devicePixelRatio || 1, 2); w = innerWidth; h = innerHeight; canvas.width = w * d; canvas.height = h * d; ctx.setTransform(d, 0, 0, d, 0, 0); };
   addEventListener('resize', resize); resize();
-
-  const bits = [];
-  let px = null, py = null, lastMove = 0;
-  addEventListener('pointermove', e => { if (e.pointerType === 'mouse') { px = e.clientX; py = e.clientY; lastMove = performance.now(); } });
-  const pathPoint = () => ({ x: w / 2 + Math.sin(scrollY / 240) * Math.min(220, w * 0.32), y: h * 0.42 });
-  let ex = null, ey = null;
-
-  const spawn = (x, y, n, speed) => {
-    for (let i = 0; i < n && bits.length < 420; i++) {
-      const a = Math.random() * Math.PI * 2, v = Math.random() * speed;
-      bits.push({ x: x + (Math.random() - .5) * 6, y: y + (Math.random() - .5) * 6, vx: Math.cos(a) * v, vy: Math.sin(a) * v - .15,
-        life: 1, decay: .006 + Math.random() * .012, r: .6 + Math.random() * 1.9, c: COLORS[(Math.random() * COLORS.length) | 0], tw: Math.random() * 6.28, star: Math.random() < .12 });
+  const motes = [];
+  let lx = null, ly = null, carry = 0, running = false;
+  const trailAt = (x, y, step) => {
+    if (lx !== null) carry += Math.hypot(x - lx, y - ly);
+    lx = x; ly = y;
+    while (carry > step && motes.length < 60) {
+      carry -= step;
+      motes.push({ x: lx + (Math.random() - .5) * 14, y: ly + (Math.random() - .5) * 14, vx: (Math.random() - .5) * .25, vy: -.18 - Math.random() * .3,
+        life: 0, max: 70 + Math.random() * 70, size: 7 + Math.random() * 10, img: sprites[(Math.random() * sprites.length) | 0], ph: Math.random() * 6.28 });
     }
+    if (!running) { running = true; requestAnimationFrame(frame); }
   };
-  const sparkle = (x, y, r, a) => {
-    ctx.beginPath();
-    ctx.moveTo(x, y - r * 3); ctx.lineTo(x + r * .6, y - r * .6); ctx.lineTo(x + r * 3, y); ctx.lineTo(x + r * .6, y + r * .6);
-    ctx.lineTo(x, y + r * 3); ctx.lineTo(x - r * .6, y + r * .6); ctx.lineTo(x - r * 3, y); ctx.lineTo(x - r * .6, y - r * .6);
-    ctx.closePath(); ctx.fill();
-  };
-
-  if (reduce) {
-    // A still scatter of glitter, no motion.
-    for (let i = 0; i < 90; i++) { ctx.fillStyle = `rgba(${COLORS[i % COLORS.length]},${.2 + Math.random() * .5})`; ctx.beginPath(); ctx.arc(Math.random() * w, Math.random() * h, .5 + Math.random() * 1.4, 0, 6.28); ctx.fill(); }
-    return;
-  }
-
-  let t = 0, running = true;
-  document.addEventListener('visibilitychange', () => { running = !document.hidden; if (running) requestAnimationFrame(frame); });
+  addEventListener('pointermove', e => { if (e.pointerType === 'mouse') trailAt(e.clientX, e.clientY, 26); });
+  addEventListener('touchstart', e => { const p = e.touches[0]; lx = null; carry = 40; trailAt(p.clientX, p.clientY, 40); }, { passive: true });
+  addEventListener('touchmove', e => { const p = e.touches[0]; trailAt(p.clientX, p.clientY, 40); }, { passive: true });
   function frame() {
-    if (!running) return;
-    t += 1;
-    const following = px !== null && performance.now() - lastMove < 2500;
-    const target = following ? { x: px, y: py } : pathPoint();
-    if (ex === null) { ex = target.x; ey = target.y; }
-    const nx = ex + (target.x - ex) * .12, ny = ey + (target.y - ey) * .12;
-    const moved = Math.hypot(nx - ex, ny - ey);
-    // Lay glitter along the way, more when it moves.
-    const steps = Math.min(6, 1 + (moved / 6) | 0);
-    for (let s = 0; s < steps; s++) spawn(ex + (nx - ex) * s / steps, ey + (ny - ey) * s / steps, 1 + (moved > 2 ? 1 : 0), .4 + Math.min(moved, 20) * .03);
-    ex = nx; ey = ny;
-    if (t % 3 === 0) spawn(ex, ey, 1, .8);
-
     ctx.clearRect(0, 0, w, h);
     ctx.globalCompositeOperation = 'lighter';
-    for (let i = bits.length - 1; i >= 0; i--) {
-      const b = bits[i];
-      b.x += b.vx; b.y += b.vy; b.vx *= .985; b.vy = b.vy * .985 + .012; b.life -= b.decay; b.tw += .25;
-      if (b.life <= 0) { bits.splice(i, 1); continue; }
-      const a = b.life * (.55 + .45 * Math.sin(b.tw));
-      ctx.fillStyle = `rgba(${b.c},${a * .18})`;
-      ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 3.2, 0, 6.28); ctx.fill();
-      ctx.fillStyle = `rgba(${b.c},${a})`;
-      if (b.star) sparkle(b.x, b.y, b.r * .9, a); else { ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 6.28); ctx.fill(); }
+    for (let i = motes.length - 1; i >= 0; i--) {
+      const m = motes[i];
+      m.life++; m.x += m.vx + Math.sin((m.life + m.ph * 20) / 18) * .15; m.y += m.vy;
+      if (m.life > m.max) { motes.splice(i, 1); continue; }
+      const k = m.life / m.max;
+      ctx.globalAlpha = Math.sin(Math.PI * k) * .7;
+      const s = m.size * (.6 + .4 * Math.sin(Math.PI * k));
+      ctx.drawImage(m.img, m.x - s / 2, m.y - s / 2, s, s);
     }
-    ctx.globalCompositeOperation = 'source-over';
-    requestAnimationFrame(frame);
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    if (motes.length) requestAnimationFrame(frame); else running = false;
   }
-  requestAnimationFrame(frame);
 })();
 
 (() => {
