@@ -264,6 +264,18 @@ export const history: Record<number, ShippedIdea> = {
     screenshot: "/screenshots/chipped.webp",
     shorts: [],
   },
+  11: {
+    id: "f3c1e2b6-318e-47a1-afa3-6cafd09c3e27",
+    title: "Finding kids' Christmas gifts",
+    problem: "How do my (screen free) kids discover things they want for christmas without an argos catalogue / physical toy shop (thats not full of total plastic cr@p)",
+    owner: "Maia",
+    sponsors: [{ name: "Maia", amount: 40 }],
+    buildTime: "4:40:00",
+    appUrl: "https://build40for40.com/glisten/",
+    recordingUrl: "https://www.twitch.tv/build40for40",
+    screenshot: "/screenshots/glisten.webp",
+    shorts: [],
+  },
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");
