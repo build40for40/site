@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Fairy moth">
+  <ellipse cx="22" cy="32" rx="16" ry="20" fill="#f2c86b" transform="rotate(-16 22 32)"/>
+  <ellipse cx="42" cy="32" rx="16" ry="20" fill="#f2c86b" transform="rotate(16 42 32)"/>
+  <ellipse cx="23" cy="36" rx="8" ry="11" fill="#c9b6f0" transform="rotate(-16 23 36)"/>
+  <ellipse cx="41" cy="36" rx="8" ry="11" fill="#c9b6f0" transform="rotate(16 41 36)"/>
+  <ellipse cx="32" cy="36" rx="3" ry="13" fill="#f7ecd2"/>
+  <path d="M30 25c-4-7-8-9-11-7" fill="none" stroke="#f7ecd2" stroke-width="1.3" stroke-linecap="round"/>
+  <path d="M34 25c4-7 8-9 11-7" fill="none" stroke="#f7ecd2" stroke-width="1.3" stroke-linecap="round"/>
+  <circle cx="19" cy="18" r="1.5" fill="#f2c86b"/>
+  <circle cx="45" cy="18" r="1.5" fill="#f2c86b"/>
+  <circle cx="14" cy="22" r="1" fill="#f7ecd2"/>
+  <circle cx="50" cy="24" r="1" fill="#f7ecd2"/>
+  <circle cx="12" cy="40" r="1.1" fill="#f2c86b"/>
+  <circle cx="52" cy="42" r="1.1" fill="#c9b6f0"/>
+</svg>
