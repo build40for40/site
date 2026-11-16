@@ -83,9 +83,6 @@ h1 { font-weight: 300; font-size: clamp(34px, 5vw, 54px); line-height: 1.12; col
 .soon p { color: var(--lit); font-size: clamp(18px, 2.2vw, 24px); font-style: italic; }
 .soon span { color: var(--dim); font-size: 16px; }
 .caption { margin-top: 14px; font-size: 16px; color: var(--dim); }
-.how { padding-block: 72px 0; display: grid; gap: 28px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.how p { font-size: 18px; }
-.how strong { display: block; font-weight: 400; color: var(--lit); font-size: 21px; margin-bottom: 6px; }
 .join { margin-block: 88px 64px; padding: clamp(24px, 4vw, 44px); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; display: grid; gap: 28px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
 .join h2 { font-weight: 300; font-size: clamp(28px, 3.4vw, 38px); line-height: 1.15; color: var(--lit); text-wrap: balance; }
 .join .copy { display: grid; gap: 12px; }
@@ -110,8 +107,7 @@ footer { padding-block: 0 48px; font-size: 15px; color: var(--dim); display: fle
 footer a { color: var(--dim); }
 @media (max-width: 760px) {
   body { font-size: 19px; }
-  .how { grid-template-columns: 1fr; gap: 20px; padding-top: 56px; }
-  .join { grid-template-columns: 1fr; margin-top: 64px; }
+    .join { grid-template-columns: 1fr; margin-top: 64px; }
 }
     </style>
   </head>
@@ -151,11 +147,6 @@ footer a { color: var(--dim); }
         <p class="caption">Built live on Twitch on Monday 16 November 2026.</p>
       </section>
 
-      <section class="how" aria-label="How it works">
-        <p><strong>Tap the wand</strong>Each kid has their own wand. One tap wakes her up, and she knows whose wishes these are.</p>
-        <p><strong>Talk to her</strong>She asks what they love, then takes them somewhere new. Dinosaurs lead to a fossil kit, not a plastic dinosaur.</p>
-        <p><strong>Five wishes, to you</strong>Every yes goes on their list. When they’re done, it comes to you, with why each one was picked.</p>
-      </section>
 
       <section class="join" aria-labelledby="join-h">
         <div class="copy">
