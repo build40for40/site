@@ -1,0 +1,215 @@
+---
+import PostHog from "../components/posthog.astro";
+const title = "Glisten: a fairy godmother for your kid's Christmas wishes";
+const description = "Glisten is a screen-free speaker for kids that talks back. They tap it with their wand, tell it what they love, and find wonderful things they never knew existed. The wish list comes to you. Day 11 of 40 for 40.";
+const url = new URL(Astro.url.pathname, Astro.site);
+// The demo video, once it's on YouTube: paste the video's id here (the part after v= in its link).
+const youtubeId = "";
+---
+
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/glisten/icon.svg" />
+    <link rel="canonical" href={url} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="40 for 40" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={url} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="theme-color" content="#070b14" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;1,300&display=swap" />
+    <PostHog />
+    <style is:global>
+/* Layout: midnight. One column: a few lines, a big frame for the demo video, then the waitlist.
+   Lantern gold is the only warm thing on the page. Single dark look by choice. */
+:root {
+  color-scheme: dark;
+  --midnight: #070b14;
+  --midnight-2: #0d1424;
+  --panel: #0b1220;
+  --line: #1c2840;
+  --text: #c9d1e0;
+  --dim: #8a96b0;
+  --lit: #f7ecd2;
+  --gold: #f2c86b;
+  --serif: "Spectral", Georgia, "Times New Roman", serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: radial-gradient(110% 60% at 50% 0%, var(--midnight-2), var(--midnight) 65%);
+  background-color: var(--midnight);
+  color: var(--text);
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 20px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, p { margin: 0; }
+a { color: var(--gold); }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+[hidden] { display: none !important; }
+.wrap {
+  max-width: 1040px; margin: 0 auto;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+header.top { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-block: 28px 0; }
+.mark { font-size: 24px; color: var(--lit); letter-spacing: .01em; display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+.mark svg { width: 20px; height: 20px; }
+.day { font-size: 16px; color: var(--dim); text-decoration: none; }
+.day:hover { color: var(--text); }
+.hero { padding-block: clamp(48px, 9vw, 96px) 40px; display: grid; gap: 18px; max-width: 40rem; }
+h1 { font-weight: 300; font-size: clamp(34px, 5vw, 54px); line-height: 1.12; color: var(--lit); text-wrap: balance; }
+.lede { font-size: clamp(19px, 2vw, 22px); max-width: 36rem; }
+.video {
+  position: relative; aspect-ratio: 16 / 9; width: 100%; max-width: 100%;
+  background: radial-gradient(60% 70% at 50% 55%, rgba(242,200,107,.10), transparent 70%), var(--panel);
+  border: 1px solid var(--line); border-radius: 6px; overflow: hidden;
+  display: grid; place-items: center; text-align: center;
+}
+.video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.soon { display: grid; gap: 10px; justify-items: center; padding: 24px; }
+.soon svg { width: 44px; height: 44px; filter: drop-shadow(0 0 14px rgba(242,200,107,.6)); }
+.soon p { color: var(--lit); font-size: clamp(18px, 2.2vw, 24px); font-style: italic; }
+.soon span { color: var(--dim); font-size: 16px; }
+.caption { margin-top: 14px; font-size: 16px; color: var(--dim); }
+.how { padding-block: 72px 0; display: grid; gap: 28px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.how p { font-size: 18px; }
+.how strong { display: block; font-weight: 400; color: var(--lit); font-size: 21px; margin-bottom: 6px; }
+.join { margin-block: 88px 64px; padding: clamp(24px, 4vw, 44px); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; display: grid; gap: 28px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+.join h2 { font-weight: 300; font-size: clamp(28px, 3.4vw, 38px); line-height: 1.15; color: var(--lit); text-wrap: balance; }
+.join .copy { display: grid; gap: 12px; }
+.access { display: grid; gap: 16px; }
+.field { display: grid; gap: 6px; font-size: 16px; color: var(--dim); }
+.access input[type="text"], .access input[type="email"] {
+  font: inherit; font-size: 18px; color: var(--lit); background: var(--midnight); border: 1px solid var(--line);
+  border-radius: 999px; padding: 11px 18px; width: 100%;
+}
+.access input:focus { outline: none; border-color: var(--gold); }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 16px; color: var(--dim); }
+.check input { margin-top: 5px; accent-color: var(--gold); }
+.hp { position: absolute; left: -9999px; }
+.btn { justify-self: start; font: inherit; font-size: 18px; font-weight: 400; color: var(--midnight); background: var(--gold); border: 0; border-radius: 999px; padding: 11px 26px; cursor: pointer; }
+.btn:hover { background: #f6d58a; }
+.btn[disabled] { opacity: .6; cursor: wait; }
+.form-status { font-size: 15px; min-height: 1.2em; color: var(--gold); }
+.done { display: grid; gap: 8px; }
+.done p:first-child { color: var(--lit); font-size: 26px; }
+.small { font-size: 15px; color: var(--dim); }
+footer { padding-block: 0 48px; font-size: 15px; color: var(--dim); display: flex; gap: 20px; flex-wrap: wrap; }
+footer a { color: var(--dim); }
+@media (max-width: 760px) {
+  body { font-size: 19px; }
+  .how { grid-template-columns: 1fr; gap: 20px; padding-top: 56px; }
+  .join { grid-template-columns: 1fr; margin-top: 64px; }
+}
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <a class="mark" href="/glisten/">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#f2c86b" d="M12 1.5l2.6 7.9 7.9 2.6-7.9 2.6L12 22.5l-2.6-7.9L1.5 12l7.9-2.6z" /></svg>
+          Glisten
+        </a>
+        <a class="day" href="/">Day 11 of 40 for 40</a>
+      </header>
+
+      <section class="hero">
+        <h1>A fairy godmother who helps your kid find their Christmas wishes.</h1>
+        <p class="lede">Glisten is a screen-free speaker for kids that talks back. They tap her with their wand and tell her what they love, and she shows them wonderful things they never knew existed. No shop, no catalogue. The wish list comes to you.</p>
+      </section>
+
+      <section aria-label="Demo video">
+        <div class="video">
+          {youtubeId ? (
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${youtubeId}?rel=0`}
+              title="Glisten demo"
+              loading="lazy"
+              allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+              allowfullscreen
+            ></iframe>
+          ) : (
+            <div class="soon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#f2c86b" d="M12 1.5l2.6 7.9 7.9 2.6-7.9 2.6L12 22.5l-2.6-7.9L1.5 12l7.9-2.6z" /></svg>
+              <p>The demo video lands here soon.</p>
+              <span>One of us tries it for real: a wand, a little robot and a wish list.</span>
+            </div>
+          )}
+        </div>
+        <p class="caption">Built live on Twitch on Monday 16 November 2026.</p>
+      </section>
+
+      <section class="how" aria-label="How it works">
+        <p><strong>Tap the wand</strong>Each kid has their own wand. One tap wakes her up, and she knows whose wishes these are.</p>
+        <p><strong>Talk to her</strong>She asks what they love, then takes them somewhere new. Dinosaurs lead to a fossil kit, not a plastic dinosaur.</p>
+        <p><strong>Five wishes, to you</strong>Every yes goes on their list. When they’re done, it comes to you, with why each one was picked.</p>
+      </section>
+
+      <section class="join" aria-labelledby="join-h">
+        <div class="copy">
+          <h2 id="join-h">Want one for your house?</h2>
+          <p>We’re working on the first ones now. Join the waitlist and we’ll tell you when you can get one.</p>
+        </div>
+        <div>
+          <form class="access" id="access-form" action="/api/forms/access" method="post">
+            <input type="hidden" name="app" value="glisten" />
+            <div class="hp" aria-hidden="true"><label>Website <input name="website" tabindex="-1" autocomplete="off" /></label></div>
+            <label class="field">Your name<input type="text" name="name" required maxlength="200" autocomplete="name" /></label>
+            <label class="field">Email<input type="email" name="email" required maxlength="254" autocomplete="email" /></label>
+            <label class="check"><input type="checkbox" name="newsletter" value="yes" /><span>Send me the 40 for 40 newsletter too.</span></label>
+            <button class="btn" type="submit">Join the waitlist</button>
+            <p class="form-status" id="access-status" role="status"></p>
+          </form>
+          <div class="done" id="access-done" hidden>
+            <p>You’re on the list.</p>
+            <p>We’ll email you when Glisten is ready. Until then, ask your kid what they love. You might be surprised.</p>
+          </div>
+          <p class="small" style="margin-top:14px">We only use your details to tell you about Glisten. See our <a href="/privacy/">privacy policy</a>.</p>
+        </div>
+      </section>
+
+      <footer>
+        <a href="/">40 for 40</a>
+        <a href="https://www.twitch.tv/build40for40">Watch us build on Twitch</a>
+        <a href="/privacy/">Privacy</a>
+      </footer>
+    </div>
+
+    <script is:inline>
+(() => {
+  const form = document.getElementById('access-form');
+  const done = document.getElementById('access-done');
+  const status = document.getElementById('access-status');
+  const showDone = () => { form.hidden = true; done.hidden = false; };
+  if (location.hash === '#requested') showDone();
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const button = form.querySelector('button');
+    button.disabled = true;
+    status.textContent = 'Sending…';
+    try {
+      const res = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
+      if (!res.ok) throw new Error(await res.text() || 'That didn’t send. Try again in a moment.');
+      status.textContent = '';
+      showDone();
+    } catch (err) {
+      status.textContent = err instanceof TypeError ? 'You look offline. Check your connection and try again.' : err.message;
+      button.disabled = false;
+    }
+  });
+})();
+    </script>
+  </body>
+</html>

@@ -33,6 +33,14 @@ describe("access requests", () => {
     expect(sqlite.prepare("SELECT app, note FROM access_requests WHERE email = ?").get("mac@example.com")).toEqual({ app: "sous", note: "iPhone" });
   });
 
+  test("takes Glisten waitlist sign-ups", async () => {
+    const { send, sqlite } = setup();
+    const response = await send("access", { name: "Maia", email: "maia@example.com", app: "glisten" });
+
+    expect(response.headers.get("Location")).toBe("https://build40for40.com/glisten/#requested");
+    expect(sqlite.prepare("SELECT app FROM access_requests WHERE email = ?").get("maia@example.com")).toEqual({ app: "glisten" });
+  });
+
   test("rejects an app that isn't taking requests", async () => {
     const { send } = setup();
     const response = await send("access", { name: "Ada", email: "ada@example.com", app: "elsewhere" });
