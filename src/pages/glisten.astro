@@ -68,9 +68,16 @@ header.top { display: flex; justify-content: space-between; align-items: baselin
 .mark svg { width: 20px; height: 20px; }
 .day { font-size: 16px; color: var(--dim); text-decoration: none; }
 .day:hover { color: var(--text); }
-.hero { padding-block: clamp(48px, 9vw, 96px) 40px; display: grid; gap: 18px; max-width: 40rem; }
+.wrap { position: relative; z-index: 1; }
+#dust { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+/* The story winds down the page, left, right, left, like a path through the dark. */
+.path { display: grid; gap: clamp(72px, 16vh, 150px); padding-block: clamp(56px, 12vh, 120px) clamp(80px, 16vh, 150px); }
+.stop { max-width: 27rem; font-size: clamp(20px, 2.1vw, 24px); line-height: 1.5; }
+.stop:nth-child(odd) { justify-self: start; }
+.stop:nth-child(even) { justify-self: end; }
+.stop.first { max-width: 38rem; }
+.stop .lit { color: var(--lit); }
 h1 { font-weight: 300; font-size: clamp(34px, 5vw, 54px); line-height: 1.12; color: var(--lit); text-wrap: balance; }
-.lede { font-size: clamp(19px, 2vw, 22px); max-width: 36rem; }
 .video {
   position: relative; aspect-ratio: 16 / 9; width: 100%; max-width: 100%;
   background: radial-gradient(60% 70% at 50% 55%, rgba(242,200,107,.10), transparent 70%), var(--panel);
@@ -107,11 +114,14 @@ footer { padding-block: 0 48px; font-size: 15px; color: var(--dim); display: fle
 footer a { color: var(--dim); }
 @media (max-width: 760px) {
   body { font-size: 19px; }
+  .stop:nth-child(n) { justify-self: start; }
+  .stop:nth-child(even) { padding-left: 12%; }
     .join { grid-template-columns: 1fr; margin-top: 64px; }
 }
     </style>
   </head>
   <body>
+    <canvas id="dust" aria-hidden="true"></canvas>
     <div class="wrap">
       <header class="top">
         <a class="mark" href="/glisten/">
@@ -121,9 +131,13 @@ footer a { color: var(--dim); }
         <a class="day" href="/">Day 11 of 40 for 40</a>
       </header>
 
-      <section class="hero">
-        <h1>A fairy godmother who helps your kid find their birthday and Christmas wishes.</h1>
-        <p class="lede">Glisten is a screen-free fairy godmother who helps kids discover wonderful things they never knew existed. Each kid gets their own magic wand to wake her up. They tell her what they love, like animals or arts and crafts, and she suggests something new they might love for a future birthday or Christmas gift. No shop, no catalogue. Their wish list is then sent to you, mum, dad, and grandparents.</p>
+      <section class="path" aria-label="What Glisten is">
+        <div class="stop first"><h1>A fairy godmother who helps your kid find their birthday and Christmas wishes.</h1></div>
+        <p class="stop">Glisten is a screen-free fairy godmother who helps kids discover wonderful things they never knew existed.</p>
+        <p class="stop">Each kid gets their own <span class="lit">magic wand</span> to wake her up.</p>
+        <p class="stop">They tell her what they love, like animals or arts and crafts, and she suggests something new they might love for a future birthday or Christmas gift.</p>
+        <p class="stop">No shop, no catalogue.</p>
+        <p class="stop">Their wish list is then sent to you, mum, dad, and grandparents.</p>
       </section>
 
       <section aria-label="Demo video">
@@ -179,6 +193,82 @@ footer a { color: var(--dim); }
     </div>
 
     <script is:inline>
+// Fairy dust: a trail of glitter that follows the cursor, or winds left and right down the page as you scroll.
+(() => {
+  const canvas = document.getElementById('dust');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COLORS = ['247,236,210', '242,200,107', '255,246,220', '246,213,138', '233,196,226'];
+  let w = 0, h = 0, dpr = 1;
+  const resize = () => {
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    w = innerWidth; h = innerHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  addEventListener('resize', resize); resize();
+
+  const bits = [];
+  let px = null, py = null, lastMove = 0;
+  addEventListener('pointermove', e => { if (e.pointerType === 'mouse') { px = e.clientX; py = e.clientY; lastMove = performance.now(); } });
+  const pathPoint = () => ({ x: w / 2 + Math.sin(scrollY / 240) * Math.min(220, w * 0.32), y: h * 0.42 });
+  let ex = null, ey = null;
+
+  const spawn = (x, y, n, speed) => {
+    for (let i = 0; i < n && bits.length < 420; i++) {
+      const a = Math.random() * Math.PI * 2, v = Math.random() * speed;
+      bits.push({ x: x + (Math.random() - .5) * 6, y: y + (Math.random() - .5) * 6, vx: Math.cos(a) * v, vy: Math.sin(a) * v - .15,
+        life: 1, decay: .006 + Math.random() * .012, r: .6 + Math.random() * 1.9, c: COLORS[(Math.random() * COLORS.length) | 0], tw: Math.random() * 6.28, star: Math.random() < .12 });
+    }
+  };
+  const sparkle = (x, y, r, a) => {
+    ctx.beginPath();
+    ctx.moveTo(x, y - r * 3); ctx.lineTo(x + r * .6, y - r * .6); ctx.lineTo(x + r * 3, y); ctx.lineTo(x + r * .6, y + r * .6);
+    ctx.lineTo(x, y + r * 3); ctx.lineTo(x - r * .6, y + r * .6); ctx.lineTo(x - r * 3, y); ctx.lineTo(x - r * .6, y - r * .6);
+    ctx.closePath(); ctx.fill();
+  };
+
+  if (reduce) {
+    // A still scatter of glitter, no motion.
+    for (let i = 0; i < 90; i++) { ctx.fillStyle = `rgba(${COLORS[i % COLORS.length]},${.2 + Math.random() * .5})`; ctx.beginPath(); ctx.arc(Math.random() * w, Math.random() * h, .5 + Math.random() * 1.4, 0, 6.28); ctx.fill(); }
+    return;
+  }
+
+  let t = 0, running = true;
+  document.addEventListener('visibilitychange', () => { running = !document.hidden; if (running) requestAnimationFrame(frame); });
+  function frame() {
+    if (!running) return;
+    t += 1;
+    const following = px !== null && performance.now() - lastMove < 2500;
+    const target = following ? { x: px, y: py } : pathPoint();
+    if (ex === null) { ex = target.x; ey = target.y; }
+    const nx = ex + (target.x - ex) * .12, ny = ey + (target.y - ey) * .12;
+    const moved = Math.hypot(nx - ex, ny - ey);
+    // Lay glitter along the way, more when it moves.
+    const steps = Math.min(6, 1 + (moved / 6) | 0);
+    for (let s = 0; s < steps; s++) spawn(ex + (nx - ex) * s / steps, ey + (ny - ey) * s / steps, 1 + (moved > 2 ? 1 : 0), .4 + Math.min(moved, 20) * .03);
+    ex = nx; ey = ny;
+    if (t % 3 === 0) spawn(ex, ey, 1, .8);
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = bits.length - 1; i >= 0; i--) {
+      const b = bits[i];
+      b.x += b.vx; b.y += b.vy; b.vx *= .985; b.vy = b.vy * .985 + .012; b.life -= b.decay; b.tw += .25;
+      if (b.life <= 0) { bits.splice(i, 1); continue; }
+      const a = b.life * (.55 + .45 * Math.sin(b.tw));
+      ctx.fillStyle = `rgba(${b.c},${a * .18})`;
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 3.2, 0, 6.28); ctx.fill();
+      ctx.fillStyle = `rgba(${b.c},${a})`;
+      if (b.star) sparkle(b.x, b.y, b.r * .9, a); else { ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 6.28); ctx.fill(); }
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
 (() => {
   const form = document.getElementById('access-form');
   const done = document.getElementById('access-done');
