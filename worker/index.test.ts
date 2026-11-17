@@ -41,6 +41,14 @@ describe("access requests", () => {
     expect(sqlite.prepare("SELECT app FROM access_requests WHERE email = ?").get("maia@example.com")).toEqual({ app: "glisten" });
   });
 
+  test.each(["poppy", "handup"])("takes %s waiting list sign-ups", async (app) => {
+    const { send, sqlite } = setup();
+    const response = await send("access", { name: "Mac", email: "mac@example.com", app });
+
+    expect(response.headers.get("Location")).toBe(`https://build40for40.com/${app}/#requested`);
+    expect(sqlite.prepare("SELECT app FROM access_requests WHERE email = ?").get("mac@example.com")).toEqual({ app });
+  });
+
   test("rejects an app that isn't taking requests", async () => {
     const { send } = setup();
     const response = await send("access", { name: "Ada", email: "ada@example.com", app: "elsewhere" });
