@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { flushPromises, mount, type VueWrapper } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { GUEST_DAYS } from "../data/days";
 
 const bodies = { registered: [] as string[], unregistered: [] as string[], dropped: [] as string[], hovers: new Map<string, number | { x: number; y: number } | null>() };
 
@@ -17,8 +18,11 @@ const physics = () => ({
   }),
 });
 
-// 39 of the 40 days take ideas before Day 1, so the last 5 of these 44 land in the pool, beside the disco ball.
-const idea = (i: number) => ({ id: `idea-${i}`, title: `Idea ${i}`, problem: `Problem number ${i}`, sponsors: i < 39 ? [{ name: "Anonymous", amount: 100 - i }] : [] });
+// Every day but the guest days takes an idea before Day 1, so the rest of these 44 land in the pool, beside the disco ball.
+const SLOTS = 40 - GUEST_DAYS.size;
+// The pool holds the overflow ideas and the disco ball.
+const POOL_ITEMS = 44 - SLOTS + 1;
+const idea = (i: number) => ({ id: `idea-${i}`, title: `Idea ${i}`, problem: `Problem number ${i}`, sponsors: i < SLOTS ? [{ name: "Anonymous", amount: 100 - i }] : [] });
 const pages: Record<string, unknown> = {
   0: { ideas: Array.from({ length: 40 }, (_, i) => idea(i)), next: 40 },
   40: { ideas: Array.from({ length: 4 }, (_, i) => idea(40 + i)), next: null },
@@ -88,7 +92,7 @@ afterEach(() => {
 async function board() {
   const { default: DayBoard } = await import("./DayBoard.vue");
   wrapper = mount(DayBoard, { props: { history: {}, builtAt: Date.now() }, attachTo: document.body });
-  await vi.waitFor(() => expect(wrapper!.findAll("ul[aria-labelledby=pool-title] li")).toHaveLength(6), { timeout: 3000 });
+  await vi.waitFor(() => expect(wrapper!.findAll("ul[aria-labelledby=pool-title] li")).toHaveLength(POOL_ITEMS), { timeout: 3000 });
   await flushPromises();
   return wrapper;
 }
@@ -102,43 +106,43 @@ const poolTitles = (w: VueWrapper) =>
 describe("the problems pool", () => {
   test("shows every idea that didn't make the days, as bodies once it's on screen", async () => {
     const w = await board();
-    expect(poolTitles(w)).toEqual(Array.from({ length: 5 }, (_, i) => `Idea ${39 + i}`));
-    await vi.waitFor(() => expect(bodies.registered).toHaveLength(6));
+    expect(poolTitles(w)).toEqual(Array.from({ length: 44 - SLOTS }, (_, i) => `Idea ${SLOTS + i}`));
+    await vi.waitFor(() => expect(bodies.registered).toHaveLength(POOL_ITEMS));
     expect(pool(w).classes()).toContain("absolute");
   });
 
   test("paying for an idea moves it into the days and bumps the last one into the pool", async () => {
     outcome = { status: "paid", amount: 140, name: "Ada" };
     const w = await board();
-    await vi.waitFor(() => expect(bodies.registered).toHaveLength(6));
-    w.findComponent({ name: "DayBox" }).vm.$emit("pick", "pool-idea-39", 25);
+    await vi.waitFor(() => expect(bodies.registered).toHaveLength(POOL_ITEMS));
+    w.findComponent({ name: "DayBox" }).vm.$emit("pick", `pool-idea-${SLOTS}`, 25);
     await flushPromises();
     await w.findAll("#day-box button").find((b) => b.text() === "$140")!.trigger("click");
     await w.find("#sponsor-button").trigger("click");
     await flushPromises();
 
-    expect(checkout.startCheckout).toHaveBeenCalledWith({ amount: 14000, anonymous: false, problem: "idea-39" });
-    expect(poolTitles(w)).not.toContain("Idea 39");
-    expect(poolTitles(w)).toContain("Idea 38");
-    await vi.waitFor(() => expect(bodies.unregistered).toEqual(["idea-39"]));
-    expect(bodies.registered.at(-1)).toBe("idea-38");
+    expect(checkout.startCheckout).toHaveBeenCalledWith({ amount: 14000, anonymous: false, problem: `idea-${SLOTS}` });
+    expect(poolTitles(w)).not.toContain(`Idea ${SLOTS}`);
+    expect(poolTitles(w)).toContain(`Idea ${SLOTS - 1}`);
+    await vi.waitFor(() => expect(bodies.unregistered).toEqual([`idea-${SLOTS}`]));
+    expect(bodies.registered.at(-1)).toBe(`idea-${SLOTS - 1}`);
   });
 
   test("closing checkout without paying leaves the idea where it was", async () => {
     outcome = { status: "closed" };
     const w = await board();
-    w.findComponent({ name: "DayBox" }).vm.$emit("pick", "pool-idea-39", 140);
+    w.findComponent({ name: "DayBox" }).vm.$emit("pick", `pool-idea-${SLOTS}`, 140);
     await flushPromises();
     await w.find("#sponsor-button").trigger("click");
     await flushPromises();
-    expect(poolTitles(w)).toContain("Idea 39");
+    expect(poolTitles(w)).toContain(`Idea ${SLOTS}`);
     expect(w.text()).not.toContain("Thank you");
   });
 
   test("custom sponsorship keeps its amount after closing checkout and can switch back to a preset", async () => {
     outcome = { status: "closed" };
     const w = await board();
-    w.findComponent({ name: "DayBox" }).vm.$emit("pick", "pool-idea-39", 40);
+    w.findComponent({ name: "DayBox" }).vm.$emit("pick", `pool-idea-${SLOTS}`, 40);
     await flushPromises();
     await w.findAll("#day-box button").find((b) => b.text() === "Custom")!.trigger("click");
     expect(document.activeElement).toBe(w.find("#sponsor-custom").element);
@@ -149,13 +153,13 @@ describe("the problems pool", () => {
     await w.find("#sponsor-custom").setValue("75");
     await w.find("#sponsor-button").trigger("click");
     await flushPromises();
-    expect(checkout.startCheckout).toHaveBeenLastCalledWith({ amount: 7500, anonymous: false, problem: "idea-39" });
+    expect(checkout.startCheckout).toHaveBeenLastCalledWith({ amount: 7500, anonymous: false, problem: `idea-${SLOTS}` });
     expect((w.find("#sponsor-custom").element as HTMLInputElement).value).toBe("75");
     await w.findAll("#day-box button").find((b) => b.text() === "$140")!.trigger("click");
     expect(w.find("#day-box").text()).not.toContain("$4 minimum");
     await w.find("#sponsor-button").trigger("click");
     await flushPromises();
-    expect(checkout.startCheckout).toHaveBeenLastCalledWith({ amount: 14000, anonymous: false, problem: "idea-39" });
+    expect(checkout.startCheckout).toHaveBeenLastCalledWith({ amount: 14000, anonymous: false, problem: `idea-${SLOTS}` });
   });
 
   test("a problem sent from the join form lands in the pool straight away", async () => {
@@ -173,7 +177,7 @@ describe("the problems pool", () => {
     const finished = new Promise<void>((resolve) => (landing = resolve));
     const animate =     vi.spyOn(Element.prototype, "animate").mockReturnValue({ finished } as unknown as Animation);
     const w = await board();
-    await vi.waitFor(() => expect(bodies.registered).toHaveLength(6));
+    await vi.waitFor(() => expect(bodies.registered).toHaveLength(POOL_ITEMS));
     const from = { left: 0, top: 0, width: 88, height: 72 };
     dispatchEvent(new CustomEvent("problem-sent", { detail: { problem: "My plant keeps dying.", name: "Sam Carter", amount: 80, from } }));
     await flushPromises();
@@ -182,16 +186,16 @@ describe("the problems pool", () => {
     expect(day(22)).toContain("Idea 20");
     expect(day(23)).toContain("My plant keeps dying");
     expect(day(24)).toContain("Idea 21");
-    expect(day(40)).toContain("Idea 37");
-    expect(animate.mock.calls.filter(([frames]) => String((frames as Keyframe[])[0].translate).endsWith("px"))).toHaveLength(17);
+    expect(day(40)).toContain(`Idea ${SLOTS - 2}`);
+    expect(animate.mock.calls.filter(([frames]) => String((frames as Keyframe[])[0].translate).endsWith("px"))).toHaveLength(40 - 24 + 1 - [...GUEST_DAYS].filter((d) => d >= 24).length);
 
     const ghost = () => document.querySelector("[aria-hidden=true].z-40");
-    expect(ghost()?.textContent).toContain("Idea 38");
+    expect(ghost()?.textContent).toContain(`Idea ${SLOTS - 1}`);
     expect(bodies.dropped).toEqual([]);
     landing();
-    await vi.waitFor(() => expect(bodies.dropped).toEqual(["idea-38"]), { timeout: 3000 });
+    await vi.waitFor(() => expect(bodies.dropped).toEqual([`idea-${SLOTS - 1}`]), { timeout: 3000 });
     expect(ghost()).toBeNull();
-    expect(poolTitles(w)).toContain("Idea 38");
+    expect(poolTitles(w)).toContain(`Idea ${SLOTS - 1}`);
   });
 
   test("is laid out for physics from the start, with ideas hidden until they drop in", async () => {
@@ -233,7 +237,7 @@ describe("writing a problem in the join form", () => {
   async function write(text: string) {
     document.body.insertAdjacentHTML("beforeend", `<textarea id="join-problem"></textarea>`);
     const w = await board();
-    await vi.waitFor(() => expect(bodies.registered).toHaveLength(6));
+    await vi.waitFor(() => expect(bodies.registered).toHaveLength(POOL_ITEMS));
     const field = document.querySelector<HTMLTextAreaElement>("#join-problem")!;
     field.value = text;
     field.dispatchEvent(new Event("input", { bubbles: true }));
@@ -263,9 +267,9 @@ describe("writing a problem in the join form", () => {
 test("Browse throws the days into the pool, docks a page of problems beside the list, opens one from its ball, and picking it puts them back", async () => {
   document.body.insertAdjacentHTML("beforeend", `<a href="#browse">Browse</a>`);
   const w = await board();
-  await vi.waitFor(() => expect(bodies.registered).toHaveLength(6));
+  await vi.waitFor(() => expect(bodies.registered).toHaveLength(POOL_ITEMS));
   document.querySelector<HTMLAnchorElement>("a[href='#browse']")!.click();
-  await vi.waitFor(() => expect(bodies.dropped.filter((id) => id.startsWith("day-"))).toHaveLength(39), { timeout: 2000 });
+  await vi.waitFor(() => expect(bodies.dropped.filter((id) => id.startsWith("day-"))).toHaveLength(SLOTS), { timeout: 2000 });
   expect(bodies.dropped).not.toContain("day-15");
   expect(w.find("ul[aria-label='The 40 days']").isVisible()).toBe(false);
 
@@ -285,7 +289,7 @@ test("Browse throws the days into the pool, docks a page of problems beside the 
   await w.findAll("#browse button").find((b) => b.text() === "Sponsor it")!.trigger("click");
   await vi.waitFor(() => expect(w.find("#browse").exists()).toBe(false));
   await vi.waitFor(() => expect(w.find("#day-box").text()).toContain("Idea 41"));
-  expect(bodies.unregistered.filter((id) => id.startsWith("day-"))).toHaveLength(39);
+  expect(bodies.unregistered.filter((id) => id.startsWith("day-"))).toHaveLength(SLOTS);
   expect([...bodies.hovers.values()].every((y) => y === null)).toBe(true);
 });
 

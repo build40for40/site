@@ -60,7 +60,10 @@ export interface PoolIdea {
 
 export type Phase = "before" | "live" | "after";
 
-export const GUEST_DAYS = new Set([15]);
+// Each guest day and who the guest is, in a few words. The problem itself stays secret until 10:00.
+export const GUEST_ROLES: Record<number, string> = { 15: "Exited Founder", 25: "Brand Director" };
+export const GUEST_DAYS = new Set(Object.keys(GUEST_ROLES).map(Number));
+export const guestTitle = (day = 0) => (GUEST_ROLES[day] ? `Guest: ${GUEST_ROLES[day]}` : "Guest day");
 export const DEFAULT_AMOUNT = 40;
 
 const DAY_MS = 86_400_000;
@@ -271,6 +274,7 @@ export const history: Record<number, ShippedIdea> = {
     owner: "Maia",
     sponsors: [{ name: "Maia", amount: 40 }],
     buildTime: "4:40:00",
+    wrecked: true,
     appUrl: "https://build40for40.com/glisten/",
     recordingUrl: "https://www.twitch.tv/build40for40",
     screenshot: "/screenshots/glisten.webp",

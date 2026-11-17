@@ -9,6 +9,7 @@ import {
   countdown,
   countdownParts,
   dayStart,
+  guestTitle,
   mergedSponsors,
   pad,
   raised,
@@ -124,7 +125,7 @@ const upNext = computed(() => {
   if (!isShipped.value || !isTodayEntry.value) return null;
   const next = props.days[props.today];
   if (!next) return null;
-  const title = next.idea?.title ?? (next.status === "guest" ? "Guest day" : "Up for grabs");
+  const title = next.idea?.title ?? (next.status === "guest" ? guestTitle(next.day) : "Up for grabs");
   return { title, day: next.day };
 });
 
@@ -424,7 +425,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
 
       <template v-else>
         <div class="flex items-start justify-between gap-3">
-          <h2 class="m-0 min-w-0 text-[26px] leading-[1.04] font-semibold tracking-tight md:text-3xl">{{ dayPrefix }}{{ idea?.title ?? "Guest day" }}</h2>
+          <h2 class="m-0 min-w-0 text-[26px] leading-[1.04] font-semibold tracking-tight md:text-3xl">{{ dayPrefix }}{{ idea?.title ?? guestTitle(entry.day) }}</h2>
           <!-- Narrow screens have no room for the player, so its links move up here. -->
           <div v-if="watch || share" class="flex shrink-0 items-center gap-1.5 max-[24rem]:flex-col max-[24rem]:items-end lg:hidden">
             <a v-if="watch" :href="watch" target="_blank" rel="noopener" :aria-label="`Watch on ${brands[watchBrand].name}`" class="grid size-[30px] place-items-center p-0" :class="overlayPill"
