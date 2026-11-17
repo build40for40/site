@@ -276,6 +276,18 @@ export const history: Record<number, ShippedIdea> = {
     screenshot: "/screenshots/glisten.webp",
     shorts: [],
   },
+  12: {
+    id: "23804103-e3e8-4f47-bf9d-a6de2e5e8d23",
+    title: "Imagining a hopeful AI future",
+    problem: "Feel optimistic and inspired about the world we are creating with the use of Ai.",
+    owner: "Samira",
+    sponsors: [{ name: "Samira", amount: 40 }],
+    buildTime: "4:40:00",
+    appUrl: "https://build40for40.com/feel-good/",
+    recordingUrl: "https://www.twitch.tv/build40for40",
+    screenshot: "/screenshots/feel-good.webp",
+    shorts: [],
+  },
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");
