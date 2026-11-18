@@ -288,6 +288,18 @@ export const history: Record<number, ShippedIdea> = {
     screenshot: "/screenshots/feel-good.webp",
     shorts: [],
   },
+  13: {
+    id: "61cab0c1-040b-45ed-8374-5421449421d2",
+    title: "Scattered AI chats everywhere",
+    problem: "I have a lot of random questions I ask AI throughout the day and accumulate lots of side chats, which then feels like another thing to organise.",
+    owner: "Ritika",
+    sponsors: [{ name: "Ritika", amount: 40 }],
+    buildTime: "4:40:00",
+    appUrl: "https://build40for40.com/dumpling/",
+    recordingUrl: "https://www.twitch.tv/build40for40",
+    screenshot: "/screenshots/dumpling.webp",
+    shorts: [],
+  },
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");
