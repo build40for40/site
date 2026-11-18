@@ -11,7 +11,9 @@
   "vars": {
     "PUBLIC_POSTHOG_HOST": "https://eu.i.posthog.com",
     "TYPESAFE_API_URL": "https://api.typesafe.ai",
-    "ARTWORK_SUBMITTER_SEEDS": "off"
+    "ARTWORK_SUBMITTER_SEEDS": "off",
+    // The stream on the site's own Postmark server that waiting list emails go out on (worker/waitlist.ts)
+    "POSTMARK_STREAM": "outbound"
   },
   "d1_databases": [
     {
