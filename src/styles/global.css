@@ -61,6 +61,15 @@
   --color-seamless-line: #cbb9c9;
   --color-seamless-line-soft: #e6dbe3;
   --color-seamless-green: #2f6b4f;
+  --color-seamless-amber: #a45a0b;
+  --color-seamless-stage-grey: #9ca3af;
+  --color-seamless-stage-blue: #3b82f6;
+  --color-seamless-stage-purple: #8b5cf6;
+  --color-seamless-stage-orange: #f97316;
+  --color-seamless-stage-teal: #14b8a6;
+  --color-seamless-stage-yellow: #eab308;
+  --color-seamless-stage-green: #22c55e;
+  --color-seamless-stage-red: #ef4444;
   --font-seamless-serif: "Playfair Display", Georgia, serif;
   --font-seamless-sans: "Inter", system-ui, sans-serif;
 

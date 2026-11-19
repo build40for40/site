@@ -17,7 +17,7 @@ const steps = [
   { n: "2", title: "Say hello", body: "Claude asks your name and your atelier's name. No forms, no dropdowns, no \"industry\" picker." },
   { n: "3", title: "Get signed up and connected", body: "Claude walks you through making a Superthread account and connecting it, one screen at a time. You type the passwords. Claude never sees them." },
   { n: "4", title: "Talk through an order", body: "One question: how an order goes, from first message to getting paid, and what's on the rail right now. Claude works out the rest." },
-  { n: "5", title: "Your board appears", body: "Your stages, in your words, with the jobs you just mentioned already on it. Not an empty board in sight." },
+  { n: "5", title: "Your board appears", body: "You watch a preview fill up as you talk. Say yes and the real board appears in Superthread, exactly as previewed, with your orders already on it." },
 ];
 
 const youGet = [
@@ -26,6 +26,16 @@ const youGet = [
   "House rules your team and Claude both follow, so hours land on the right garment",
   "Unpaid invoices kept firmly in the \"chase this\" pile until the money's in",
   "Afterwards, just ask Claude: \"what's unbilled?\" or \"where's the Costa gown?\"",
+];
+
+const previewStages = [
+  { name: "Enquiry", dot: "bg-seamless-stage-grey", orders: [] },
+  { name: "Quoted", dot: "bg-seamless-stage-grey", orders: [{ title: "Almeida – christening gown", meta: "Not assigned yet · 0 of 4 steps", gap: "Waiting on her reply" }] },
+  { name: "Deposit paid", dot: "bg-seamless-stage-blue", orders: [] },
+  { name: "Being made", dot: "bg-seamless-stage-purple", orders: [{ title: "Ferreira – suit alteration", meta: "Ana · 1 of 4 steps", gap: "Deposit to confirm" }] },
+  { name: "Fitting", dot: "bg-seamless-stage-orange", orders: [{ title: "Costa – wedding gown", meta: "Beatriz · 2 of 5 steps", gap: "Fitting Tue 24 Nov" }] },
+  { name: "Ready & invoiced", dot: "bg-seamless-stage-yellow", orders: [] },
+  { name: "Paid & collected", dot: "bg-seamless-stage-green", orders: [] },
 ];
 
 const youNeed = [
@@ -90,6 +100,44 @@ const youNeed = [
           <figcaption class="mt-4 text-xs text-seamless-muted">An example. Your board comes from your own words.</figcaption>
         </figure>
       </header>
+
+      <section class="pb-16" aria-labelledby="preview-title">
+        <div class={wrap}>
+          <h2 id="preview-title" class="font-seamless-serif text-[30px] font-semibold sm:text-[36px]">Watch it take shape</h2>
+          <p class="mt-2 max-w-[640px] text-seamless-muted">While you talk, Claude draws a preview of your board, and redraws it whenever you change your mind. Say yes and it builds the real thing in Superthread: same stages, same orders, nothing lost in translation.</p>
+        </div>
+        <div class={`${wrap} mt-6`}>
+          <figure class="overflow-hidden rounded-2xl border border-seamless-line-soft bg-seamless-ground shadow-[0_24px_60px_rgb(43_27_51/0.10)]">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-seamless-line-soft px-5 py-4">
+              <p class="font-seamless-serif text-xl font-semibold">Atelier Rosa</p>
+              <p class="rounded-full bg-seamless-blush px-3 py-1 text-xs font-semibold text-seamless-claret">Preview of your board</p>
+            </div>
+            <div class="flex gap-3 overflow-x-auto px-5 py-5" tabindex="0" aria-label="Example board, scrolls sideways">
+              {previewStages.map((stage) => (
+                <div class="w-[220px] flex-none rounded-xl border border-seamless-line-soft bg-seamless-paper p-2.5">
+                  <p class="flex items-center gap-2 text-[13px] font-semibold">
+                    <span class={`h-2.5 w-2.5 flex-none rounded-full ${stage.dot}`} aria-hidden="true"></span>
+                    {stage.name}
+                    <span class="ml-auto font-medium text-seamless-muted">{stage.orders.length}</span>
+                  </p>
+                  {stage.orders.length === 0 ? (
+                    <p class="mt-2 text-xs text-seamless-muted italic">Nothing here yet</p>
+                  ) : (
+                    stage.orders.map((order) => (
+                      <div class="mt-2 rounded-lg border border-seamless-line-soft bg-seamless-paper px-3 py-2 shadow-[0_1px_2px_rgb(43_27_51/0.06)]">
+                        <p class="text-sm font-semibold">{order.title}</p>
+                        <p class="text-xs text-seamless-muted">{order.meta}</p>
+                        <p class="text-xs text-seamless-amber">{order.gap}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              ))}
+            </div>
+            <figcaption class="px-5 pb-4 text-xs text-seamless-muted">An example preview for Atelier Rosa: Ana, Beatriz and Ana Sofia, billing €55 an hour. Scroll sideways to see every stage.</figcaption>
+          </figure>
+        </div>
+      </section>
 
       <section class="border-y border-seamless-line-soft bg-seamless-paper/70 py-16" aria-labelledby="how">
         <div class={wrap}>
