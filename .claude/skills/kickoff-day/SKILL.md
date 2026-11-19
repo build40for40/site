@@ -1,11 +1,11 @@
 ---
 name: kickoff-day
-description: Kick off a build day once its problem is revealed at 10:00. Confirms the day's problem against the live site, fixes the day's Superthread page if the ranking changed overnight, and creates the day's public GitHub repo with its first commit. Later, once the app has a name, it serves the app at build40for40.com/<app>/ with CI. Use when a day starts or its repo is needed. Triggers include "kick off day 4", "kickoff", "start day 4", "make today's repo", or "the app is called X, put it live".
+description: Kick off a build day once its problem is revealed at 10:00. Confirms the day's problem against the live site, sets up the day's Superthread board and page, and creates the day's public GitHub repo with its first commit. Later, once the app has a name, it serves the app at build40for40.com/<app>/ with CI. Use when a day starts or its repo is needed. Triggers include "kick off day 4", "kickoff", "start day 4", "set up day 4", "make today's repo", or "the app is called X, put it live".
 ---
 
 # Kick off a day
 
-At 10:00 UK the day's box opens and the build starts. The Superthread board and page were set up the night before by step 8 of the `finish-day` skill. This skill makes the GitHub repo for the day and checks the page still matches the problem that's actually being built. Day 1 (`joyo`) is the reference repo.
+At 10:00 UK the day's box opens and the build starts. This skill sets up everything the day needs: its Superthread board and page, and its GitHub repo. Nothing is set up the night before, since the ranking can change until the box opens. Day 1 (`joyo`) is the reference repo.
 
 ## 1. Confirm the problem
 
@@ -17,15 +17,45 @@ curl -s https://build40for40.com/api/problems | jq -c --argjson shipped '["<hist
 
 The first result is the problem the site is showing now. On Day 3 a problem submitted at 09:30 overtook the one that had been top the night before, so if the top two are close, or the top one was submitted overnight, ask the user which one the team is building. If the day is in `GUEST_DAYS`, ask the user for the problem.
 
-Ask for the form factor too if the Superthread page still says TBC, and for the app's name. Since Day 14 the team picks three form factors each day rather than one, to keep the build flexible (Day 14's were CLI, WhatsApp and Agents), so ask for all three. The repo is named after the app (`joyo`, `sidekick`, `naughty-list`), lowercase with hyphens. If the app doesn't have a name yet, use `dayN` for now and rename it in step 5.
+Ask for the form factor too, unless the day's Superthread page already has it, and for the app's name. Since Day 14 the team picks three form factors each day rather than one, to keep the build flexible (Day 14's were CLI, WhatsApp and Agents), so ask for all three. The repo is named after the app (`joyo`, `sidekick`, `naughty-list`), lowercase with hyphens. If the app doesn't have a name yet, use `dayN` for now and rename it in step 5.
 
-## 2. Check the Superthread page
+## 2. Set up Superthread
 
-Use the `superthread-cli` skill. In the General space (id 2), find the "Day N" page under Days (id 7) and the `dayN` board.
+Everything goes in the General space (id 2). Use the `superthread-cli` skill for the `st` commands. Check `st boards list -s 2` and `st pages list -s 2` first, and skip anything that already exists.
 
-- If the page is missing, or shows a different problem, write it again in the same format as "Day 2": `**Problem:**` with the title, `**Form factor:**` with the three picks separated by commas, then the problem in full. Use `st pages update <id> --content` on an existing page.
-- If the board is missing, create it as in step 8 of `finish-day`. If it isn't public, make it public the same way.
-- Add the repo link to the page once the repo exists: a `**Repo:**` line under the form factor.
+- **Board** called `dayN` (lowercase, no space, like `day3`), with the same columns as the other day boards:
+
+  ```bash
+  st boards create -s 2 --title day4 --list "To do:todo" --list "Doing:doing" --list "Done:done" --list "Cancelled:canceled"
+  ```
+
+- **Make the board public**, like every day board, so viewers can follow along. `st` can't do this, so call the API with the token `st auth login` saved, without printing it:
+
+  ```bash
+  curl -s -X PATCH -H "Authorization: Bearer $(awk '/^token:/{print $2}' ~/.config/superthread/config.yaml | tr -d '"')" \
+    -H "Content-Type: application/json" -d '{"is_public": true}' \
+    "https://api.superthread.com/v1/tSyziWPE/boards/<board id>" | jq -r '.board.public_settings.url'
+  ```
+
+  It prints the board's public link. Run it on an existing day board too if it isn't public yet.
+
+- **One starter card** in To do, "Define the 5 W's", since every day starts by defining the problem. Don't add any others.
+- **Page** called "Day N" under the Days page (id 7), in the same format as "Day 2". On an existing page that shows a different problem, write it again with `st pages update <id> --content`.
+
+  ```bash
+  st pages create -s 2 --parent-page 7 --title "Day 4" --content "$(cat <<'MD'
+  **Problem:** <title>
+
+  **Form factor:** <the three picks, separated by commas>
+
+  **Repo:** [build40for40/<repo>](https://github.com/build40for40/<repo>)
+
+  <the problem, in full, as it is on the site>
+  MD
+  )"
+  ```
+
+  Add the `**Repo:**` line once the repo exists. The prep, demo and retro pages get added under the page during the day, so don't create them.
 
 ## 3. Create the repo
 
@@ -50,7 +80,7 @@ CI deploys use the `CLOUDFLARE_API_TOKEN` organisation secret, so don't add one 
 
 ## 4. Report
 
-Tell the user the repo link, whether the page needed fixing, and whether the form factor is still TBC.
+Tell the user the repo link, the board's public link and the page, whether they were created or already there, and whether the form factor is still TBC.
 
 ## 5. When the app has a name
 
