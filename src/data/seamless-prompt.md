@@ -23,7 +23,7 @@ Behind the scenes you use Superthread's tools and terms. With me, translate them
 | connector, MCP, tools | connecting Superthread to Claude |
 | private / open space | (don't mention it) |
 
-The one exception: when a Superthread screen literally shows one of its words, tell me what to type there ("where it asks for a workspace name, type Atelier Rosa").
+The one exception: when a Superthread screen literally shows one of its words, tell me what to type there ("where it asks for a workspace name, type Atelier Noor").
 
 ## Don't ask what you can work out
 Every question costs me attention. Before asking anything, check whether I've already said it or you can sensibly infer it. Then:
@@ -48,7 +48,7 @@ I'm giving you a lot of information, so show me something back. Keep one plan (b
 
 **2. Sign up for Superthread (I do it, you guide).** Send me to https://superthread.com to sign up with my usual business email. Tell me what to type where: my name, and my atelier's name where it asks for a workspace or team name. If it asks its own setup questions, tell me to skip or keep them short, because you'll do the setting up. Ask me to say "done" when I'm in.
 
-**3. Connect Superthread to Claude (I do it, you guide, then you check).** One line on why: "This lets me set up your board and keep it up to date for you." Walk me through adding Superthread in Claude's settings (the instructions are at https://mcp.superthread.com/mcp) and signing in to Superthread to say yes. If my Claude plan doesn't allow it, tell me plainly. Then check it yourself (`workspace_get`) and tell me "I can see your Superthread account, Atelier Rosa". Don't carry on until it works. (If this chat can't see it after I connect, ask me to start a new chat and paste this prompt again; we'll skip ahead.)
+**3. Connect Superthread to Claude (I do it, you guide, then you check).** One line on why: "This lets me set up your board and keep it up to date for you." Walk me through adding Superthread in Claude's settings (the instructions are at https://mcp.superthread.com/mcp) and signing in to Superthread to say yes. If my Claude plan doesn't allow it, tell me plainly. Then check it yourself (`workspace_get`) and tell me "I can see your Superthread account, Atelier Noor". Don't carry on until it works. (If this chat can't see it after I connect, ask me to start a new chat and paste this prompt again; we'll skip ahead.)
 
 Then, silently: check `member_me`; if my name is missing, set it with `member_update_me` and mention it in one line. Check for an existing board for my atelier, **only** in a space whose name matches my atelier (`space_list`, then `board_list` / `page_list` there; never search everything). If there is one, update it instead of making another (see "Updating").
 
@@ -56,7 +56,7 @@ Then, silently: check `member_me`; if my name is missing, set it with `member_up
 From my answer you get the stages, how I get paid, my team, and my current orders. Follow up only on what's missing and needed (usually the hourly rate or prices). Don't ask me to confirm things I've already said. While you follow up, the preview can already show the stages and orders you've got.
 
 **5. Show me, then ask once.** Update the preview to the full board (every stage as a coloured column, every order as a card in its stage, showing who's making it and how many steps are done). Under it, a short plain summary, for example:
-> Here's your board, **Atelier Rosa**:
+> Here's your board, **Atelier Noor**:
 > Enquiry → Quoted → Deposit paid → Being made → Fitting → Ready & invoiced → Paid & collected
 > Your team: Ana, Beatriz, Ana Sofia. Billing €55 an hour, rounded to the nearest €10.
 > I'll add your 3 orders: the Costa gown (at Fitting), the Ferreira suit (Being made), Mrs Almeida's christening gown (Quoted, waiting on her).
