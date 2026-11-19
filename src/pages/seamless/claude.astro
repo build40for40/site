@@ -1,14 +1,13 @@
 ---
-import PostHog from "../components/posthog.astro";
-import "../styles/global.css";
-import prompt from "../data/seamless-prompt.md?raw";
-import boardPrompt from "../data/seamless-board-prompt.md?raw";
-import dashboardPrompt from "../data/seamless-dashboard-prompt.md?raw";
+import PostHog from "../../components/posthog.astro";
+import "../../styles/global.css";
+import prompt from "../../data/seamless-prompt.md?raw";
+import boardPrompt from "../../data/seamless-board-prompt.md?raw";
+import dashboardPrompt from "../../data/seamless-dashboard-prompt.md?raw";
 
 const title = "Seamless: your atelier, set up in one chat with Claude";
 const description = "Copy one prompt into Claude, tell it about your atelier, and it walks you through Superthread and builds your board with your real jobs on it. Day 14 of 40 for 40.";
 const url = new URL(Astro.url.pathname, Astro.site);
-const appUrl = "https://seamstress.build40for40.com";
 const repo = "https://github.com/build40for40/seamstress";
 
 const wrap = "mx-auto w-full max-w-[1040px] px-4 sm:px-6";
@@ -93,14 +92,14 @@ const youNeed = [
   </head>
   <body class="min-h-screen bg-seamless-ground bg-[repeating-linear-gradient(90deg,rgb(43_27_51/0.035)_0_1px,transparent_1px_14px)] font-seamless-sans text-[16px] leading-relaxed text-seamless-ink antialiased [&_:focus-visible]:outline-2 [&_:focus-visible]:outline-offset-4 [&_:focus-visible]:outline-seamless-claret">
     <nav class={`${wrap} flex items-center justify-between gap-4 py-5`} aria-label="Seamless">
-      <a href="#top" class="font-seamless-serif text-[26px] font-semibold italic text-seamless-claret no-underline">Seamless</a>
+      <a href="/seamless/" class="font-seamless-serif text-[26px] font-semibold italic text-seamless-claret no-underline">Seamless</a>
       <a href="#prompt" class="rounded-full border-[1.5px] border-seamless-claret px-4 py-2 text-sm font-semibold text-seamless-claret no-underline hover:bg-seamless-blush">Get the prompt</a>
     </nav>
 
     <main id="top">
       <header class={`${wrap} grid gap-10 pt-6 pb-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center lg:pt-12 lg:pb-24`}>
         <div class="flex flex-col gap-6">
-          <p class="self-start rounded-full bg-seamless-blush px-3.5 py-1.5 text-xs font-semibold tracking-[0.14em] text-seamless-claret-dark uppercase">For ateliers · Day 14 of 40 for 40</p>
+          <p class="self-start rounded-full bg-seamless-blush px-3.5 py-1.5 text-xs font-semibold tracking-[0.14em] text-seamless-claret-dark uppercase">The Claude way · Day 14 of 40 for 40</p>
           <h1 class="font-seamless-serif text-[40px] leading-[1.05] font-semibold sm:text-[56px]">
             Your atelier, set up in <em class="font-medium text-seamless-claret">one chat.</em>
           </h1>
@@ -112,6 +111,7 @@ const youNeed = [
             <a href="https://claude.ai/new" target="_blank" rel="noopener" class={`${button} border-[1.5px] border-seamless-line bg-seamless-paper text-seamless-ink hover:border-seamless-claret`}>Open Claude ↗</a>
           </div>
           <p class="text-sm text-seamless-muted">Copy, open a new chat, paste, send. Claude takes it from there.</p>
+          <p class="text-sm text-seamless-muted">Rather have your own software? <a href="/seamless/app/" class="font-semibold text-seamless-claret">See the Seamless app</a>.</p>
         </div>
 
         <figure class="rounded-3xl border border-seamless-line-soft bg-seamless-paper p-5 shadow-[0_24px_60px_rgb(43_27_51/0.10)] sm:p-6" aria-label="An example of the conversation">
@@ -257,7 +257,8 @@ const youNeed = [
     <footer class={`${wrap} flex flex-col gap-2 py-10 text-sm text-seamless-muted sm:flex-row sm:items-center sm:justify-between`}>
       <p>Seamless is Day 14 of <a href="/" class="font-medium text-seamless-claret">40 for 40</a>, built live on Twitch.</p>
       <p class="flex gap-4">
-        <a href={appUrl} class="font-medium text-seamless-claret">The Seamless app</a>
+        <a href="/seamless/" class="font-medium text-seamless-claret">Both ways to use Seamless</a>
+        <a href="/seamless/app/" class="font-medium text-seamless-claret">The Seamless app</a>
         <a href={repo} class="font-medium text-seamless-claret">Code on GitHub</a>
       </p>
     </footer>

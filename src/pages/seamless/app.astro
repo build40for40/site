@@ -1,0 +1,216 @@
+---
+import PostHog from "../../components/posthog.astro";
+import "../../styles/global.css";
+
+const title = "Seamless, the app: workshop software for ateliers";
+const description = "A studio for the owner, a timer on every seamstress's phone and a tracking page for each client. Every hour sewn ends up on an invoice. Day 14 of 40 for 40.";
+const url = new URL(Astro.url.pathname, Astro.site);
+const appUrl = "https://seamless.build40for40.com";
+const repo = "https://github.com/build40for40/seamstress";
+
+const wrap = "mx-auto w-full max-w-[1040px] px-4 sm:px-6";
+const button = "inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-base font-semibold no-underline transition-colors";
+
+const parts = [
+  {
+    who: "For you",
+    name: "The studio",
+    body: "Where you run the place. Take an order, add its garments, a quote and a due date, and hand each garment to a seamstress.",
+    points: [
+      "Approve hours and photos before a client sees them",
+      "Turn an order into an invoice, set against its quote",
+      "Run the monthly timesheets without a calculator",
+    ],
+  },
+  {
+    who: "For your seamstresses",
+    name: "The workroom",
+    body: "A personal link that opens on her phone. No password, no app store. She sees her own garments and nobody else's.",
+    points: [
+      "Tap Start, sew, tap Stop. The hours log themselves",
+      "Forgot the timer? Type the time in afterwards",
+      "Send a photo, move the garment along, send the timesheet",
+    ],
+  },
+  {
+    who: "For your clients",
+    name: "The tracking page",
+    body: "Each client gets a private page for her order, so she can stop texting you \"any news?\" at 11pm.",
+    points: [
+      "Only the hours and photos you approved",
+      "An email when the order is in, ready and invoiced",
+      "Never the seamstress's notes about the sleeve that went wrong",
+    ],
+  },
+];
+
+const numbers = [
+  { label: "Unbilled work", figure: "£2,490", line: "Hours sewn that aren't on an invoice yet. Tap it to see which orders." },
+  { label: "Earned per hour", figure: "£63", line: "What this month's invoices really paid you, next to your hourly rate." },
+  { label: "Billable share", figure: "96%", line: "How much of the time you paid for ended up on a client's order." },
+];
+
+const steps = [
+  { n: "1", title: "Sign in", body: "With your email. That's the account made." },
+  { n: "2", title: "Set up your atelier", body: "Its name, your hourly rate and the prices you charge again and again." },
+  { n: "3", title: "Add your seamstresses", body: "Each one gets her own link. Send it however you already talk to her." },
+  { n: "4", title: "Take an order", body: "Garments, quote, due date, who's sewing what. Tick express if the wedding is Saturday." },
+  { n: "5", title: "Approve and invoice", body: "Hours and photos roll in. You approve them, send the invoice and get paid for all of it." },
+];
+
+const youNeed = [
+  "An email address for the business",
+  "Your hourly rate, or a rough idea of it",
+  "A phone number or email for each seamstress, to send her link",
+];
+---
+
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/seamless/icon.svg" />
+    <link rel="canonical" href={url} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="40 for 40" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={url} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="theme-color" content="#fbf6f4" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" />
+    <PostHog />
+  </head>
+  <body class="min-h-screen bg-seamless-ground bg-[repeating-linear-gradient(90deg,rgb(43_27_51/0.035)_0_1px,transparent_1px_14px)] font-seamless-sans text-[16px] leading-relaxed text-seamless-ink antialiased [&_:focus-visible]:outline-2 [&_:focus-visible]:outline-offset-4 [&_:focus-visible]:outline-seamless-claret">
+    <nav class={`${wrap} flex items-center justify-between gap-4 py-5`} aria-label="Seamless">
+      <a href="/seamless/" class="font-seamless-serif text-[26px] font-semibold italic text-seamless-claret no-underline">Seamless</a>
+      <a href={appUrl} class="rounded-full border-[1.5px] border-seamless-claret px-4 py-2 text-sm font-semibold text-seamless-claret no-underline hover:bg-seamless-blush">Open the app</a>
+    </nav>
+
+    <main id="top">
+      <header class={`${wrap} grid gap-10 pt-6 pb-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center lg:pt-12 lg:pb-24`}>
+        <div class="flex flex-col gap-6">
+          <p class="self-start rounded-full bg-seamless-blush px-3.5 py-1.5 text-xs font-semibold tracking-[0.14em] text-seamless-claret-dark uppercase">Your own software · Day 14 of 40 for 40</p>
+          <h1 class="font-seamless-serif text-[40px] leading-[1.05] font-semibold sm:text-[56px]">
+            Every hour sewn, <em class="font-medium text-seamless-claret">on an invoice.</em>
+          </h1>
+          <p class="max-w-[540px] text-lg text-seamless-muted">Seamless is workshop software made for ateliers. Your seamstresses tap a timer, you approve what they did, and the client pays for all of it. The notebook can retire.</p>
+          <div class="flex flex-wrap items-center gap-3">
+            <a href={appUrl} class={`${button} bg-seamless-claret text-seamless-paper hover:bg-seamless-claret-dark`}>Open Seamless <span aria-hidden="true">↗</span></a>
+            <a href="#demo" class={`${button} border-[1.5px] border-seamless-line bg-seamless-paper text-seamless-ink hover:border-seamless-claret`}>Watch the demo</a>
+          </div>
+          <p class="text-sm text-seamless-muted">Rather just chat? <a href="/seamless/claude/" class="font-semibold text-seamless-claret">Set it up in Claude instead</a>.</p>
+        </div>
+
+        <figure class="rounded-3xl border border-seamless-line-soft bg-seamless-paper p-5 shadow-[0_24px_60px_rgb(43_27_51/0.10)] sm:p-6" aria-label="An example of a seamstress's day in the workroom">
+          <p class="text-xs font-semibold tracking-[0.14em] text-seamless-muted uppercase">Her phone, this morning</p>
+          <div class="mt-3 flex flex-col gap-3">
+            <div class="rounded-2xl border border-seamless-line-soft p-4">
+              <p class="flex items-center justify-between gap-3 text-sm font-semibold"><span>Wedding veil, hand-rolled edge</span><span class="rounded-full bg-seamless-blush px-2.5 py-0.5 text-xs text-seamless-claret-dark">Due 12 Dec</span></p>
+              <p class="mt-1 text-sm text-seamless-muted">In progress · 8 hours so far</p>
+            </div>
+            <div class="flex items-center justify-between gap-3 rounded-2xl bg-seamless-claret px-4 py-3 text-seamless-paper">
+              <p class="text-sm"><span class="block text-xs opacity-80">Timer running · sewing</span><span class="font-seamless-serif text-2xl font-semibold tabular-nums">1:24</span></p>
+              <p class="rounded-full bg-seamless-paper px-4 py-2 text-sm font-semibold text-seamless-claret-dark">Stop</p>
+            </div>
+            <p class="rounded-2xl bg-seamless-blush px-4 py-3 text-sm text-seamless-claret-dark">Saved. 1 hour 30 on the veil, waiting for the studio to approve.</p>
+          </div>
+          <figcaption class="mt-4 text-xs text-seamless-muted">An example with a made-up order. Hers shows her own garments.</figcaption>
+        </figure>
+      </header>
+
+      <section id="demo" class={`${wrap} pb-16`} aria-labelledby="demo-title">
+        <h2 id="demo-title" class="font-seamless-serif text-[30px] font-semibold sm:text-[36px]">See it in a minute</h2>
+        <p class="mt-2 max-w-[620px] text-seamless-muted">One order, start to finish: the studio, a seamstress's phone, the invoice and the month's timesheets. No sound, so it's safe to watch in the workroom.</p>
+        <figure class="mt-6 overflow-hidden rounded-2xl border border-seamless-line-soft bg-seamless-paper shadow-[0_24px_60px_rgb(43_27_51/0.10)]">
+          <video controls playsinline preload="none" poster="/seamless/demo-poster.jpg" width="1280" height="720" class="block h-auto w-full" aria-label="A one minute silent demo of Seamless with a made-up atelier">
+            <source src="/seamless/demo.mp4" type="video/mp4" />
+            <a href="/seamless/demo.mp4">Watch the demo</a>
+          </video>
+          <figcaption class="px-5 py-3 text-xs text-seamless-muted">A one minute demo with a made-up atelier. Nobody in it is real.</figcaption>
+        </figure>
+      </section>
+
+      <section class="border-y border-seamless-line-soft bg-seamless-paper/70 py-16" aria-labelledby="parts-title">
+        <div class={wrap}>
+          <h2 id="parts-title" class="font-seamless-serif text-[30px] font-semibold sm:text-[36px]">Three doors, one workshop</h2>
+          <p class="mt-2 max-w-[620px] text-seamless-muted">Everybody gets the bit they need and nothing they don't.</p>
+          <div class="mt-8 grid gap-4 lg:grid-cols-3">
+            {parts.map((part) => (
+              <article class="flex flex-col gap-3 rounded-2xl border border-seamless-line-soft bg-seamless-paper p-5 sm:p-6">
+                <p class="text-xs font-semibold tracking-[0.14em] text-seamless-claret-dark uppercase">{part.who}</p>
+                <h3 class="font-seamless-serif text-[24px] leading-snug font-semibold">{part.name}</h3>
+                <p class="text-[15px] text-seamless-muted">{part.body}</p>
+                <ul class="mt-1 flex flex-col gap-2.5 text-[15px]">
+                  {part.points.map((point) => (
+                    <li class="flex gap-3"><span class="mt-0.5 text-seamless-green" aria-hidden="true">✓</span><span>{point}</span></li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section class={`${wrap} py-16`} aria-labelledby="numbers-title">
+        <h2 id="numbers-title" class="font-seamless-serif text-[30px] font-semibold sm:text-[36px]">Three numbers on your wall</h2>
+        <p class="mt-2 max-w-[620px] text-seamless-muted">The studio opens on these. If they look right, go and have lunch.</p>
+        <div class="mt-8 grid gap-4 sm:grid-cols-3">
+          {numbers.map((number) => (
+            <div class="flex flex-col gap-1.5 rounded-2xl border border-seamless-line-soft bg-seamless-paper p-5">
+              <p class="text-xs font-semibold tracking-[0.1em] text-seamless-muted uppercase">{number.label}</p>
+              <p class="font-seamless-serif text-[40px] leading-none font-semibold text-seamless-claret tabular-nums">{number.figure}</p>
+              <p class="text-sm text-seamless-muted">{number.line}</p>
+            </div>
+          ))}
+        </div>
+        <p class="mt-4 text-xs text-seamless-muted">Example figures from a made-up atelier.</p>
+      </section>
+
+      <section id="how" class="border-y border-seamless-line-soft bg-seamless-paper/70 py-16" aria-labelledby="how-title">
+        <div class={wrap}>
+          <h2 id="how-title" class="font-seamless-serif text-[30px] font-semibold sm:text-[36px]">How it goes</h2>
+          <p class="mt-2 max-w-[600px] text-seamless-muted">From nothing to your first order in about the time it takes to thread a machine. Twice, if it's that machine.</p>
+          <ol class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {steps.map((step) => (
+              <li class="flex flex-col gap-2 rounded-2xl border border-seamless-line-soft bg-seamless-paper p-5">
+                <span class="flex h-9 w-9 items-center justify-center rounded-full bg-seamless-claret font-seamless-serif text-lg font-semibold text-seamless-paper" aria-hidden="true">{step.n}</span>
+                <h3 class="font-seamless-serif text-lg leading-snug font-semibold">{step.title}</h3>
+                <p class="text-[15px] text-seamless-muted">{step.body}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section class={`${wrap} grid gap-10 py-16 md:grid-cols-2 md:items-start`}>
+        <div>
+          <h2 class="font-seamless-serif text-[28px] font-semibold">What you need</h2>
+          <ul class="mt-5 flex flex-col gap-3">
+            {youNeed.map((item) => (
+              <li class="flex gap-3"><span class="mt-1 text-seamless-claret" aria-hidden="true">✂</span><span>{item}</span></li>
+            ))}
+          </ul>
+        </div>
+        <div class="flex flex-col gap-4 rounded-3xl border border-seamless-line-soft bg-seamless-paper p-6 shadow-[0_24px_60px_rgb(43_27_51/0.10)] sm:p-8">
+          <h2 class="font-seamless-serif text-[28px] leading-tight font-semibold">Ready when you are</h2>
+          <p class="text-seamless-muted">Any atelier can sign in and run its own team. It was built in a day, live, so tell us what's missing and we'll hear you.</p>
+          <a href={appUrl} class={`${button} self-start bg-seamless-claret text-seamless-paper hover:bg-seamless-claret-dark`}>Open Seamless <span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+    </main>
+
+    <footer class={`${wrap} flex flex-col gap-2 py-10 text-sm text-seamless-muted sm:flex-row sm:items-center sm:justify-between`}>
+      <p>Seamless is Day 14 of <a href="/" class="font-medium text-seamless-claret">40 for 40</a>, built live on Twitch.</p>
+      <p class="flex flex-wrap gap-4">
+        <a href="/seamless/" class="font-medium text-seamless-claret">Both ways to use Seamless</a>
+        <a href={repo} class="font-medium text-seamless-claret">Code on GitHub</a>
+      </p>
+    </footer>
+  </body>
+</html>
