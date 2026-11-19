@@ -14,16 +14,16 @@ const button = "inline-flex items-center justify-center gap-2 rounded-full px-6 
 
 const steps = [
   { n: "1", title: "Paste one prompt into Claude", body: "Copy it below, open a new chat at claude.ai, paste, send. That's the whole install." },
-  { n: "2", title: "Say hello", body: "Claude asks your name, your company and what you make. No forms, no dropdowns, no \"industry\" picker." },
+  { n: "2", title: "Say hello", body: "Claude asks your name and your atelier's name. No forms, no dropdowns, no \"industry\" picker." },
   { n: "3", title: "Get signed up and connected", body: "Claude walks you through making a Superthread account and connecting it, one screen at a time. You type the passwords. Claude never sees them." },
-  { n: "4", title: "Talk through an order", body: "From first enquiry to getting paid. Tell it who's on your team and what's on the rail right now." },
+  { n: "4", title: "Talk through an order", body: "One question: how an order goes, from first message to getting paid, and what's on the rail right now. Claude works out the rest." },
   { n: "5", title: "Your board appears", body: "Your stages, in your words, with the jobs you just mentioned already on it. Not an empty board in sight." },
 ];
 
 const youGet = [
   "A board built from how you actually work, not a template someone guessed at",
   "Cards for the garments you're making right now, each with its own checklist of steps",
-  "A rules page your team and Claude both follow, so hours land on the right garment",
+  "House rules your team and Claude both follow, so hours land on the right garment",
   "Unpaid invoices kept firmly in the \"chase this\" pile until the money's in",
   "Afterwards, just ask Claude: \"what's unbilled?\" or \"where's the Costa gown?\"",
 ];
@@ -83,9 +83,9 @@ const youNeed = [
           <div class="flex flex-col gap-3 text-[15px]">
             <p class="max-w-[85%] self-start rounded-2xl rounded-tl-sm bg-seamless-blush px-4 py-2.5">Hello! I'm going to set up your workshop with you. First things first: what's your name, and what's your atelier called?</p>
             <p class="max-w-[85%] self-end rounded-2xl rounded-tr-sm bg-seamless-claret px-4 py-2.5 text-seamless-paper">Rosa. Atelier Rosa, bridal and alterations in Lisbon.</p>
-            <p class="max-w-[85%] self-start rounded-2xl rounded-tl-sm bg-seamless-blush px-4 py-2.5">Lovely. Walk me through a typical order, from the first message to getting paid.</p>
-            <p class="max-w-[85%] self-end rounded-2xl rounded-tr-sm bg-seamless-claret px-4 py-2.5 text-seamless-paper">They come in, I quote, they pay 30%, Beatriz or Ana sews, a fitting or two, they pay the rest when they collect.</p>
-            <p class="max-w-[85%] self-start rounded-2xl rounded-tl-sm bg-seamless-blush px-4 py-2.5">Got it. Here's your board: Inquiry, Quoted, Accepted, In Progress, Fitting, Ready &amp; Invoiced, Paid &amp; Collected. Shall I make it?</p>
+            <p class="max-w-[85%] self-start rounded-2xl rounded-tl-sm bg-seamless-blush px-4 py-2.5">Lovely to meet you, Rosa. Tell me how an order goes, from the first message to getting paid, and what's on the rail right now.</p>
+            <p class="max-w-[85%] self-end rounded-2xl rounded-tr-sm bg-seamless-claret px-4 py-2.5 text-seamless-paper">I quote, they pay 30%, Beatriz or Ana sews, a fitting, they pay the rest when they collect. Right now Beatriz has the Costa wedding gown, fitting on Tuesday.</p>
+            <p class="max-w-[85%] self-start rounded-2xl rounded-tl-sm bg-seamless-blush px-4 py-2.5">Got it. Here's your board: Enquiry, Quoted, Deposit paid, Being made, Fitting, Ready &amp; invoiced, Paid &amp; collected, with the Costa gown at Fitting. Shall I set it up?</p>
           </div>
           <figcaption class="mt-4 text-xs text-seamless-muted">An example. Your board comes from your own words.</figcaption>
         </figure>
