@@ -91,7 +91,7 @@ Day N+1 needs a Superthread board and a Superthread page before 10:00. Its GitHu
 
 Run the ranking from step 2 again with day N's id added to the shipped list. The first result is the next day's problem, and it should match "Up next" on build40for40.com. If day N+1 is in `GUEST_DAYS`, its problem is a secret until 10:00, so ask the user for it.
 
-Ask the user for the day's form factor (Day 2's was "Local LLM / SLM"). If it isn't decided yet, write "TBC".
+Ask the user for the day's three form factor picks. Since Day 14 the team picks three a day rather than one, to keep the build flexible (Day 14's were "CLI, WhatsApp, Agents"). If they aren't decided yet, write "TBC".
 
 ### Superthread
 
@@ -120,7 +120,7 @@ Everything goes in the General space (id 2). Use the `superthread-cli` skill for
   st pages create -s 2 --parent-page 7 --title "Day 4" --content "$(cat <<'MD'
   **Problem:** <title>
 
-  **Form factor:** <form factor>
+  **Form factor:** <the three picks, separated by commas>
 
   <the problem, in full, as it is on the site>
   MD
