@@ -52,7 +52,7 @@ function sponsorSelected() {
 }
 const anonymous = ref(false);
 const showAll = ref(false);
-const video = ref<"recording" | "shorts">("shorts");
+const video = ref<"demo" | "recording" | "shorts">("demo");
 const sponsoring = ref(false);
 
 const idea = computed(() => props.entry.idea);
@@ -94,7 +94,12 @@ const liveStyle = computed(() => isLive.value || isNext.value || isShipped.value
 const watch = computed(() => (isLive.value ? links.twitch : isShipped.value ? shippedIdea.value.recordingUrl : null));
 const watchBrand = computed(() => (watch.value?.includes("youtube.com") ? "youtube" : "twitch"));
 const hasShorts = computed(() => !!shippedIdea.value?.shorts?.length);
-const view = computed(() => (hasShorts.value ? video.value : "recording"));
+const videoTabs = computed(() => [
+  ...(shippedIdea.value.demoUrl ? [["demo", "Demo"]] : []),
+  ["recording", "Full build"],
+  ...(hasShorts.value ? [["shorts", "Shorts"]] : []),
+]);
+const view = computed(() => videoTabs.value.some(([value]) => value === video.value) ? video.value : hasShorts.value ? "shorts" : "recording");
 // YouTube shorts play in place, but only load YouTube once someone presses play.
 const youtubeId = (url: string) => url.match(/youtube\.com\/shorts\/([\w-]+)/)?.[1];
 const playing = ref("");
@@ -229,7 +234,8 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
       <div class="flex aspect-video flex-col bg-player lg:min-h-100">
         <div class="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-2.5 p-4 text-center">
           <template v-if="isShipped">
-            <div v-if="view === 'shorts'" class="absolute inset-0 flex justify-center gap-2 px-3 pt-13 pb-3">
+            <video v-if="view === 'demo'" :src="shippedIdea.demoUrl" :poster="shippedIdea.demoPoster ?? shippedIdea.screenshot" controls playsinline preload="none" aria-label="App demo" class="absolute inset-x-0 bottom-0 h-[calc(100%-3.5rem)] w-full object-contain" />
+            <div v-else-if="view === 'shorts'" class="absolute inset-0 flex justify-center gap-2 px-3 pt-13 pb-3">
               <template v-for="short in shippedIdea.shorts" :key="short.title">
               <iframe
                 v-if="playing === short.url"
@@ -270,15 +276,15 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
               <a :href="shippedIdea.recordingUrl" target="_blank" rel="noopener" class="relative rounded-full bg-brand-lime text-brand-lime-ink hover:bg-brand-lime-hover px-5 py-3 text-[15px] font-semibold no-underline">▶ Watch the full build</a>
               <p class="relative m-0 font-mono text-xs text-night-sub">All {{ shippedIdea.buildTime }} of it, on {{ brands[watchBrand].name }}.</p>
             </template>
-            <div v-if="hasShorts" class="absolute top-2.5 left-2.5 z-1 flex gap-1.5" role="group" aria-label="Video">
+            <div v-if="videoTabs.length > 1" class="absolute top-2.5 left-2.5 z-1 flex gap-1.5" role="group" aria-label="Video">
               <button
-                v-for="[value, text] in [['recording', 'Full build'], ['shorts', 'Shorts']]"
+                v-for="[value, text] in videoTabs"
                 :key="value"
                 type="button"
-                :aria-pressed="video === value"
+                :aria-pressed="view === value"
                 class="bg-night/60 px-3 py-1.5 aria-pressed:border-brand-lime aria-pressed:text-brand-lime"
                 :class="pill"
-                @click="video = value as 'recording' | 'shorts'"
+                @click="video = value as 'demo' | 'recording' | 'shorts'"
               >{{ text }}</button>
             </div>
             <ShareButton v-if="share" class="absolute top-2.5 right-2.5 z-1 max-w-[calc(100%-11rem)] justify-end" v-bind="share" label="Share" />
@@ -457,6 +463,7 @@ const pill = "cursor-pointer rounded-full border border-night-edge bg-transparen
           <a v-if="shippedIdea.appUrl" :href="shippedIdea.appUrl" target="_blank" rel="noopener" class="min-w-56" :class="mainButton">{{ isWrecked ? "See how far we got" : "Try this idea" }} ↗</a>
           <a v-if="shippedIdea.postUrl" :href="shippedIdea.postUrl" target="_blank" rel="noopener" :class="smallLink">Read how it went ↗</a>
         </div>
+        <video v-if="isShipped && shippedIdea.demoUrl" :src="shippedIdea.demoUrl" :poster="shippedIdea.demoPoster ?? shippedIdea.screenshot" controls playsinline preload="none" aria-label="App demo" class="aspect-video w-full rounded-md bg-player lg:hidden" />
         <a v-if="entry.status === 'guest'" href="#join" class="self-start" :class="smallLink">Suggest a guest</a>
 
         <div class="mt-auto flex flex-col gap-2.5 border-t border-night-line pt-3">

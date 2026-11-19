@@ -34,6 +34,9 @@ export interface ShippedIdea extends Idea {
   recordingUrl: string;
   postUrl?: string;
   screenshot?: string;
+  // A short product walkthrough, separate from the full build recording.
+  demoUrl?: string;
+  demoPoster?: string;
   // A frame from the day's stream, behind "Watch the full build".
   still?: string;
   shorts: Short[];
@@ -300,6 +303,25 @@ export const history: Record<number, ShippedIdea> = {
     screenshot: "/screenshots/dumpling.webp",
     shorts: [],
   },
+  14: {
+    "id": "45c47875-ed0a-4cf1-bd02-b4c78d462af2",
+    "title": "Unbilled seamstress hours",
+    "problem": "An atelier handling made-to-order garments and high-value alterations has no tech-automated system to track, manage and invoice work. Orders, seamstress hours and client billing are done manually, so time is lost, hours go unbilled, and payroll is error-prone. Need a system to easily track per-garment orders with photos and descriptions; time-based client invoicing at an hourly rate (optional fixed-price rounding); assign garments to different seamstresses; seamstresses log time and photos; monthly timesheets for hourly pay.",
+    "owner": "Alex",
+    "sponsors": [
+        {
+            "name": "Alex",
+            "amount": 40
+        }
+    ],
+    "buildTime": "4:40:00",
+    "appUrl": "https://build40for40.com/seamless/",
+    "recordingUrl": "https://www.twitch.tv/40for40",
+    "screenshot": "/screenshots/seamless.webp",
+    "demoUrl": "/seamless/demo.mp4?v=elevenlabs-1",
+    "demoPoster": "/seamless/demo-poster.jpg?v=elevenlabs-1",
+    "shorts": []
+},
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");

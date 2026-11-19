@@ -9,13 +9,13 @@ From 16:40 UK a day counts as shipped. Until it has an entry in `history` in `sr
 
 ## 1. Get the inputs
 
-Ask for everything below in one message, and go ahead with whatever the user has. Only the app link is required.
+Ask for everything below in one message, and go ahead with whatever the user has. Only the app link is required. Reuse links and media already supplied in the conversation. Do not ask for build time or block wrap-up on it; preserve an existing value or use the history schema’s default of `"4:40:00"` for a new entry.
 
 | Input | Field | If missing |
 | --- | --- | --- |
 | App link | `appUrl` | Stop. A day can't ship without one |
+| Short app demo, when available | `demoUrl`, `demoPoster` | Leave them out. Reuse an existing hosted demo and poster rather than upload duplicates |
 | Full build recording (YouTube, or a Twitch VOD) | `recordingUrl` | Use `links.twitch` from `src/data/site.ts` |
-| Build time, if it wasn't the full 4:40:00 | `buildTime` | `"4:40:00"` |
 | Shorts: title, platform and link for each | `shorts` | `[]`. YouTube shorts are picked up by the 08:00 cron, so only add one here to override it or for TikTok and Instagram |
 | A screenshot or GIF that shows what the app does | `screenshot` | Offer to take one of the live app |
 | A still from the day's stream | `still` | Pick a frame from the Twitch recording's thumbnails, save as `public/stills/day-NN.webp` |
@@ -64,6 +64,7 @@ Add the day to `history` in `src/data/days.ts`, in the same shape as the entries
   },
 ```
 
+- Keep a short app demo separate from `recordingUrl`, which is the full build. The day box plays `demoUrl` inline on desktop and mobile. A landing-page screenshot is suitable when the user requests one.
 - `id` must be the production D1 id. Title, problem, owner and sponsors are only fallbacks: the board swaps in the live values by id.
 - Leave out `postUrl` and `screenshot` when there are none. Don't add empty strings.
 - `platform` is a key in `src/data/brands.ts`. YouTube Shorts play inside the day box, and the rest open as links.
