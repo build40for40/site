@@ -63,10 +63,12 @@ Follow "Starting a new repo" in the 40 for 40 folder's `CLAUDE.md` (the parent o
 
 ```bash
 gh repo create build40for40/<repo> --public --description "<title>, built live for 40 for 40"
-gh repo edit build40for40/<repo> --enable-auto-merge --delete-branch-on-merge
+gh repo edit build40for40/<repo> --enable-auto-merge --delete-branch-on-merge --enable-squash-merge --enable-merge-commit=false --enable-rebase-merge=false
 ```
 
-The second line copies Joyo's settings. GitHub sometimes answers these with a 502, so check they took with `gh api repos/build40for40/<repo> --jq '{allow_auto_merge, delete_branch_on_merge}'`, and run it again if they didn't.
+The second line turns on auto-merge, makes squash the only way to merge a PR and deletes each branch once it's merged. GitHub sometimes answers these with a 502, so check they took with `gh api repos/build40for40/<repo> --jq '{allow_auto_merge, allow_squash_merge, allow_merge_commit, allow_rebase_merge, delete_branch_on_merge}'` (true, true, false, false, true), and run it again if they didn't.
+
+CI checks get required on `main` once CI exists, at the end of step 5.
 
 In the 40 for 40 folder, `git init -b main` a `<repo>` folder next to `site/` with `origin` set to `git@github.com:build40for40/<repo>.git`, and commit straight to `main`:
 
@@ -80,7 +82,7 @@ CI deploys use the `CLOUDFLARE_API_TOKEN` organisation secret, so don't add one 
 
 ## 4. Report
 
-Tell the user the repo link, the board's public link and the page, whether they were created or already there, and whether the form factor is still TBC.
+Tell the user the repo link, the board's public link and the page, whether they were created or already there, and whether the form factor is still TBC. Say too that `main` won't require CI checks until the repo has CI (step 5).
 
 ## 5. When the app has a name
 
@@ -101,3 +103,29 @@ Apps are served at `build40for40.com/<app>/` by their own Worker. Once the repo 
 - **`.github/workflows/ci.yml`:** tests and build on every PR, a preview upload with a link commented on the PR, and a deploy on pushes to `main`. Change the `/joyo/` in the preview link to the app's path.
 
 The app must build for its own path, or its assets load from the site's root. Joyo sets Vite's `base: '/joyo/'`, and Sidekick uses `base: './'`. Merge the PR and check `https://build40for40.com/<app>/` answers 200. Then the app link is ready for `finish-day` at the end of the day.
+
+### Require CI on `main`
+
+Once a CI workflow is on `main`, whether from this PR or a template's own workflow, add a ruleset so nothing merges to `main` without passing it. Handup's "main: require CI" is the reference.
+
+The required checks are the jobs that run on `pull_request` with no `paths` filter, named as GitHub shows them: the job's `name:` if it has one, otherwise its id (`ci` in Joyo and the web-app, cli-agent and whatsapp-agent templates, `check` in browser-extension and mobile-app). A job with a `paths` filter never reports on PRs that don't touch those paths, so requiring it would block them. Check the names on a real PR with `gh pr checks`.
+
+```bash
+gh api repos/build40for40/<repo>/rulesets --method POST --input - <<'JSON'
+{
+  "name": "main: require CI",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": { "ref_name": { "include": ["~DEFAULT_BRANCH"], "exclude": [] } },
+  "rules": [{
+    "type": "required_status_checks",
+    "parameters": {
+      "strict_required_status_checks_policy": false,
+      "required_status_checks": [{ "context": "ci", "integration_id": 15368 }]
+    }
+  }]
+}
+JSON
+```
+
+`15368` is GitHub Actions. List one entry per required job. Check `gh api repos/build40for40/<repo>/rulesets` first and update the existing ruleset instead of adding a second. From then on, changes reach `main` through PRs: a direct push to `main` is rejected because its checks haven't run.

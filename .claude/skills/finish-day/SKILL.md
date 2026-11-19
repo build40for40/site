@@ -1,11 +1,11 @@
 ---
 name: finish-day
-description: Put a finished day's app on build40for40.com by adding it to the shipped history in src/data/days.ts and opening the PR. Use when a day ships or when a shipped day gets new links. Triggers include "finish day 3", "day 3 shipped", "ship today", "add the recording for day 2", "here's today's app link", or a link to an app under build40for40.com.
+description: Put a finished day's app on build40for40.com by adding it to the shipped history in src/data/days.ts and opening the PR, then talk the user through the day's LinkedIn post and draft it. Use when a day ships or when a shipped day gets new links. Triggers include "finish day 3", "day 3 shipped", "ship today", "add the recording for day 2", "here's today's app link", or a link to an app under build40for40.com.
 ---
 
 # Finish a day
 
-From 16:40 UK a day counts as shipped. Until it has an entry in `history` in `src/data/days.ts`, its box links the full build to the Twitch channel and hides "Try this idea". This skill adds that entry and gets it to production through a PR. It does no setup for the next day: the `kickoff-day` skill makes the board, page and repo when that day starts.
+From 16:40 UK a day counts as shipped. Until it has an entry in `history` in `src/data/days.ts`, its box links the full build to the Twitch channel and hides "Try this idea". This skill adds that entry and gets it to production through a PR (steps 1 to 7), then helps write the day's LinkedIn post while it's fresh (step 8). It does no setup for the next day: the `kickoff-day` skill makes the board, page and repo when that day starts.
 
 ## 1. Get the inputs
 
@@ -82,3 +82,26 @@ Add the day to `history` in `src/data/days.ts`, in the same shape as the entries
 - Enable auto-merge (`gh pr merge --auto --squash`) and wait for CI. Merging deploys it in about a minute.
 - Never deploy by hand. See Deploys in `AGENTS.md`.
 - If the recording, shorts or write-up are still to come, say so in the summary so the user knows to come back with them.
+
+## 8. Draft the LinkedIn post
+
+Once the PR is open, start on the day's LinkedIn post while CI runs. You're the user's thinking partner for a first draft, not the author of the final post. Skip this step when the user is only adding links to a day that already shipped, or when the day's page under "Linkedin Posts" already has a "Posted" section.
+
+The `linkedin-post` skill has the sources, voice, format and where drafts are saved. This step adds the conversation before the draft. **Work in this order, and never skip ahead:**
+
+1. **Raw material first.** Read what `linkedin-post` steps 2 and 3 list: the posts that went out, then the day's repo, its Superthread page with the prep, demo and retro notes, and its board. Search transcripts for moments rather than reading them in full. Tell the user in a few lines what you read and what wasn't there.
+2. **Key questions second.** Ask these in one message, and let them answer by typing or in Wispr Flow:
+   1. What's the one line that makes the app click, and why is it called that?
+   2. Which of the day's three form factors did you go with, and why?
+   3. What was funny, dumb or impressive about today?
+   4. What went wrong, and how much time was left at the worst moment?
+   5. What's the best thing anyone said: the guest, the problem owner or the team?
+   6. Who's posting it, and who or what should be tagged?
+   7. What image or clip have you got?
+
+   Help them find the story rather than fill in a form. Use what you read to jog their memory ("the retro says the deploy broke at 16:20, was that on stream?"), and follow up on anything funny, tense or surprising. Ask whether there's a running joke or a callback to an earlier day. If an answer contradicts the notes, trust the user.
+3. **Draft third,** only once they say they're ready or the questions are covered. Write two or three versions with different hooks, plus the comments, tags and media, as in `linkedin-post` steps 4 and 5. Above the drafts, add:
+
+   > A first draft. Whoever posts it will rewrite most of it to make it funnier and punchier.
+
+   Then save it as in `linkedin-post` step 6. When the user comes back with what they posted, follow its step 7.
