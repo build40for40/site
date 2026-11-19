@@ -1,0 +1,134 @@
+---
+import PostHog from "../../components/posthog.astro";
+import "../../styles/global.css";
+
+const title = "Seamless: run your atelier in Claude, or in your own software";
+const description = "Two ways to stop seamstress hours vanishing into a notebook. Set up your order board in one chat with Claude, or use Seamless, workshop software made for ateliers. Day 14 of 40 for 40.";
+const url = new URL(Astro.url.pathname, Astro.site);
+const repo = "https://github.com/build40for40/seamstress";
+
+const wrap = "mx-auto w-full max-w-[1040px] px-4 sm:px-6";
+const button = "inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-base font-semibold no-underline transition-colors";
+
+const options = [
+  {
+    key: "claude",
+    label: "Option one",
+    title: "I'd rather work in Claude",
+    body: "Paste one prompt, chat for ten minutes, and Claude builds your order board in Superthread from how you actually work. After that you just ask it things, like what's unbilled or where the Costa gown has got to.",
+    points: [
+      "Nothing new to learn. You talk, it does the admin",
+      "Your stages and your words, not somebody's template",
+      "A live order board and an owner dashboard, right inside Claude",
+    ],
+    fits: "Best if you already live in Claude, or you want to be up and running before your tea goes cold.",
+    href: "/seamless/claude/",
+    cta: "Set it up in Claude",
+  },
+  {
+    key: "app",
+    label: "Option two",
+    title: "I'd rather have my own software",
+    body: "Seamless, the app. A studio for you, a timer on every seamstress's phone and a tracking page for each client. Made for ateliers and nothing else.",
+    points: [
+      "Seamstresses tap Start and Stop. No passwords, no typing up hours",
+      "You approve hours and photos before a client sees a thing",
+      "Invoices against the quote, monthly timesheets, and three numbers that tell you how it's going",
+    ],
+    fits: "Best if you have a team logging hours every day and clients who like to peek at progress.",
+    href: "/seamless/app/",
+    cta: "See the app",
+  },
+];
+
+const compare = [
+  { q: "Where you work", claude: "In a chat with Claude", app: "In Seamless, in your browser" },
+  { q: "Where your seamstresses log hours", claude: "They tell you or Claude, and Claude writes it down", app: "A timer on their own phone" },
+  { q: "What your clients see", claude: "Whatever you send them", app: "Their own tracking page, with approved hours and photos" },
+  { q: "What you need", claude: "A Claude account that can add connectors, plus Superthread", app: "An email address" },
+];
+---
+
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/seamless/icon.svg" />
+    <link rel="canonical" href={url} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="40 for 40" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={url} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="theme-color" content="#fbf6f4" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" />
+    <PostHog />
+  </head>
+  <body class="min-h-screen bg-seamless-ground bg-[repeating-linear-gradient(90deg,rgb(43_27_51/0.035)_0_1px,transparent_1px_14px)] font-seamless-sans text-[16px] leading-relaxed text-seamless-ink antialiased [&_:focus-visible]:outline-2 [&_:focus-visible]:outline-offset-4 [&_:focus-visible]:outline-seamless-claret">
+    <nav class={`${wrap} flex items-center justify-between gap-4 py-5`} aria-label="Seamless">
+      <a href="/seamless/" class="font-seamless-serif text-[26px] font-semibold italic text-seamless-claret no-underline">Seamless</a>
+      <a href="#choose" class="rounded-full border-[1.5px] border-seamless-claret px-4 py-2 text-sm font-semibold text-seamless-claret no-underline hover:bg-seamless-blush">Pick your way</a>
+    </nav>
+
+    <main id="top">
+      <header class={`${wrap} flex flex-col gap-6 pt-6 pb-10 lg:pt-12`}>
+        <p class="self-start rounded-full bg-seamless-blush px-3.5 py-1.5 text-xs font-semibold tracking-[0.14em] text-seamless-claret-dark uppercase">For ateliers · Day 14 of 40 for 40</p>
+        <h1 class="max-w-[820px] font-seamless-serif text-[40px] leading-[1.05] font-semibold sm:text-[56px]">
+          Your atelier, run <em class="font-medium text-seamless-claret">your way.</em>
+        </h1>
+        <p class="max-w-[620px] text-lg text-seamless-muted">Seamless keeps track of every order, every hour sewn and every invoice still to chase. There are two ways to have it. One question decides which: would you rather work in Claude, or have your own software?</p>
+      </header>
+
+      <section id="choose" class={`${wrap} pb-16`} aria-labelledby="choose-title">
+        <h2 id="choose-title" class="sr-only">Pick your way</h2>
+        <div class="grid gap-6 md:grid-cols-2">
+          {options.map((option) => (
+            <article class="flex flex-col gap-4 rounded-3xl border border-seamless-line-soft bg-seamless-paper p-6 shadow-[0_24px_60px_rgb(43_27_51/0.10)] sm:p-8">
+              <p class="text-xs font-semibold tracking-[0.14em] text-seamless-claret-dark uppercase">{option.label}</p>
+              <h3 class="font-seamless-serif text-[28px] leading-tight font-semibold sm:text-[32px]">{option.title}</h3>
+              <p class="text-seamless-muted">{option.body}</p>
+              <ul class="flex flex-col gap-2.5">
+                {option.points.map((point) => (
+                  <li class="flex gap-3"><span class="mt-0.5 text-seamless-green" aria-hidden="true">✓</span><span>{point}</span></li>
+                ))}
+              </ul>
+              <p class="rounded-xl bg-seamless-blush px-4 py-3 text-sm text-seamless-claret-dark">{option.fits}</p>
+              <a href={option.href} data-seamless-choice={option.key} class={`${button} mt-auto self-start bg-seamless-claret text-seamless-paper hover:bg-seamless-claret-dark`}>{option.cta} <span aria-hidden="true">→</span></a>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section class="border-y border-seamless-line-soft bg-seamless-paper/70 py-16" aria-labelledby="compare-title">
+        <div class={wrap}>
+          <h2 id="compare-title" class="font-seamless-serif text-[30px] font-semibold sm:text-[36px]">Still torn?</h2>
+          <p class="mt-2 max-w-[600px] text-seamless-muted">Side by side. Neither is the wrong answer, and nobody's checking if you try both.</p>
+          <div class="mt-8 grid gap-4">
+            {compare.map((row) => (
+              <div class="grid gap-3 rounded-2xl border border-seamless-line-soft bg-seamless-paper p-5 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1fr)] sm:items-start sm:gap-6">
+                <h3 class="font-seamless-serif text-lg leading-snug font-semibold">{row.q}</h3>
+                <p class="text-[15px]"><span class="block text-xs font-semibold tracking-[0.1em] text-seamless-muted uppercase">In Claude</span>{row.claude}</p>
+                <p class="text-[15px]"><span class="block text-xs font-semibold tracking-[0.1em] text-seamless-muted uppercase">Your own software</span>{row.app}</p>
+              </div>
+            ))}
+          </div>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href="/seamless/claude/" class={`${button} bg-seamless-claret text-seamless-paper hover:bg-seamless-claret-dark`}>Set it up in Claude</a>
+            <a href="/seamless/app/" class={`${button} border-[1.5px] border-seamless-line bg-seamless-paper text-seamless-ink hover:border-seamless-claret`}>See the app</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class={`${wrap} flex flex-col gap-2 py-10 text-sm text-seamless-muted sm:flex-row sm:items-center sm:justify-between`}>
+      <p>Seamless is Day 14 of <a href="/" class="font-medium text-seamless-claret">40 for 40</a>, built live on Twitch.</p>
+      <p><a href={repo} class="font-medium text-seamless-claret">Code on GitHub</a></p>
+    </footer>
+  </body>
+</html>
