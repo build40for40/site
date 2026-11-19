@@ -316,7 +316,7 @@ export const history: Record<number, ShippedIdea> = {
     ],
     "buildTime": "4:40:00",
     "appUrl": "https://build40for40.com/seamless/",
-    "recordingUrl": "https://www.twitch.tv/40for40",
+    "recordingUrl": "https://www.twitch.tv/build40for40",
     "screenshot": "/screenshots/seamless.webp",
     "demoUrl": "/seamless/demo.mp4?v=elevenlabs-1",
     "demoPoster": "/seamless/demo-poster.jpg?v=elevenlabs-1",
