@@ -17,13 +17,13 @@ curl -s https://build40for40.com/api/problems | jq -c --argjson shipped '["<hist
 
 The first result is the problem the site is showing now. On Day 3 a problem submitted at 09:30 overtook the one that had been top the night before, so if the top two are close, or the top one was submitted overnight, ask the user which one the team is building. If the day is in `GUEST_DAYS`, ask the user for the problem.
 
-Ask for the form factor too if the Superthread page still says TBC, and for the app's name. The repo is named after the app (`joyo`, `sidekick`, `naughty-list`), lowercase with hyphens. If the app doesn't have a name yet, use `dayN` for now and rename it in step 5.
+Ask for the form factor too if the Superthread page still says TBC, and for the app's name. Since Day 14 the team picks three form factors each day rather than one, to keep the build flexible (Day 14's were CLI, WhatsApp and Agents), so ask for all three. The repo is named after the app (`joyo`, `sidekick`, `naughty-list`), lowercase with hyphens. If the app doesn't have a name yet, use `dayN` for now and rename it in step 5.
 
 ## 2. Check the Superthread page
 
 Use the `superthread-cli` skill. In the General space (id 2), find the "Day N" page under Days (id 7) and the `dayN` board.
 
-- If the page is missing, or shows a different problem, write it again in the same format as "Day 2": `**Problem:**` with the title, `**Form factor:**`, then the problem in full. Use `st pages update <id> --content` on an existing page.
+- If the page is missing, or shows a different problem, write it again in the same format as "Day 2": `**Problem:**` with the title, `**Form factor:**` with the three picks separated by commas, then the problem in full. Use `st pages update <id> --content` on an existing page.
 - If the board is missing, create it as in step 8 of `finish-day`. If it isn't public, make it public the same way.
 - Add the repo link to the page once the repo exists: a `**Repo:**` line under the form factor.
 
@@ -40,7 +40,7 @@ The second line copies Joyo's settings. GitHub sometimes answers these with a 50
 
 In the 40 for 40 folder, `git init -b main` a `<repo>` folder next to `site/` with `origin` set to `git@github.com:build40for40/<repo>.git`, and commit straight to `main`:
 
-- `AGENTS.md` about this repo only: the day number and date, the problem's title and full text, the owner, the form factor, a pointer to `../AGENTS.md` for shared context, and that it's served at `build40for40.com/<app>/` once it has a name.
+- `AGENTS.md` about this repo only: the day number and date, the problem's title and full text, the owner, the three form factor picks, a pointer to `../AGENTS.md` for shared context, and that it's served at `build40for40.com/<app>/` once it has a name.
 - `CLAUDE.md` as a symlink: `ln -s AGENTS.md CLAUDE.md`.
 - A `.gitignore` that covers `.env*`, `.dev.vars*` (keeping the `.example` files), `.wrangler/`, `node_modules/` and `dist/`.
 
