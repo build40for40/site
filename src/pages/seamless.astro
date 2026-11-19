@@ -1,0 +1,196 @@
+---
+import PostHog from "../components/posthog.astro";
+import "../styles/global.css";
+import prompt from "../data/seamless-prompt.md?raw";
+
+const title = "Seamless: your atelier, set up in one chat with Claude";
+const description = "Copy one prompt into Claude, tell it about your atelier, and it walks you through Superthread and builds your board with your real jobs on it. Day 14 of 40 for 40.";
+const url = new URL(Astro.url.pathname, Astro.site);
+const appUrl = "https://seamstress.build40for40.com";
+const repo = "https://github.com/build40for40/seamstress";
+
+const wrap = "mx-auto w-full max-w-[1040px] px-4 sm:px-6";
+const button = "inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-base font-semibold no-underline transition-colors";
+
+const steps = [
+  { n: "1", title: "Paste one prompt into Claude", body: "Copy it below, open a new chat at claude.ai, paste, send. That's the whole install." },
+  { n: "2", title: "Say hello", body: "Claude asks your name, your company and what you make. No forms, no dropdowns, no \"industry\" picker." },
+  { n: "3", title: "Get signed up and connected", body: "Claude walks you through making a Superthread account and connecting it, one screen at a time. You type the passwords. Claude never sees them." },
+  { n: "4", title: "Talk through an order", body: "From first enquiry to getting paid. Tell it who's on your team and what's on the rail right now." },
+  { n: "5", title: "Your board appears", body: "Your stages, in your words, with the jobs you just mentioned already on it. Not an empty board in sight." },
+];
+
+const youGet = [
+  "A board built from how you actually work, not a template someone guessed at",
+  "Cards for the garments you're making right now, each with its own checklist of steps",
+  "A rules page your team and Claude both follow, so hours land on the right garment",
+  "Unpaid invoices kept firmly in the \"chase this\" pile until the money's in",
+  "Afterwards, just ask Claude: \"what's unbilled?\" or \"where's the Costa gown?\"",
+];
+
+const youNeed = [
+  "A Claude account at claude.ai, on a plan that lets you add connectors",
+  "The email you use for the business",
+  "About ten minutes, and a rough idea of what's on the rail",
+];
+---
+
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <link rel="icon" type="image/svg+xml" href="/seamless/icon.svg" />
+    <link rel="canonical" href={url} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="40 for 40" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={url} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="theme-color" content="#fbf6f4" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" />
+    <PostHog />
+  </head>
+  <body class="min-h-screen bg-seamless-ground bg-[repeating-linear-gradient(90deg,rgb(43_27_51/0.035)_0_1px,transparent_1px_14px)] font-seamless-sans text-[16px] leading-relaxed text-seamless-ink antialiased [&_:focus-visible]:outline-2 [&_:focus-visible]:outline-offset-4 [&_:focus-visible]:outline-seamless-claret">
+    <nav class={`${wrap} flex items-center justify-between gap-4 py-5`} aria-label="Seamless">
+      <a href="#top" class="font-seamless-serif text-[26px] font-semibold italic text-seamless-claret no-underline">Seamless</a>
+      <a href="#prompt" class="rounded-full border-[1.5px] border-seamless-claret px-4 py-2 text-sm font-semibold text-seamless-claret no-underline hover:bg-seamless-blush">Get the prompt</a>
+    </nav>
+
+    <main id="top">
+      <header class={`${wrap} grid gap-10 pt-6 pb-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center lg:pt-12 lg:pb-24`}>
+        <div class="flex flex-col gap-6">
+          <p class="self-start rounded-full bg-seamless-blush px-3.5 py-1.5 text-xs font-semibold tracking-[0.14em] text-seamless-claret-dark uppercase">For ateliers · Day 14 of 40 for 40</p>
+          <h1 class="font-seamless-serif text-[40px] leading-[1.05] font-semibold sm:text-[56px]">
+            Your atelier, set up in <em class="font-medium text-seamless-claret">one chat.</em>
+          </h1>
+          <p class="max-w-[540px] text-lg text-seamless-muted">Copy one prompt into Claude and tell it about your business. It walks you through Superthread and builds your board while you talk, with the jobs you're making right now already on it. No hours vanish into a notebook ever again. Well, fewer.</p>
+          <div class="flex flex-wrap items-center gap-3">
+            <button type="button" data-copy-prompt class={`${button} cursor-pointer bg-seamless-claret text-seamless-paper hover:bg-seamless-claret-dark`}>
+              <span data-copy-label>Copy the prompt</span>
+            </button>
+            <a href="https://claude.ai/new" target="_blank" rel="noopener" class={`${button} border-[1.5px] border-seamless-line bg-seamless-paper text-seamless-ink hover:border-seamless-claret`}>Open Claude ↗</a>
+          </div>
+          <p class="text-sm text-seamless-muted">Copy, open a new chat, paste, send. Claude takes it from there.</p>
+        </div>
+
+        <figure class="rounded-3xl border border-seamless-line-soft bg-seamless-paper p-5 shadow-[0_24px_60px_rgb(43_27_51/0.10)] sm:p-6" aria-label="An example of the conversation">
+          <div class="flex flex-col gap-3 text-[15px]">
+            <p class="max-w-[85%] self-start rounded-2xl rounded-tl-sm bg-seamless-blush px-4 py-2.5">Hello! I'm going to set up your workshop with you. First things first: what's your name, and what's your atelier called?</p>
+            <p class="max-w-[85%] self-end rounded-2xl rounded-tr-sm bg-seamless-claret px-4 py-2.5 text-seamless-paper">Rosa. Atelier Rosa, bridal and alterations in Lisbon.</p>
+            <p class="max-w-[85%] self-start rounded-2xl rounded-tl-sm bg-seamless-blush px-4 py-2.5">Lovely. Walk me through a typical order, from the first message to getting paid.</p>
+            <p class="max-w-[85%] self-end rounded-2xl rounded-tr-sm bg-seamless-claret px-4 py-2.5 text-seamless-paper">They come in, I quote, they pay 30%, Beatriz or Ana sews, a fitting or two, they pay the rest when they collect.</p>
+            <p class="max-w-[85%] self-start rounded-2xl rounded-tl-sm bg-seamless-blush px-4 py-2.5">Got it. Here's your board: Inquiry, Quoted, Accepted, In Progress, Fitting, Ready &amp; Invoiced, Paid &amp; Collected. Shall I make it?</p>
+          </div>
+          <figcaption class="mt-4 text-xs text-seamless-muted">An example. Your board comes from your own words.</figcaption>
+        </figure>
+      </header>
+
+      <section class="border-y border-seamless-line-soft bg-seamless-paper/70 py-16" aria-labelledby="how">
+        <div class={wrap}>
+          <h2 id="how" class="font-seamless-serif text-[30px] font-semibold sm:text-[36px]">How it goes</h2>
+          <p class="mt-2 max-w-[600px] text-seamless-muted">One conversation. You only leave it to sign up and connect, and Claude holds your hand for both.</p>
+          <ol class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {steps.map((step) => (
+              <li class="flex flex-col gap-2 rounded-2xl border border-seamless-line-soft bg-seamless-paper p-5">
+                <span class="flex h-9 w-9 items-center justify-center rounded-full bg-seamless-claret font-seamless-serif text-lg font-semibold text-seamless-paper" aria-hidden="true">{step.n}</span>
+                <h3 class="font-seamless-serif text-lg font-semibold leading-snug">{step.title}</h3>
+                <p class="text-[15px] text-seamless-muted">{step.body}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section class={`${wrap} grid gap-10 py-16 md:grid-cols-2`}>
+        <div>
+          <h2 class="font-seamless-serif text-[28px] font-semibold">What you end up with</h2>
+          <ul class="mt-5 flex flex-col gap-3">
+            {youGet.map((item) => (
+              <li class="flex gap-3"><span class="mt-1 text-seamless-green" aria-hidden="true">✓</span><span>{item}</span></li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h2 class="font-seamless-serif text-[28px] font-semibold">What you need</h2>
+          <ul class="mt-5 flex flex-col gap-3">
+            {youNeed.map((item) => (
+              <li class="flex gap-3"><span class="mt-1 text-seamless-claret" aria-hidden="true">✂</span><span>{item}</span></li>
+            ))}
+          </ul>
+          <p class="mt-5 text-sm text-seamless-muted">You'll make a Superthread account on the way. Claude tells you exactly what to type.</p>
+        </div>
+      </section>
+
+      <section id="prompt" class="border-t border-seamless-line-soft bg-seamless-paper/70 py-16" aria-labelledby="prompt-title">
+        <div class={wrap}>
+          <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 id="prompt-title" class="font-seamless-serif text-[30px] font-semibold sm:text-[36px]">The prompt</h2>
+              <p class="mt-2 max-w-[600px] text-seamless-muted">Nothing hidden. This is everything Claude is told. Copy it, paste it into a new chat at claude.ai, and send.</p>
+            </div>
+            <button type="button" data-copy-prompt class={`${button} cursor-pointer bg-seamless-claret text-seamless-paper hover:bg-seamless-claret-dark`}>
+              <span data-copy-label>Copy the prompt</span>
+            </button>
+          </div>
+          <details class="group mt-6 rounded-2xl border border-seamless-line bg-seamless-paper">
+            <summary class="cursor-pointer list-none px-5 py-4 font-semibold text-seamless-claret marker:hidden">
+              <span class="group-open:hidden">Read the whole prompt</span><span class="hidden group-open:inline">Hide the prompt</span>
+            </summary>
+            <pre class="max-h-[520px] overflow-auto border-t border-seamless-line-soft px-5 py-4 font-mono text-[13px] leading-relaxed whitespace-pre-wrap text-seamless-ink">{prompt}</pre>
+          </details>
+          <p class="mt-4 text-sm text-seamless-muted" role="status" aria-live="polite" data-copy-status></p>
+        </div>
+      </section>
+    </main>
+
+    <footer class={`${wrap} flex flex-col gap-2 py-10 text-sm text-seamless-muted sm:flex-row sm:items-center sm:justify-between`}>
+      <p>Seamless is Day 14 of <a href="/" class="font-medium text-seamless-claret">40 for 40</a>, built live on Twitch.</p>
+      <p class="flex gap-4">
+        <a href={appUrl} class="font-medium text-seamless-claret">The Seamless app</a>
+        <a href={repo} class="font-medium text-seamless-claret">Code on GitHub</a>
+      </p>
+    </footer>
+
+    <script is:inline define:vars={{ prompt }}>
+      const buttons = document.querySelectorAll("[data-copy-prompt]");
+      const status = document.querySelector("[data-copy-status]");
+      const copyWithTextarea = (text) => {
+        const area = document.createElement("textarea");
+        area.value = text;
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.select();
+        const ok = document.execCommand("copy");
+        area.remove();
+        if (!ok) throw new Error("copy failed");
+      };
+      buttons.forEach((button) => {
+        button.addEventListener("click", async () => {
+          const label = button.querySelector("[data-copy-label]");
+          try {
+            try {
+              await navigator.clipboard.writeText(prompt);
+            } catch {
+              copyWithTextarea(prompt);
+            }
+            label.textContent = "Copied. Now paste it into Claude";
+            if (status) status.textContent = "Prompt copied. Open a new chat at claude.ai and paste it.";
+          } catch {
+            label.textContent = "Couldn't copy. Open the prompt below";
+            const details = document.querySelector("#prompt details");
+            if (details) details.open = true;
+          }
+          setTimeout(() => { label.textContent = "Copy the prompt"; }, 4000);
+        });
+      });
+    </script>
+  </body>
+</html>
