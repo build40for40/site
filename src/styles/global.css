@@ -50,6 +50,20 @@
   --color-lava-deep: oklch(0.26 0.08 30);
   --color-lava: oklch(0.44 0.17 31);
 
+  /* Seamless (/seamless): the app's dressmaker look, claret on a pinstripe ground. */
+  --color-seamless-ink: #2b1b33;
+  --color-seamless-muted: #6a5870;
+  --color-seamless-ground: #fbf6f4;
+  --color-seamless-paper: #ffffff;
+  --color-seamless-claret: #7a2e4d;
+  --color-seamless-claret-dark: #5e2239;
+  --color-seamless-blush: #f3e1e7;
+  --color-seamless-line: #cbb9c9;
+  --color-seamless-line-soft: #e6dbe3;
+  --color-seamless-green: #2f6b4f;
+  --font-seamless-serif: "Playfair Display", Georgia, serif;
+  --font-seamless-sans: "Inter", system-ui, sans-serif;
+
   /* Hookr (/hookr): After Hours, a neon sign on a late street. */
   --color-hookr-midnight: #0b0710;
   --color-hookr-night: #12091a;
