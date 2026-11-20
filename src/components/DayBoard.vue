@@ -7,6 +7,7 @@ import ProblemsPool, { type Dock, type PoolTile } from "./ProblemsPool.vue";
 import {
   BUILD_MS,
   DEFAULT_AMOUNT,
+  GUEST_DAYS,
   buildBoard,
   countdown,
   dayDate,
@@ -453,10 +454,12 @@ function pick(key: string, preset: number) {
 
 async function sponsor(amount: number, anonymous: boolean) {
   const entry = selected.value;
-  const target = entry.status === "guest" ? { day: entry.day } : entry.status === "us" ? {} : { problem: entry.idea?.id };
+  const target = onGuestDay(entry) ? { day: entry.day } : entry.status === "us" ? {} : { problem: entry.idea?.id };
   const outcome = await pay(() => startCheckout({ amount: amount * 100, anonymous, ...target }), `Sponsor ${money(amount)}`);
   if (outcome.status === "paid") credit(entry, { name: outcome.name ?? "Anonymous", amount: outcome.amount, ...(outcome.group ? { group: outcome.group } : {}) });
 }
+
+const onGuestDay = ({ day }: Entry) => day !== undefined && GUEST_DAYS.has(day);
 
 function credit({ key, day, status, idea: entryIdea }: Entry, sponsor: Sponsor) {
   if (status === "us") {
@@ -465,7 +468,7 @@ function credit({ key, day, status, idea: entryIdea }: Entry, sponsor: Sponsor) 
       backed.value = key;
     }, "day-box");
   }
-  if (status === "guest" && day) {
+  if (day !== undefined && GUEST_DAYS.has(day)) {
     return swap(() => {
       (guestSponsors.value[day] ??= []).push(sponsor);
       backed.value = key;

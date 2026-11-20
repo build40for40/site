@@ -62,3 +62,12 @@ test("a day locks at 10:00, so a sponsor arriving mid-build only reshuffles the 
   const before = buildBoard(ideas, {}, Date.parse("2026-11-02T09:00:00Z"));
   expect(before.days.find((d) => d.idea)!.idea!.id).toBe("late");
 });
+
+test("a guest day shows as shipped once it has history, and keeps the day's own sponsors", () => {
+  const shipped = { ...idea("guest-day-15", 0), buildTime: "4:40:00", appUrl: "/a-line/", recordingUrl: "#", shorts: [] };
+  const sponsors = { 15: [{ name: "Ada", amount: 40 }] };
+  const during = buildBoard([], {}, Date.parse("2026-11-20T18:00:00Z"), sponsors);
+  expect(during.days[14]).toMatchObject({ status: "guest", sponsors: sponsors[15] });
+  const after = buildBoard([], { 15: shipped }, Date.parse("2026-11-20T18:00:00Z"), sponsors);
+  expect(after.days[14]).toMatchObject({ status: "shipped", idea: { id: "guest-day-15", appUrl: "/a-line/", sponsors: sponsors[15] } });
+});

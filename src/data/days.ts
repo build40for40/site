@@ -122,10 +122,12 @@ export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, 
 
   for (let day = 1; day <= TOTAL_DAYS; day++) {
     const base = { key: `day-${day}`, day, date: dayDate(day) };
-    if (GUEST_DAYS.has(day)) {
+    const guest = GUEST_DAYS.has(day);
+    if (guest && !(started(day) && history[day])) {
       days.push({ ...base, status: "guest", sponsors: guestSponsors[day] ?? [] });
     } else if (started(day)) {
-      const idea = history[day] ? { ...history[day], ...loaded.get(history[day].id) } : locked.get(day);
+      const shipped = history[day];
+      const idea = shipped ? { ...shipped, ...(guest ? { sponsors: guestSponsors[day] ?? [] } : loaded.get(shipped.id)) } : locked.get(day);
       const status = day === today && phase === "live" ? "live" : history[day]?.wrecked ? "wrecked" : "shipped";
       days.push(idea ? { ...base, status, idea } : { ...base, status: "open" });
     } else if (next < ranked.length) {
@@ -322,6 +324,17 @@ export const history: Record<number, ShippedIdea> = {
     "demoPoster": "/seamless/demo-poster.jpg?v=elevenlabs-1",
     "shorts": []
 },
+  15: {
+    id: "guest-day-15",
+    title: "Agency briefs full of holes",
+    problem: "An agency and a client shake on a pitch, then find out what they never agreed once the budget is spent. Early plans are full of holes, and the blind spots only show up when they're expensive to fix.",
+    sponsors: [],
+    buildTime: "4:40:00",
+    appUrl: "https://a-line.build40for40.com/",
+    recordingUrl: "https://www.twitch.tv/build40for40",
+    screenshot: "/screenshots/a-line.webp",
+    shorts: [],
+  },
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");
