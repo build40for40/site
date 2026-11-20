@@ -12,6 +12,7 @@ import {
   countdown,
   dayDate,
   dayStart,
+  guestTitle,
   pad,
   raised,
   statusLabel,
@@ -732,7 +733,7 @@ const tileSub = (e: Entry) => {
             :selected="d.key === selected.key"
             :today="d.day === board.today"
             :number="d.day"
-            :title="d.status === 'guest' ? 'Guest day' : d.idea?.title"
+            :title="d.status === 'guest' ? guestTitle(d.day) : d.idea?.title"
             :sub="tileSub(d)"
             @select="select(d.key)"
           />
