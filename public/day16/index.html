@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>The Honest Basket</title>
+<meta name="description" content="One recipe a day, in season where you live, free. Come back tomorrow for the next one, or buy the book for all 365.">
+<meta property="og:title" content="The Honest Basket">
+<meta property="og:description" content="One recipe a day, in season where you live, free. Or buy the book for all 365.">
+<meta property="og:type" content="website">
+<script>
+/* Set the skin before first paint: ?skin=riso, then the last choice, then the default. */
+(function(){var s='designer',ok=['designer','riso','garden','calm','cool'];
+try{var q=new URLSearchParams(location.search).get('skin');var l=localStorage.getItem('hb-skin');s=ok.indexOf(q)>-1?q:ok.indexOf(l)>-1?l:s}catch(e){}
+document.documentElement.setAttribute('data-skin',s)})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;800&family=Archivo:wght@500;900&family=Fraunces:opsz,wght@9..144,800&family=Hanken+Grotesk:wght@400;500;600&family=DM+Sans:opsz,wght@9..40,300;9..40,500;9..40,600&family=Space+Grotesk:wght@500;700&family=Space+Mono:wght@400;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* One page, five skins. Base tokens are the Designer skin; each other skin overrides tokens and adds a little CSS under html[data-skin]. Tile colours are set from JS so text contrast is always picked per tile. */
+:root{--bg:#fff;--ink:#0b0b0b;--bd:var(--ink);--body:'Inter Tight',system-ui,sans-serif;--disp:'Inter Tight',system-ui,sans-serif;--dw:800;--dls:-.045em;--vtt:none;--ktt:uppercase;--bw:2px;--gap:0px;--rad:0px;--mono:'DM Mono',ui-monospace,monospace;--buyb:#e30613;--buyf:#fff;color-scheme:light}
+:root[data-skin="riso"]{--bg:#f3f0e6;--ink:#1c1b3a;--body:'Archivo',system-ui,sans-serif;--disp:'Archivo',system-ui,sans-serif;--dw:900;--dls:-.04em;--bw:0px;--gap:clamp(8px,2vw,14px)}
+:root[data-skin="garden"]{--bg:#f1f5ec;--ink:#14240f;--body:'Hanken Grotesk',system-ui,sans-serif;--disp:'Fraunces',Georgia,serif;--dw:800;--dls:-.03em}
+:root[data-skin="calm"]{--bg:#f6f2ec;--ink:#2d322e;--bd:#d9d3c8;--body:'DM Sans',system-ui,sans-serif;--disp:'DM Sans',system-ui,sans-serif;--dw:400;--dls:-.035em;--ktt:none;--bw:0px;--gap:clamp(8px,2vw,14px);--rad:clamp(14px,3.4vw,26px)}
+:root[data-skin="cool"]{--bg:#09090b;--ink:#f1f1ee;--bd:#2a2a2e;--body:'Space Mono',ui-monospace,monospace;--disp:'Space Grotesk',system-ui,sans-serif;--dw:700;--dls:-.04em;--bw:1px;--mono:'Space Mono',ui-monospace,monospace;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.45;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.wrap{max-width:1000px;margin:0 auto}
+.hd{display:flex;justify-content:space-between;align-items:center;gap:8px 16px;flex-wrap:wrap;padding-block:20px}
+.mark{font-family:var(--disp);font-weight:var(--dw);font-size:1.35rem;letter-spacing:var(--dls);text-transform:var(--vtt)}
+.tools{display:flex;align-items:center;gap:14px}
+.dn{font:500 .76rem var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.sk{display:flex;align-items:center;gap:8px}
+.sk b{font:500 .72rem var(--mono);letter-spacing:.08em;text-transform:uppercase;min-width:4.6em;text-align:right}
+.sk button{width:24px;height:24px;border-radius:50%;border:2px solid var(--ink);padding:0;cursor:pointer;background:transparent}
+.sk button[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:3px}
+.sk button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+h1,h2,.v,.buy p{font-family:var(--disp);font-weight:var(--dw);letter-spacing:var(--dls);text-transform:var(--vtt)}
+h1{font-size:clamp(2.2rem,6.6vw,4.6rem);line-height:.98;margin:12px 0 14px;max-width:16ch;text-wrap:balance}
+.lede{font-size:clamp(1rem,1.8vw,1.2rem);max-width:46ch;margin:0 0 28px}
+.lede a{color:inherit;font-weight:600}
+.g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gap)}
+.g a{aspect-ratio:1;background-color:var(--tb,var(--bg));color:var(--tf,var(--ink));padding:clamp(10px,2.4vw,20px);display:flex;flex-direction:column;justify-content:space-between;text-decoration:none;min-width:0;overflow:hidden;position:relative}
+.g.tight{border-top:var(--bw) solid var(--bd);border-left:var(--bw) solid var(--bd)}
+.g.tight a{border-right:var(--bw) solid var(--bd);border-bottom:var(--bw) solid var(--bd)}
+.g:not(.tight) a{border:var(--bw) solid var(--bd);border-radius:var(--rad)}
+.k{font-weight:500;text-transform:var(--ktt);letter-spacing:.07em;font-size:clamp(.6rem,1.6vw,.78rem)}
+.v{display:block;line-height:.95;font-size:clamp(1.1rem,5.2vw,3.2rem);overflow-wrap:anywhere}
+.s{display:block;margin-top:8px;font-size:clamp(.65rem,1.6vw,.85rem);line-height:1.3}
+.g a:hover{filter:brightness(1.08)}
+.g a:focus-visible{outline:3px solid currentColor;outline-offset:-7px}
+.t{font-variant-numeric:tabular-nums}
+#today{padding-block:clamp(48px,8vw,96px) 40px;scroll-margin-top:8px}
+.tag{font:500 .76rem var(--mono);letter-spacing:.12em;text-transform:uppercase;margin:0 0 18px}
+h2{font-size:clamp(2.2rem,6vw,4.4rem);line-height:.98;margin:0;max-width:16ch;text-wrap:balance}
+.dek{font-size:1.15rem;max-width:44ch;margin:18px 0 0}
+.cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(28px,6vw,72px);margin-top:44px;border-top:var(--bw) solid var(--bd);padding-top:28px}
+h3{font:500 .74rem var(--mono);letter-spacing:.14em;text-transform:uppercase;margin:0 0 14px}
+.ing{list-style:none;margin:0;padding:0}
+.ing li{display:flex;align-items:baseline;gap:10px;padding:8px 0}
+.ing i{flex:1;border-bottom:1px dotted currentColor;opacity:.5;transform:translateY(-4px);min-width:12px}
+.ing .mi{font:400 .85rem var(--mono);white-space:nowrap}
+.tot{border-top:var(--bw) solid var(--bd);margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;font:500 .85rem var(--mono)}
+.pn{font-size:.8rem;margin:12px 0 0;opacity:.75}
+.steps{list-style:none;margin:0;padding:0;counter-reset:s}
+.steps li{counter-increment:s;display:grid;grid-template-columns:3.2rem minmax(0,1fr);padding-bottom:22px}
+.steps li::before{content:counter(s);font-family:var(--disp);font-weight:var(--dw);font-size:2rem;line-height:1}
+.steps p{margin:0;font-size:1.05rem;max-width:50ch}
+.buy{background:var(--buyb);color:var(--buyf);margin:clamp(32px,6vw,64px) calc(-1 * max(16px,env(safe-area-inset-left,0px))) 0;padding:clamp(40px,7vw,72px) max(16px,env(safe-area-inset-left,0px))}
+.buy .wrap{display:flex;justify-content:space-between;align-items:flex-end;gap:28px;flex-wrap:wrap}
+.buy p{font-size:clamp(2rem,5.4vw,3.8rem);line-height:.98;margin:0;max-width:15ch}
+.buy small{display:block;font:400 .85rem var(--mono);margin-top:14px;letter-spacing:0;text-transform:none;opacity:.85}
+.buy a{background:var(--buyf);color:var(--buyb);padding:16px 34px;font-weight:800;text-decoration:none;font-size:1.1rem;border-radius:var(--rad)}
+.buy a:hover,.buy a:focus-visible{outline:3px solid var(--buyf);outline-offset:3px}
+.fine{font:400 .72rem var(--mono);margin:0;padding-block:18px 28px;opacity:.7}
+@media(max-width:760px){.cols{grid-template-columns:1fr}}
+@media(max-width:520px){.g .s,.sk b{display:none}}
+/* Riso */
+[data-skin="riso"] .mark{color:#ff4d8d}
+[data-skin="riso"] .dn{color:#2b4acb}
+[data-skin="riso"] .g a{background-image:radial-gradient(rgba(0,0,0,.14) 1px,transparent 1.6px);background-size:5px 5px;isolation:isolate}
+[data-skin="riso"] .g a::after{content:"";position:absolute;width:90%;aspect-ratio:1;border-radius:50%;right:-25%;bottom:-30%;mix-blend-mode:multiply;z-index:-1;background:#2b4acb}
+[data-skin="riso"] .g a:nth-child(even)::after,[data-skin="riso"] .g a:nth-child(5)::after{background:#ff4d8d}
+[data-skin="riso"] .g a:nth-child(9)::after{background:#2b4acb}
+[data-skin="riso"] .g a:hover{filter:saturate(1.3)}
+/* Garden */
+[data-skin="garden"] h1,[data-skin="garden"] h2,[data-skin="garden"] .v{font-variation-settings:'SOFT' 50}
+/* Calm */
+[data-skin="calm"] .g a{transition:transform .25s}
+[data-skin="calm"] .g a:hover{transform:translateY(-4px);filter:none}
+[data-skin="calm"] .k{opacity:.7;letter-spacing:.03em}
+[data-skin="calm"] h1,[data-skin="calm"] h2{font-weight:300}
+/* Cool */
+[data-skin="cool"] .mark::after{content:"_";color:#c6ff00;animation:bl 1s steps(1) infinite}
+@keyframes bl{50%{opacity:0}}
+@media(prefers-reduced-motion:reduce){[data-skin="cool"] .mark::after{animation:none}[data-skin="calm"] .g a{transition:none}}
+[data-skin="cool"] .k{color:#c6ff00}
+[data-skin="cool"] .g a:hover{filter:none;background-color:#c6ff00;color:#09090b}
+[data-skin="cool"] .g a:hover .k,[data-skin="cool"] .g a:nth-child(3) .k,[data-skin="cool"] .g a:nth-child(9) .k{color:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hd"><span class="mark">The Honest Basket</span>
+<div class="tools"><span class="dn" id="dn"></span>
+<div class="sk" role="group" aria-label="Choose a skin"><b id="skn"></b><span id="sks" style="display:flex;gap:8px"></span></div></div></header>
+<main>
+<h1>One recipe a day. In season, near you. Free.</h1>
+<p class="lede">Come back tomorrow for the next one. Or <a href="#buy">buy the book</a> and get all 365 at once.</p>
+<nav class="g" id="g" aria-label="Today at a glance">
+<a href="#today"><span class="k">Today</span><span><span class="v" id="t1"></span><span class="s" id="s1"></span></span></a>
+<a href="#today"><span class="k">Season</span><span><span class="v" id="t2"></span><span class="s" id="s2"></span></span></a>
+<a href="#today"><span class="k">Furthest</span><span><span class="v" id="t3"></span><span class="s">Furthest ingredient in today's recipe</span></span></a>
+<a href="#today"><span class="k">Ingredients</span><span><span class="v" id="t4"></span><span class="s">All in season where you live</span></span></a>
+<a href="#buy"><span class="k">Tomorrow</span><span><span class="v t" id="cd"></span><span class="s" id="s5"></span></span></a>
+<a href="#today"><span class="k">Daily</span><span><span class="v">Free</span><span class="s">A new recipe every day</span></span></a>
+<a href="#" id="reg"><span class="k">Where</span><span><span class="v" id="t7"></span><span class="s">Tap to change region</span></span></a>
+<a href="#buy"><span class="k">The book</span><span><span class="v">365</span><span class="s">Every recipe, all at once</span></span></a>
+<a href="#buy"><span class="k">Buy</span><span><span class="v">£12</span><span class="s">All 365 days</span></span></a>
+</nav>
+<section id="today">
+<p class="tag" id="date"></p>
+<h2 id="title"></h2>
+<p class="dek" id="dek"></p>
+<div class="cols">
+<div><h3>Today's receipt</h3><ul class="ing" id="ing"></ul><div class="tot"><span>Total distance</span><span id="total"></span></div><p class="pn">Pantry, not counted: salt and black pepper.</p></div>
+<div><h3 id="meta"></h3><ol class="steps" id="steps"></ol></div>
+</div>
+</section>
+</main>
+</div>
+<div class="buy" id="buy"><div class="wrap"><p>Want every day? Get all 365.<small>Free today. Tomorrow's unlocks at midnight. The book has the lot.</small></p><a href="#">Buy the book, £12</a></div></div>
+<div class="wrap"><p class="fine">Working title. Sample recipes with illustrative distances.</p></div>
+<script>
+var R=[
+{n:"Northern Europe",sh:"N. Europe",short:"Soup",season:"Late autumn",title:"Celeriac and apple soup with rye crumbs",dek:"A pale, silky soup that tastes of the cellar. Celeriac does the job cream usually does.",time:"Serves 4 · 40 minutes",
+ing:[["Celeriac, 1 large",38],["Leeks, 2",28],["Cox apples, 2",22],["Whole milk, 250 ml",14],["Rye bread, 2 slices",9],["Rapeseed oil, 2 tbsp",35],["Thyme, from the windowsill",0]],
+steps:["Warm the oil in a heavy pan. Soften the sliced leeks with a pinch of salt for 8 minutes.","Add the cubed celeriac and apples, the thyme and 800 ml water. Simmer for 25 minutes, until the celeriac is soft.","Blend with the milk until smooth. Season.","Tear the rye into crumbs, toast in a dry pan until crisp, and scatter over each bowl."]},
+{n:"US Northeast",sh:"US NE",short:"Stew",season:"Late autumn",title:"Delicata squash and white bean stew with kale",dek:"Sweet roasted squash, creamy beans and plenty of greens. Everything in the pot grew within a morning's drive.",time:"Serves 4 · 1 hour 15, beans soaked overnight",
+ing:[["Delicata squash, 2",26],["Kale, 1 bunch",21],["Dried white beans, 1 cup",85],["Yellow onion, 1",33],["Garlic, 4 cloves",40],["Maple syrup, 1 tbsp",62],["Butter, 2 tbsp",48],["Sage, from the pot",0]],
+steps:["Simmer the soaked beans with half the onion until tender, about an hour.","Slice the squash into half moons. Roast with butter and maple at 425°F / 220°C for 25 minutes.","Cook the garlic, sage and remaining onion in butter. Add the kale and stir until bright, about 5 minutes.","Fold the squash and beans into the kale with a ladle of bean broth. Season."]},
+{n:"Southeast Australia",sh:"SE Australia",short:"Toast",season:"Late spring",title:"Smashed broad beans, peas and ricotta on sourdough",dek:"Late spring on a plate. Podded by hand, which is the point: sit down with a child and a bowl.",time:"Serves 4 · 25 minutes",
+ing:[["Broad beans, 500 g in pods",42],["Peas, 250 g in pods",42],["Fresh ricotta, 150 g",31],["Sourdough, 4 slices",6],["Lemon, 1",118],["Extra virgin olive oil, 3 tbsp",96],["Mint, from the garden",0]],
+steps:["Pod the broad beans and peas. Blanch the beans for 2 minutes, add the peas for the last 30 seconds, then cool in cold water.","Slip the broad beans out of their grey skins.","Crush beans and peas roughly with oil, lemon zest and juice, torn mint and salt.","Toast the sourdough. Spread with ricotta, pile on the smash and finish with oil."]}
+];
+/* tile fill per skin: 0 = page colour, 'i' = ink, else a colour. Order: Today, Season, Furthest, Ingredients, Tomorrow, Daily, Where, Book, Buy */
+var SK={
+designer:{n:"Designer",tight:true,sw:["#e30613","#1f3fd1","#ffd400"],t:[0,0,"i","#ffd400","#1f3fd1",0,0,0,"#e30613"]},
+riso:{n:"Riso",tight:false,sw:["#ff4d8d","#2b4acb","#f3f0e6"],t:["#ff4d8d","#2b4acb","#ff4d8d","#2b4acb","#ffffff","#2b4acb","#ff4d8d","#2b4acb","i"]},
+garden:{n:"Garden",tight:true,sw:["#1f7a3d","#e8432b","#ffd25a"],t:[0,"#ffd25a","#1f7a3d",0,"#e8432b",0,"#cfe6b8",0,"i"]},
+calm:{n:"Calm",tight:false,sw:["#dbe4d6","#efdfd2","#d8e2e7"],t:["#dbe4d6","#efdfd2","#e5e1d0","#d8e2e7","#e9dce4","#f0e8c9","#d9e6df","#e8e3dc","#2f5a3e"]},
+cool:{n:"Cool",tight:true,sw:["#09090b","#c6ff00","#26262b"],t:[0,0,"#c6ff00",0,"#26262b",0,0,0,"#c6ff00"]}
+};
+var $=function(i){return document.getElementById(i)},ri=0,grid=$('g'),tiles=grid.querySelectorAll('a'),root=document.documentElement,keys=Object.keys(SK);
+function rl(h){var n=parseInt(h.slice(1),16),c=[n>>16&255,n>>8&255,n&255].map(function(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*c[0]+.7152*c[1]+.0722*c[2]}
+function pick(h){var l=rl(h);return (l+.05)/.05>1.05/(l+.05)?'#0b0b0b':'#ffffff'}
+function skin(k,save){var s=SK[k];root.setAttribute('data-skin',k);grid.classList.toggle('tight',s.tight);
+var cs=getComputedStyle(root),bg=cs.getPropertyValue('--bg').trim(),ink=cs.getPropertyValue('--ink').trim();
+tiles.forEach(function(a,i){var f=s.t[i],c=f===0?bg:f==='i'?ink:f,fg=f===0?ink:f==='i'?bg:pick(c);a.style.setProperty('--tb',c);a.style.setProperty('--tf',fg)});
+var b=s.t[8],bb=b===0?bg:b==='i'?ink:b,bf=b==='i'?bg:pick(bb);root.style.setProperty('--buyb',bb);root.style.setProperty('--buyf',bf);
+$('skn').textContent=s.n;document.querySelectorAll('#sks button').forEach(function(x){x.setAttribute('aria-pressed',x.dataset.k===k)});
+if(save){try{localStorage.setItem('hb-skin',k)}catch(e){}}}
+$('sks').innerHTML=keys.map(function(k){var w=SK[k].sw;return '<button type="button" data-k="'+k+'" aria-label="'+SK[k].n+' skin" title="'+SK[k].n+'" style="background:linear-gradient(90deg,'+w[0]+' 33%,'+w[1]+' 33% 66%,'+w[2]+' 66%)"></button>'}).join('');
+document.querySelectorAll('#sks button').forEach(function(b){b.addEventListener('click',function(){skin(b.dataset.k,true)})});
+function show(i){ri=i;var d=R[i],t=0,m=0;d.ing.forEach(function(x){t+=x[1];if(x[1]>m)m=x[1]});
+$('t1').textContent=d.short;$('s1').textContent=d.title;$('t2').textContent=d.season.split(' ')[1].replace(/^./,function(c){return c.toUpperCase()});$('s2').textContent=d.season+', '+d.n;
+$('t3').textContent=m+' mi';$('t4').textContent=d.ing.length;$('t7').textContent=d.sh;
+$('title').textContent=d.title;$('dek').textContent=d.dek;$('meta').textContent='Method · '+d.time;
+$('ing').innerHTML=d.ing.map(function(x){return '<li><span>'+x[0]+'</span><i></i><span class="mi">'+x[1]+' mi</span></li>'}).join('');$('total').textContent=t+' mi';
+$('steps').innerHTML=d.steps.map(function(s){return '<li><p>'+s+'</p></li>'}).join('')}
+var now=new Date(),doy=Math.round((Date.UTC(now.getFullYear(),now.getMonth(),now.getDate())-Date.UTC(now.getFullYear(),0,0))/864e5);
+$('dn').textContent='Day '+doy+' of 365';
+$('date').textContent=now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})+' · Free today';
+$('s5').textContent='Day '+(doy+1)+' unlocks at midnight';
+function tick(){var n=new Date(),m=new Date(n);m.setHours(24,0,0,0);var s=Math.floor((m-n)/1000),p=function(x){return String(x).padStart(2,'0')};$('cd').textContent=p(Math.floor(s/3600))+':'+p(Math.floor(s%3600/60))+':'+p(s%60)}
+tick();setInterval(tick,1000);
+$('reg').addEventListener('click',function(e){e.preventDefault();show((ri+1)%R.length)});
+skin(root.getAttribute('data-skin')||'designer',false);show(0);
+</script>
+</body>
+</html>
