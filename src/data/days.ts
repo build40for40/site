@@ -344,6 +344,18 @@ export const history: Record<number, ShippedIdea> = {
     screenshot: "/screenshots/a-line.webp",
     shorts: [],
   },
+  16: {
+    id: "ed4a1991-068f-42ad-a07d-456966f28a79",
+    title: "Ultra processed food guilt",
+    problem: "When food shopping or ordering groceries online, I am always aware of trying to cut down on ultra processed foods, and added ingredients that can be avoided. I want my food shop, either online or in person, to be audited to show which foods are highly processed, what alternatives I can buy, how local is the product, and ideally link to a meal plan to meet nutritional goals.",
+    owner: "Ritika",
+    sponsors: [{ name: "Anonymous", amount: 40 }],
+    buildTime: "4:40:00",
+    appUrl: "https://build40for40.com/seasoned/",
+    recordingUrl: "https://www.twitch.tv/build40for40",
+    screenshot: "/screenshots/seasoned.webp",
+    shorts: [],
+  },
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");
