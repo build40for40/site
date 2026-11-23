@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { pad, tones, type EntryStatus } from "../data/days";
+import { dotFor, pad, taped, tones, type EntryStatus } from "../data/days";
 
 defineProps<{
   status: EntryStatus;
@@ -9,6 +9,7 @@ defineProps<{
   title?: string;
   sub?: string;
   today?: boolean;
+  guest?: string;
 }>();
 defineEmits<{ select: [] }>();
 </script>
@@ -29,13 +30,22 @@ defineEmits<{ select: [] }>();
       ]"
       @click="$emit('select')"
     >
-      <span v-if="status !== 'open' && status !== 'pool'" aria-hidden="true" class="absolute inset-x-0 top-0 h-[3px]" :class="tones[status].dot"></span>
+      <span
+        v-if="status !== 'open' && status !== 'pool'"
+        aria-hidden="true"
+        class="absolute inset-x-0 top-0"
+        :class="[dotFor({ status, guest }), taped({ status, guest }) ? 'h-1.5' : 'h-[3px]']"
+      ></span>
       <span v-if="number" class="font-mono text-[11px] leading-none font-medium" :class="status === 'open' ? 'text-night-muted' : 'text-night-sub'">{{ pad(number) }}</span>
       <span v-if="title" class="line-clamp-2 text-xs leading-[1.15] font-semibold wrap-break-word">{{ title }}</span>
       <span v-if="sub" class="mt-auto truncate font-mono text-[11px] leading-none font-medium text-night-sub">{{ sub }}</span>
       <svg v-if="status === 'guest'" aria-hidden="true" viewBox="0 0 24 24" class="absolute right-2 bottom-2 size-3.5 fill-none stroke-current stroke-2 opacity-70">
         <rect x="5" y="11" width="14" height="10" rx="2" />
         <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+      </svg>
+      <svg v-else-if="taped({ status, guest })" aria-hidden="true" viewBox="0 0 24 24" class="absolute right-2 bottom-2 size-3.5 fill-none stroke-guest stroke-2">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21a8 8 0 0 1 16 0" />
       </svg>
     </button>
   </li>
