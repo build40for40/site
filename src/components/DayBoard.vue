@@ -12,6 +12,8 @@ import {
   countdown,
   dayDate,
   dayStart,
+  dotFor,
+  guestTitle,
   pad,
   raised,
   statusLabel,
@@ -488,8 +490,9 @@ function credit({ key, day, status, idea: entryIdea }: Entry, sponsor: Sponsor) 
 const tileLabel = (e: Entry) => {
   const head = e.day ? `Day ${e.day}, ${e.date}` : "In the pool";
   const title = e.status === "guest" || e.status === "open" ? "" : `: ${e.idea?.title}`;
+  const guest = e.guest && e.status !== "guest" ? `, ${e.guest}` : "";
   const sum = e.status === "queued" || e.status === "pool" ? `, ${money(raised(e.idea!))}` : "";
-  return `${head}, ${statusLabel(e, board.value.today).toLowerCase()}${title}${sum}`;
+  return `${head}, ${statusLabel(e, board.value.today).toLowerCase()}${guest}${title}${sum}`;
 };
 
 const hint = ref<{ key: string; label: string; left: number; top: number; shift: number } | null>(null);
@@ -668,7 +671,7 @@ const tileSub = (e: Entry) => {
               :tabindex="gridless ? undefined : -1"
               class="grid h-5 scroll-mt-8 cursor-pointer place-items-center rounded-xs p-0 font-mono text-[9px] leading-none font-medium ease-out focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-lime md:h-full md:min-w-0 md:flex-1 motion-safe:md:transition-[flex-grow,height] motion-safe:md:duration-100"
               :class="[
-                tones[d.status].dot,
+                dotFor(d),
                 d.idea || d.status === 'guest' ? 'text-night' : 'text-night-muted',
                 d.status === 'live' && 'motion-safe:animate-pulse',
                 incoming === d.key && 'invisible',
@@ -732,7 +735,8 @@ const tileSub = (e: Entry) => {
             :selected="d.key === selected.key"
             :today="d.day === board.today"
             :number="d.day"
-            :title="d.status === 'guest' ? 'Guest day' : d.idea?.title"
+            :title="d.status === 'guest' ? guestTitle(d.day) : d.idea?.title"
+            :guest="d.guest"
             :sub="tileSub(d)"
             @select="select(d.key)"
           />

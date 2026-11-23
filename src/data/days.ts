@@ -54,6 +54,8 @@ export interface Day {
   idea?: Idea | ShippedIdea;
   rank?: number;
   sponsors?: Sponsor[];
+  // Set on every guest day, before and after it runs, so a shipped guest day still looks like one.
+  guest?: string;
 }
 
 export interface PoolIdea {
@@ -63,7 +65,10 @@ export interface PoolIdea {
 
 export type Phase = "before" | "live" | "after";
 
-export const GUEST_DAYS = new Set([15]);
+// Each guest day and who the guest is, in a few words. The problem itself stays secret until 10:00.
+export const GUEST_ROLES: Record<number, string> = { 15: "Exited Founder", 25: "Brand Director" };
+export const GUEST_DAYS = new Set(Object.keys(GUEST_ROLES).map(Number));
+export const guestTitle = (day = 0) => (GUEST_ROLES[day] ? `Guest: ${GUEST_ROLES[day]}` : "Guest day");
 export const DEFAULT_AMOUNT = 40;
 
 const DAY_MS = 86_400_000;
@@ -121,8 +126,8 @@ export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, 
   let rank = 0;
 
   for (let day = 1; day <= TOTAL_DAYS; day++) {
-    const base = { key: `day-${day}`, day, date: dayDate(day) };
     const guest = GUEST_DAYS.has(day);
+    const base = { key: `day-${day}`, day, date: dayDate(day), ...(guest ? { guest: guestTitle(day) } : {}) };
     if (guest && !(started(day) && history[day])) {
       days.push({ ...base, status: "guest", sponsors: guestSponsors[day] ?? [] });
     } else if (started(day)) {
@@ -276,6 +281,7 @@ export const history: Record<number, ShippedIdea> = {
     owner: "Maia",
     sponsors: [{ name: "Maia", amount: 40 }],
     buildTime: "4:40:00",
+    wrecked: true,
     appUrl: "https://build40for40.com/glisten/",
     recordingUrl: "https://www.twitch.tv/build40for40",
     screenshot: "/screenshots/glisten.webp",
@@ -300,6 +306,7 @@ export const history: Record<number, ShippedIdea> = {
     owner: "Ritika",
     sponsors: [{ name: "Ritika", amount: 40 }],
     buildTime: "4:40:00",
+    wrecked: true,
     appUrl: "https://build40for40.com/dumpling/",
     recordingUrl: "https://www.twitch.tv/build40for40",
     screenshot: "/screenshots/dumpling.webp",
@@ -376,6 +383,7 @@ export interface Entry {
   idea?: Idea | ShippedIdea;
   rank?: number;
   sponsors?: Sponsor[];
+  guest?: string;
 }
 
 export function statusLabel(entry: Entry, today: number) {
@@ -393,3 +401,12 @@ export const tones: Record<EntryStatus, { dot: string; text: string; border: str
   pool: { dot: "ring-1 ring-queued ring-inset", text: "text-night-sub", border: "border-night-edge", ring: "ring-night-edge" },
   us: { dot: "bg-pop-blue", text: "text-pop-cyan", border: "border-pop-blue", ring: "ring-pop-blue" },
 };
+
+// A guest day that has started wears hazard tape: guest gold striped with how it went.
+const tape: Partial<Record<EntryStatus, string>> = {
+  shipped: "bg-[repeating-linear-gradient(-45deg,var(--color-guest)_0_5px,var(--color-shipped)_5px_10px)]",
+  wrecked: "bg-[repeating-linear-gradient(-45deg,var(--color-guest)_0_5px,var(--color-wrecked)_5px_10px)]",
+  live: "bg-[repeating-linear-gradient(-45deg,var(--color-guest)_0_5px,var(--color-live)_5px_10px)]",
+};
+export const taped = (entry: Pick<Entry, "status" | "guest">) => Boolean(entry.guest && tape[entry.status]);
+export const dotFor = (entry: Pick<Entry, "status" | "guest">) => (taped(entry) ? tape[entry.status]! : tones[entry.status].dot);

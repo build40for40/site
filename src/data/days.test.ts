@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { buildBoard, mergedSponsors, sponsorCount, statusLabel, type Idea } from "./days";
+import { buildBoard, dotFor, mergedSponsors, sponsorCount, statusLabel, tones, type Idea } from "./days";
 
 const idea = (id: string, amount: number): Idea => ({ id, title: id, problem: id, sponsors: amount ? [{ name: "Anonymous", amount }] : [] });
 const beforeDayOne = Date.parse("2026-10-29T12:00:00Z");
@@ -70,4 +70,20 @@ test("a guest day shows as shipped once it has history, and keeps the day's own 
   expect(during.days[14]).toMatchObject({ status: "guest", sponsors: sponsors[15] });
   const after = buildBoard([], { 15: shipped }, Date.parse("2026-11-20T18:00:00Z"), sponsors);
   expect(after.days[14]).toMatchObject({ status: "shipped", idea: { id: "guest-day-15", appUrl: "/a-line/", sponsors: sponsors[15] } });
+});
+
+test("a guest day keeps its label, and wears hazard tape only once it has run", () => {
+  const shipped = { ...idea("guest-day-15", 0), buildTime: "4:40:00", appUrl: "/a-line/", recordingUrl: "#", shorts: [] };
+  const before = buildBoard([], {}, Date.parse("2026-11-19T18:00:00Z"));
+  expect(before.days[14]).toMatchObject({ status: "guest", guest: "Guest: Exited Founder" });
+  expect(dotFor(before.days[14])).toBe(tones.guest.dot);
+
+  const after = buildBoard([], { 15: shipped }, Date.parse("2026-11-20T18:00:00Z"));
+  expect(after.days[14]).toMatchObject({ status: "shipped", guest: "Guest: Exited Founder" });
+  expect(dotFor(after.days[14])).toContain("--color-guest");
+  expect(dotFor(after.days[14])).toContain("--color-shipped");
+  expect(dotFor({ ...after.days[14], status: "wrecked" })).toContain("--color-wrecked");
+
+  expect(after.days[13].guest).toBeUndefined();
+  expect(dotFor(after.days[13])).toBe(tones[after.days[13].status].dot);
 });
