@@ -154,3 +154,16 @@ test("Escape clears the search before closing", async () => {
   await flushPromises();
   expect(wrapper.emitted("close")).toHaveLength(1);
 });
+
+test("focuses the search on wide screens, and leaves it alone on phones", async () => {
+  let wide = true;
+  vi.stubGlobal("matchMedia", () => ({ matches: wide }));
+  wrapper = mount(BrowsePanel, { props: { ideas: sorted, statuses }, attachTo: document.body });
+  expect(document.activeElement?.id).toBe("browse-search");
+  wrapper.unmount();
+
+  wide = false;
+  wrapper = mount(BrowsePanel, { props: { ideas: sorted, statuses }, attachTo: document.body });
+  expect(wrapper.find("#browse-search").exists()).toBe(true);
+  expect(document.activeElement?.id).not.toBe("browse-search");
+});

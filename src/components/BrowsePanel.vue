@@ -182,8 +182,9 @@ const share = computed(() => {
   return { text: `Help get “${idea.title}” built live on 40 for 40.`, url: `${import.meta.env.SITE ?? ""}/?idea=${encodeURIComponent(idea.id)}` };
 });
 
+// On phones the keyboard would cover the list, so the search waits to be tapped.
 onMounted(() => {
-  input.value?.focus({ preventScroll: true });
+  if (matchMedia("(width >= 40rem)").matches) input.value?.focus({ preventScroll: true });
   dock();
 });
 
@@ -249,10 +250,9 @@ const round =
     </template>
 
     <template v-else>
-      <div class="flex items-center gap-2 max-sm:items-start sm:flex-wrap">
+      <div class="flex flex-wrap items-center gap-2">
         <label for="browse-search" class="sr-only">Search the pool</label>
-        <!-- On phones the keyboard would cover the list, so browsing there is by filter only. -->
-        <div class="relative min-w-0 flex-1 max-sm:hidden">
+        <div class="relative min-w-0 flex-1">
           <input
             id="browse-search"
             ref="input"
@@ -261,7 +261,7 @@ const round =
             autocomplete="off"
             enterkeyhint="search"
             placeholder="Search the pool"
-            class="w-full appearance-none rounded-full border border-night-edge bg-night py-2 pr-9 pl-4 text-sm text-night-text placeholder:text-night-muted focus-visible:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime [&::-webkit-search-cancel-button]:hidden"
+            class="w-full appearance-none rounded-full border border-night-edge bg-night py-2 pr-9 pl-4 text-base text-night-text sm:text-sm placeholder:text-night-muted focus-visible:border-night-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-lime [&::-webkit-search-cancel-button]:hidden"
             @input="typed"
           />
           <button
@@ -272,7 +272,7 @@ const round =
             @click="clear"
           >✕</button>
         </div>
-        <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:order-last sm:basis-full sm:pt-1">
+        <div class="order-last flex min-w-0 basis-full flex-wrap items-center gap-2 pt-1">
           <div role="group" aria-label="Show" class="contents">
             <button
               v-for="s in stages"

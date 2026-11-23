@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { flushPromises, mount, type VueWrapper } from "@vue/test-utils";
+import type { ShippedIdea } from "../data/days";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { GUEST_DAYS } from "../data/days";
 
@@ -306,4 +307,23 @@ test("the clock ticking doesn't re-render Browse, so an open category picker sta
   await flushPromises();
   expect(panel.props("ideas")).toBe(ideas);
   expect(panel.props("statuses")).toBe(statuses);
+});
+
+test("shipped days don't re-render Browse on each tick either", async () => {
+  vi.useFakeTimers({ toFake: ["Date", "setInterval"] });
+  vi.setSystemTime(new Date("2026-11-04T12:00:00Z"));
+  document.body.insertAdjacentHTML("beforeend", `<a href="#browse">Browse</a>`);
+  const shipped: ShippedIdea = { id: "shipped-1", title: "Shipped", problem: "A shipped problem", sponsors: [], buildTime: "6h", appUrl: "https://example.com", recordingUrl: "https://example.com/recording" };
+  const { default: DayBoard } = await import("./DayBoard.vue");
+  const w = (wrapper = mount(DayBoard, { props: { history: { 1: shipped }, builtAt: Date.now() }, attachTo: document.body }));
+  await flushPromises();
+  document.querySelector<HTMLAnchorElement>("a[href='#browse']")!.click();
+  await vi.waitFor(() => expect(w.find("#browse").exists()).toBe(true), { timeout: 2000 });
+  const panel = w.findComponent({ name: "BrowsePanel" });
+  const ideas = panel.props("ideas");
+  expect(ideas.map((i: { id: string }) => i.id)).toContain("shipped-1");
+
+  vi.advanceTimersByTime(3000);
+  await flushPromises();
+  expect(panel.props("ideas")).toBe(ideas);
 });

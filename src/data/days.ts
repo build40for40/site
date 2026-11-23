@@ -100,6 +100,8 @@ export function clock(now: number): { today: number; phase: Phase; isToday: bool
   return next ? { today: next, phase: "before", isToday: false } : { today: TOTAL_DAYS, phase: "after", isToday: false };
 }
 
+const NO_SPONSORS: Sponsor[] = [];
+
 export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, now: number, guestSponsors: Record<number, Sponsor[]> = {}) {
   const { today, phase, isToday } = clock(now);
   const started = (day: number) => day < today || (day === today && phase !== "before");
@@ -129,10 +131,10 @@ export function buildBoard(ideas: Idea[], history: Record<number, ShippedIdea>, 
     const guest = GUEST_DAYS.has(day);
     const base = { key: `day-${day}`, day, date: dayDate(day), ...(guest ? { guest: guestTitle(day) } : {}) };
     if (guest && !(started(day) && history[day])) {
-      days.push({ ...base, status: "guest", sponsors: guestSponsors[day] ?? [] });
+      days.push({ ...base, status: "guest", sponsors: guestSponsors[day] ?? NO_SPONSORS });
     } else if (started(day)) {
       const shipped = history[day];
-      const idea = shipped ? { ...shipped, ...(guest ? { sponsors: guestSponsors[day] ?? [] } : loaded.get(shipped.id)) } : locked.get(day);
+      const idea = shipped ? { ...shipped, ...(guest ? { sponsors: guestSponsors[day] ?? NO_SPONSORS } : loaded.get(shipped.id)) } : locked.get(day);
       const status = day === today && phase === "live" ? "live" : history[day]?.wrecked ? "wrecked" : "shipped";
       days.push(idea ? { ...base, status, idea } : { ...base, status: "open" });
     } else if (next < ranked.length) {
