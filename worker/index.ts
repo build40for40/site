@@ -1,7 +1,7 @@
 import { GUEST_DAYS } from "../src/data/days";
 import { TOTAL_DAYS, backings, helpTypes, involvement, isSponsorCents, SPONSOR_MIN, SPONSOR_MAX, money } from "../src/data/site";
 import { categoriseProblem, verdict, type Sorted } from "./categories";
-import { StripeError, openCheckout, readCheckout, recordPayment, statusOf, summary, type CheckoutSession, type Sponsoring } from "./checkout";
+import { StripeError, openCheckout, readCheckout, recordPayment, soldByAnApp, statusOf, summary, type CheckoutSession, type Sponsoring } from "./checkout";
 import { jevClassifier } from "./classifier";
 import { listProblems } from "./problems";
 import { searchIdeas } from "./search";
@@ -179,7 +179,7 @@ async function stripeWebhook(request: Request, env: Env, ctx: ExecutionContext) 
   const paid =
     event.type === "checkout.session.async_payment_succeeded" ||
     (event.type === "checkout.session.completed" && session.payment_status === "paid");
-  if (!paid) return text("Ignored.", 200);
+  if (!paid || soldByAnApp(session)) return text("Ignored.", 200);
 
   if (await recordPayment(env.DB, session, new Date(event.created * 1000).toISOString())) paymentCompleted(env, ctx, session);
   return text("Saved.", 200);

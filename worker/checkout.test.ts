@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { StripeError, openCheckout, recordPayment, statusOf, type CheckoutSession } from "./checkout";
+import { StripeError, openCheckout, recordPayment, soldByAnApp, statusOf, type CheckoutSession } from "./checkout";
 import { addProblem, testDb } from "./test-db";
 
 const env = { STRIPE_SECRET_KEY: "sk_test_fake", STRIPE_PUBLISHABLE_KEY: "pk_test_fake", STRIPE_SPONSOR_PRODUCT: "prod_fake" } as Env;
@@ -79,6 +79,12 @@ describe("openCheckout", () => {
     await expect(openCheckout(env, { cents: 400_000_000, day: 15, origin: "" })).rejects.toThrow("Amount must be no more than $999,999.99");
     await expect(openCheckout({ ...env, STRIPE_SECRET_KEY: "" }, { cents: 400, day: 15, origin: "" })).rejects.toBeInstanceOf(StripeError);
   });
+});
+
+test("tells an app's own sale from a sponsor payment", () => {
+  expect(soldByAnApp(session({ metadata: { app: "day16", region: "uk" } }))).toBe(true);
+  expect(soldByAnApp(session({ metadata: { day: "15" } }))).toBe(false);
+  expect(soldByAnApp(session({ metadata: null }))).toBe(false);
 });
 
 describe("recordPayment", () => {

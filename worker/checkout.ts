@@ -100,6 +100,9 @@ export const dayOf = (session: CheckoutSession) => {
   return GUEST_DAYS.has(day) ? day : null;
 };
 
+// The apps sell through the same Stripe account and tag their own sales, which aren't sponsor payments.
+export const soldByAnApp = (session: CheckoutSession) => Boolean(session.metadata?.app);
+
 // Stripe retries and can send an event twice, and the page asks too, so a repeat is a no-op. A problem id from another
 // database becomes null. A paid problem comes out of hiding.
 export async function recordPayment(db: D1Database, session: CheckoutSession, paidAt: string) {
