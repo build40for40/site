@@ -8,6 +8,7 @@ import { searchIdeas } from "./search";
 import { fetchFeed, listShorts, syncShorts } from "./shorts";
 import { publicSponsors, sponsorGroup, type SponsorPayment } from "./sponsors";
 import { anthropicTitler, titleProblem } from "./titles";
+import { sendWaitlistEmail } from "./waitlist";
 
 interface Field {
   name: string;
@@ -393,6 +394,8 @@ export default {
     if (problemId && classifier) ctx.waitUntil(categoriseProblem(env.DB, classifier, problemId, reportSorted(env, ctx, "submit")).catch(() => {}));
     const titler = problemId && titlerFor(env);
     if (problemId && titler) ctx.waitUntil(titleProblem(env.DB, titler, problemId).catch(() => {}));
+    if (form === "access")
+      ctx.waitUntil(sendWaitlistEmail(env, String(values.app), String(values.email), values.name ? String(values.name) : null).catch(() => console.error("Waitlist email failed to send.")));
 
     if (sponsoring) {
       const name = String(values.name ?? "").split(/\s+/)[0] || null;

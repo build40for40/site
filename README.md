@@ -153,6 +153,18 @@ Put the sandbox values in `.env`, and the live ones in production with `npm run 
 
 Stripe sends `checkout.session.completed` and `checkout.session.async_payment_succeeded` to `/api/stripe/webhook`. The Worker checks the signature, then saves paid sessions to `payments` with the payer's email, the problem from `client_reference_id`, the guest day and the credited name. Stripe retries failed deliveries, and a repeat of the same session is ignored. To replace the secret, roll it in the Stripe dashboard and put it again.
 
+### Waiting lists
+
+The `access` form takes sign-ups for an app's beta or waiting list (Synergy, Sous, Glisten, Poppy, Handup) into `access_requests`, keyed by `app`. Poppy and Handup sign-ups also get a "you're on the list" email from `worker/waitlist.ts`, which lists the apps that send one and holds the copy. It goes out after the sign-up is saved, so a Postmark failure never loses a sign-up, and it's logged by error code only, never the address.
+
+Mail goes through the site's own Postmark server, kept apart from the apps' servers (Feel good AI has its own) so their sending reputation and suppression lists stay separate. Nothing is sent until both secrets are set. One-time setup, for a human:
+
+1. In Postmark, create a server called `40 for 40 site`. Its transactional stream is `outbound`, the `POSTMARK_STREAM` var in `wrangler.jsonc`.
+2. Send from an address on a domain that's already verified in the account, or add a sender signature for it.
+3. `npm run wrangler -- secret put POSTMARK_SERVER_TOKEN` with the new server's API token, and `npm run wrangler -- secret put EMAIL_FROM` with the from address. Mail goes out as `Poppy <address>` or `Handup <address>`.
+
+Locally, `POSTMARK_SERVER_TOKEN=POSTMARK_API_TEST` makes Postmark check each request without delivering it.
+
 ### Running and reading forms
 
 `npm run dev` runs the Worker for `/api/*` with a local D1, and so does `npm run preview` (the built site on port 8787). Before the first run, create the local tables with `npm run db:migrate`, add fake problems with `npm run db:seed`, and copy `.env.example` to `.env`. It holds every local secret: Astro reads the `PUBLIC_` ones at build time and the Worker reads them all, unless a `.dev.vars` exists, which wrangler would read instead. To get sandbox webhooks locally, run `stripe listen --forward-to localhost:4321/api/stripe/webhook` and put the `whsec_` it prints in `STRIPE_WEBHOOK_SECRET`. Plain `astro preview` serves only the static files, so forms 404 there. To read real submissions:
