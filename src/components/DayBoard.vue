@@ -235,9 +235,13 @@ const thrown = computed(() => board.value.days.filter((d) => d.idea));
 const dayIdeas = computed(() => board.value.days.flatMap((d) => (d.idea ? [d.idea] : [])));
 // The clock rebuilds the board every second, so these keep their last value until something in them changes. A fresh
 // one each tick re-renders the browse panel, which closes and reopens an open category picker in Firefox.
+const sameIdea = (a: Idea, b: Idea) => {
+  const keys = Object.keys(a) as (keyof Idea)[];
+  return a === b || (keys.length === Object.keys(b).length && keys.every((k) => a[k] === b[k]));
+};
 const browsable = computed<Idea[]>((last) => {
   const ideas = [...pool.value.map((p) => p.idea!), ...dayIdeas.value];
-  return last?.length === ideas.length && ideas.every((idea, i) => idea === last[i]) ? last : ideas;
+  return last?.length === ideas.length && ideas.every((idea, i) => sameIdea(idea, last[i])) ? last : ideas;
 });
 const browseStatuses = computed<Record<string, EntryStatus>>((last) => {
   const statuses = Object.fromEntries([...pool.value, ...board.value.days].flatMap((e) => (e.idea ? [[e.idea.id, e.status]] : [])));
