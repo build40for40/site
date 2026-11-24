@@ -358,6 +358,18 @@ export const history: Record<number, ShippedIdea> = {
     screenshot: "/screenshots/seasoned.webp",
     shorts: [],
   },
+  17: {
+    id: "be26f992-d88f-481f-adad-56576ea1c9b1",
+    title: "Buried neighbourhood favour requests",
+    problem: "Parents and neighbours coordinate small, urgent favours (late pickup, strike day kid care, parcel collection, party RSVPs) through scattered WhatsApp chains. Requests get buried, nobody knows who's responding, and it takes several messages to settle one thing.",
+    owner: "Anastasia",
+    sponsors: [{ name: "Anastasia", amount: 30 }],
+    buildTime: "4:40:00",
+    appUrl: "https://build40for40.com/lantern/",
+    recordingUrl: "https://www.twitch.tv/build40for40",
+    screenshot: "/screenshots/lantern.webp",
+    shorts: [],
+  },
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");
