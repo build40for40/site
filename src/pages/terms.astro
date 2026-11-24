@@ -1,0 +1,89 @@
+---
+import Base from "../layouts/Base.astro";
+import { links, SPONSOR_MIN, money } from "../data/site";
+
+const sections = [
+  {
+    title: "Who we are",
+    body: [
+      `40 for 40 is a community project run from London: 40 apps in 40 days, built live on stream. It isn't a company raising money, and nobody can invest in it. For anything about these terms, email ${links.email}.`,
+      "By using this site, sending us a form or paying to sponsor, you agree to these terms. If you don't agree, the stream is still free to watch.",
+    ],
+  },
+  {
+    title: "Using the site",
+    body: [
+      "Use it like a decent person. Don't try to break it, scrape it into the ground, pretend to be someone else or send us anything illegal, hateful or spammy.",
+      "We can remove anything sent to us, and block anyone who makes the place worse for everyone else.",
+    ],
+  },
+  {
+    title: "Problems and ideas you send us",
+    body: [
+      "When you send us a problem, you're telling us it's yours to share and that it doesn't give away anyone's secrets or personal details.",
+      "You let us publish it on the site, edit it for length and clarity, talk about it on stream and build an app for it, for free and for as long as we like. You keep the right to do whatever you want with your own idea, and so does everyone else who has the same one.",
+      "Sending a problem doesn't mean we'll build it. The 40 days get picked from the pool, and most problems won't make the cut.",
+    ],
+  },
+  {
+    title: "Sponsoring",
+    body: [
+      `Sponsorships start at ${money(SPONSOR_MIN)}, are charged in US dollars and are handled by Stripe. A sponsorship backs a problem or a day and gets you credited on the site, unless you chose to stay anonymous. The first payment on a day's box unlocks it.`,
+      "A sponsorship is a payment for that credit. It is not an investment, a loan or a charitable donation, and it gives you no shares, no ownership of any app and no say over what gets built.",
+      "The name or message you ask to be credited with has to be fit to show on a public site. We can edit or remove a credit that isn't, without refunding it.",
+      "Sponsoring a problem pushes it up the pool but doesn't guarantee we'll build it, finish it or ship it by 5pm. Some days get paused. That's the show.",
+      `Payments are final once your credit is live. If we charged you by mistake, or something went properly wrong on our side, email ${links.email} and we'll sort it out.`,
+    ],
+  },
+  {
+    title: "The apps",
+    body: [
+      "Every app is built in a day, live, by people who are sometimes writing their first ever line of code. Treat them as experiments. They come as they are, with no promise that they work, stay online, keep your data safe forever or do what the name suggests.",
+      "Don't rely on one for anything that matters, like your health, your money or your legal troubles. Some apps have their own terms or privacy notes, and those apply on top of these.",
+    ],
+  },
+  {
+    title: "Guests and the stream",
+    body: [
+      "The build is streamed live on Twitch and recorded. If you join as a guest, you'll be on camera and in the recording, and we'll agree that with you in writing first.",
+      "Twitch, Discord and the other places we hang out have their own rules, and those apply when you're there.",
+    ],
+  },
+  {
+    title: "Who owns what",
+    body: [
+      "The site, the 40 for 40 name, the artwork and the recordings belong to us. The apps' code lives in public repos, each under whatever licence its repo says.",
+      "Sponsor logos and names belong to the sponsors. Showing one here doesn't mean they vouch for every app we ship.",
+    ],
+  },
+  {
+    title: "When things go wrong",
+    body: [
+      "We run this with care, but we can't promise the site or the apps will always be up, right or free of bugs. As far as the law allows, we aren't responsible for losses that come from using them, and anything we do owe you is capped at what you paid us in the last 12 months.",
+      "Nothing here limits our responsibility for things the law says we can't limit, like fraud or injury caused by our carelessness, or takes away rights you have as a consumer.",
+    ],
+  },
+  {
+    title: "Changes and the law",
+    body: [
+      "We may update these terms as the project changes. The latest version is always on this page, and it applies from the moment it's posted.",
+      "These terms are governed by the law of England and Wales, and its courts settle any dispute. If you live elsewhere in the UK, you can use your local courts instead.",
+    ],
+  },
+];
+---
+
+<Base title="Terms | 40 for 40" description="The rules for using build40for40.com, sending us problems and sponsoring a day.">
+  <article class="mx-auto flex max-w-3xl flex-col gap-10 px-4 py-12 md:px-12 md:py-18">
+    <div class="flex flex-col gap-3">
+      <div class="font-mono text-xs font-medium tracking-wider text-muted">TERMS</div>
+      <h1 class="m-0 text-5xl leading-[0.95] font-bold tracking-tight md:text-6xl">The other boring but important bit.</h1>
+    </div>
+    {sections.map(({ title, body }) => (
+      <section class="flex flex-col gap-3 border-t border-line pt-5">
+        <h2 class="m-0 text-xl font-semibold tracking-tight">{title}</h2>
+        {body.map((text) => <p class="m-0 text-base leading-relaxed text-body text-pretty">{text}</p>)}
+      </section>
+    ))}
+  </article>
+</Base>
