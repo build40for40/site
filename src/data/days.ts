@@ -296,6 +296,7 @@ export const history: Record<number, ShippedIdea> = {
     owner: "Samira",
     sponsors: [{ name: "Samira", amount: 40 }],
     buildTime: "4:40:00",
+    wrecked: true,
     appUrl: "https://build40for40.com/feel-good/",
     recordingUrl: "https://www.twitch.tv/build40for40",
     screenshot: "/screenshots/feel-good.webp",
