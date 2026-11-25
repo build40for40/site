@@ -1,0 +1,27 @@
+---
+import Base from "../layouts/Base.astro";
+
+const subscribeUrl = "https://build40for40.substack.com/subscribe";
+const shownUrl = subscribeUrl.replace("https://", "");
+---
+
+<Base title="Subscribe to 40 for 40" description="Scan to get every app we build in your inbox, the day it ships.">
+  <section class="flex min-h-dvh flex-col items-center justify-center gap-[3vh] bg-white px-4 py-6 text-center text-ink">
+    <h1 class="m-0 text-[clamp(28px,5vh,64px)] leading-[0.95] font-bold tracking-[-0.04em] text-balance">
+      Get every app in your inbox
+    </h1>
+    <a href={subscribeUrl} class="block bg-white p-[2vh]" aria-label="Subscribe on Substack">
+      <img
+        src="/subscribe/qr.png"
+        alt="QR code that opens our Substack signup"
+        width="450"
+        height="450"
+        class="block size-[min(62vh,88vw)] [image-rendering:pixelated]"
+      />
+    </a>
+    <p class="m-0 text-[clamp(16px,3vh,36px)] font-bold break-all">
+      <a href={subscribeUrl} class="text-ink underline decoration-2 underline-offset-4">{shownUrl}</a>
+    </p>
+    <p class="m-0 text-[clamp(14px,2vh,24px)] opacity-70">Scan it, pop your email in, done. 40 apps, 40 days.</p>
+  </section>
+</Base>
