@@ -370,6 +370,18 @@ export const history: Record<number, ShippedIdea> = {
     screenshot: "/screenshots/lantern.webp",
     shorts: [],
   },
+  18: {
+    id: "ce547aae-d850-4aaf-967c-32cf650d3c9e",
+    title: "Ranking creator influence globally",
+    problem: "I want to build a global FTSE 100 for content creators: a live intelligence and ranking platform that identifies and tracks the world's most influential digital personalities across all major social media platforms.",
+    owner: "Nicole",
+    sponsors: [{ name: "Nicole", amount: 20 }],
+    buildTime: "4:40:00",
+    appUrl: "https://build40for40.com/crossover/",
+    recordingUrl: "https://www.twitch.tv/build40for40",
+    screenshot: "/screenshots/crossover.webp",
+    shorts: [],
+  },
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");
