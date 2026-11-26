@@ -382,6 +382,18 @@ export const history: Record<number, ShippedIdea> = {
     screenshot: "/screenshots/crossover.webp",
     shorts: [],
   },
+  19: {
+    id: "460a1b87-c9a9-4d83-a88a-67c21f7412e6",
+    title: "Gratitude stays unsaid",
+    problem: "We live in the most connected time in the history of the world and yet we live in the loneliest at the same time. Each year, we only give ourselves one dedicated day to tell our family and friends what we are grateful for.",
+    owner: "The",
+    sponsors: [{ name: "The", amount: 15 }],
+    buildTime: "4:40:00",
+    appUrl: "https://build40for40.com/gobbler/",
+    recordingUrl: "https://www.twitch.tv/build40for40",
+    screenshot: "/screenshots/gobbler.webp",
+    shorts: [],
+  },
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");
