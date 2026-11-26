@@ -180,13 +180,15 @@ describe("the problems pool", () => {
     const w = await board();
     await vi.waitFor(() => expect(bodies.registered).toHaveLength(POOL_ITEMS));
     const from = { left: 0, top: 0, width: 88, height: 72 };
-    dispatchEvent(new CustomEvent("problem-sent", { detail: { problem: "My plant keeps dying.", name: "Sam Carter", amount: 80, from } }));
+    // Ideas fill the days in order, skipping guest days. The send ties with Day 22's idea, so it lands on Day 23.
+    const ideaOn = (n: number) => n - 1 - [...GUEST_DAYS].filter((d) => d < n).length;
+    dispatchEvent(new CustomEvent("problem-sent", { detail: { problem: "My plant keeps dying.", name: "Sam Carter", amount: 100 - ideaOn(22), from } }));
     await flushPromises();
 
     const day = (n: number) => w.find(`[data-day-slot=day-${n}] button`).attributes("aria-label");
-    expect(day(22)).toContain("Idea 20");
+    expect(day(22)).toContain(`Idea ${ideaOn(22)}`);
     expect(day(23)).toContain("My plant keeps dying");
-    expect(day(24)).toContain("Idea 21");
+    expect(day(24)).toContain(`Idea ${ideaOn(24) - 1}`);
     expect(day(40)).toContain(`Idea ${SLOTS - 2}`);
     expect(animate.mock.calls.filter(([frames]) => String((frames as Keyframe[])[0].translate).endsWith("px"))).toHaveLength(40 - 24 + 1 - [...GUEST_DAYS].filter((d) => d >= 24).length);
 
