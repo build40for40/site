@@ -66,7 +66,7 @@ export interface PoolIdea {
 export type Phase = "before" | "live" | "after";
 
 // Each guest day and who the guest is, in a few words. The problem itself stays secret until 10:00.
-export const GUEST_ROLES: Record<number, string> = { 15: "Exited Founder", 25: "Brand Director" };
+export const GUEST_ROLES: Record<number, string> = { 15: "Exited Founder", 20: "Databases CEO", 25: "Brand Director" };
 export const GUEST_DAYS = new Set(Object.keys(GUEST_ROLES).map(Number));
 export const guestTitle = (day = 0) => (GUEST_ROLES[day] ? `Guest: ${GUEST_ROLES[day]}` : "Guest day");
 export const DEFAULT_AMOUNT = 40;
