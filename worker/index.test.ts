@@ -33,6 +33,18 @@ describe("access requests", () => {
     expect(sqlite.prepare("SELECT app, note FROM access_requests WHERE email = ?").get("mac@example.com")).toEqual({ app: "sous", note: "iPhone" });
   });
 
+  test("takes Ember waitlist sign-ups with the company and where their records live", async () => {
+    const { send, sqlite } = setup();
+    const response = await send("access", { name: "Fen", email: "fen@example.com", firm: "Example Events", app: "ember", note: "Records in: FileMaker." });
+
+    expect(response.headers.get("Location")).toBe("https://build40for40.com/ember/#requested");
+    expect(sqlite.prepare("SELECT app, firm, note FROM access_requests WHERE email = ?").get("fen@example.com")).toEqual({
+      app: "ember",
+      firm: "Example Events",
+      note: "Records in: FileMaker.",
+    });
+  });
+
   test("takes Glisten waitlist sign-ups", async () => {
     const { send, sqlite } = setup();
     const response = await send("access", { name: "Maia", email: "maia@example.com", app: "glisten" });
