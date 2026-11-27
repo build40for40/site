@@ -394,6 +394,16 @@ export const history: Record<number, ShippedIdea> = {
     screenshot: "/screenshots/gobbler.webp",
     shorts: [],
   },
+  20: {
+    id: "guest-day-20",
+    title: "Find the contacts worth a personal message",
+    problem: "Sunbaba's database holds about 6,000 contacts, and most have gone stale: bounced emails, changed jobs, companies that no longer exist. Somewhere in there are the few hundred people still worth a personal, story-led message, and finding them means sifting through a lot of noise.",
+    sponsors: [],
+    buildTime: "6:40:00",
+    appUrl: "",
+    recordingUrl: "https://www.twitch.tv/build40for40",
+    shorts: [],
+  },
 };
 
 export const pad = (n: number) => String(n).padStart(2, "0");
