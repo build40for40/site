@@ -400,8 +400,9 @@ export const history: Record<number, ShippedIdea> = {
     problem: "Sunbaba's database holds about 6,000 contacts, and most have gone stale: bounced emails, changed jobs, companies that no longer exist. Somewhere in there are the few hundred people still worth a personal, story-led message, and finding them means sifting through a lot of noise.",
     sponsors: [],
     buildTime: "6:40:00",
-    appUrl: "",
+    appUrl: "https://build40for40.com/ember/",
     recordingUrl: "https://www.twitch.tv/build40for40",
+    screenshot: "/screenshots/ember.webp",
     shorts: [],
   },
 };
