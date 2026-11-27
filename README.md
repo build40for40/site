@@ -111,6 +111,10 @@ npm run wrangler -- d1 execute 40for40 --remote --command "SELECT p.id, p.title,
 
 Locally, the seed sorts its fake problems by hand.
 
+### Sign-up emails
+
+Some apps' waitlists also email the team. When someone signs up through the access form for an app listed in `NOTIFY_APPS` in `worker/notify.ts` (Ember for now), the Worker sends a plain email to `hello@40for40.app` through Postmark, with their name, email, company and note, and Reply-To set to them. It sends from `noreply@build40for40.com` on the `outbound` stream and needs `POSTMARK_SERVER_TOKEN`: `npm run wrangler -- secret put POSTMARK_SERVER_TOKEN` in production. Without the token nothing is sent, and a mail failure never fails the sign-up.
+
 ### Titles
 
 Each new problem gets a short title from Claude Haiku, alongside its sort with Jev, when `ANTHROPIC_API_KEY` is set. Only the problem text is sent. The title is written only while the problem has none, so one the team sets is never replaced. If titling fails, the problem shows the start of its text until someone sets a title by hand. `worker/titles.ts` hides the provider behind a `Titler`, so changing model is one default and changing provider is one new function. To try it locally, put a key in `.env`. In production, `npm run wrangler -- secret put ANTHROPIC_API_KEY`.
