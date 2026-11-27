@@ -7,6 +7,7 @@ import { listProblems } from "./problems";
 import { searchIdeas } from "./search";
 import { fetchFeed, listShorts, syncShorts } from "./shorts";
 import { publicSponsors, sponsorGroup, type SponsorPayment } from "./sponsors";
+import { notifySignUp } from "./notify";
 import { anthropicTitler, titleProblem } from "./titles";
 
 interface Field {
@@ -388,6 +389,14 @@ export default {
       ...(record ? [record] : []),
     ]);
     track("form_saved", { form_type: form, involvement: values.involved, backing: values.backing, newsletter: values.newsletter === "yes" });
+    // Some apps' waitlists email the team inbox too. Mail trouble never fails the sign-up.
+    if (form === "access") {
+      const token = (env as Env & { POSTMARK_SERVER_TOKEN?: string }).POSTMARK_SERVER_TOKEN;
+      const optional = (value: unknown) => (value ? String(value) : undefined);
+      ctx.waitUntil(
+        notifySignUp(token, { app: String(values.app), name: optional(values.name), email: String(values.email), firm: optional(values.firm), note: optional(values.note) }).catch(() => {}),
+      );
+    }
 
     const classifier = problemId && classifierFor(env, CATEGORISE_TIMEOUT_MS);
     if (problemId && classifier) ctx.waitUntil(categoriseProblem(env.DB, classifier, problemId, reportSorted(env, ctx, "submit")).catch(() => {}));
