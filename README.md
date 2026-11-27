@@ -148,6 +148,7 @@ Local dev uses the Stripe sandbox and everything on a URL (production and PR pre
 - `STRIPE_PUBLISHABLE_KEY`: handed to the page with each session.
 - `STRIPE_SPONSOR_PRODUCT`: the Sponsor product's id. Without it, sessions name the product themselves.
 - `STRIPE_WEBHOOK_SECRET`: the signing secret of the webhook endpoint.
+- `POSTMARK_SERVER_TOKEN`: the shared Postmark server token. With it, early access sign-ups for apps listed in `worker/notify.ts` (Ember so far) email `hello@40for40.app`. Without it, nothing is sent.
 
 Put the sandbox values in `.env`, and the live ones in production with `npm run wrangler -- secret put <name>`. Pay in the sandbox with test cards such as `4242 4242 4242 4242`, `4000 0000 0000 0002` (declined) and `4000 0025 0000 3155` (3D Secure).
 

@@ -8,6 +8,7 @@ import { searchIdeas } from "./search";
 import { fetchFeed, listShorts, syncShorts } from "./shorts";
 import { publicSponsors, sponsorGroup, type SponsorPayment } from "./sponsors";
 import { anthropicTitler, titleProblem } from "./titles";
+import { notifyAccessRequest } from "./notify";
 
 interface Field {
   name: string;
@@ -388,6 +389,17 @@ export default {
       ...(record ? [record] : []),
     ]);
     track("form_saved", { form_type: form, involvement: values.involved, backing: values.backing, newsletter: values.newsletter === "yes" });
+    if (form === "access")
+      ctx.waitUntil(
+        notifyAccessRequest(env, {
+          app: String(values.app),
+          name: values.name ? String(values.name) : undefined,
+          email: String(values.email),
+          firm: values.firm ? String(values.firm) : undefined,
+          note: values.note ? String(values.note) : undefined,
+          createdAt: now,
+        }).catch(() => {}),
+      );
 
     const classifier = problemId && classifierFor(env, CATEGORISE_TIMEOUT_MS);
     if (problemId && classifier) ctx.waitUntil(categoriseProblem(env.DB, classifier, problemId, reportSorted(env, ctx, "submit")).catch(() => {}));

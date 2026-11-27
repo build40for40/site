@@ -15,6 +15,7 @@ interface __BaseEnv_Env {
 	STRIPE_PUBLISHABLE_KEY: string;
 	STRIPE_SPONSOR_PRODUCT: string;
 	STRIPE_WEBHOOK_SECRET: string;
+	POSTMARK_SERVER_TOKEN: string;
 }
 declare namespace Cloudflare {
 	interface GlobalProps {
@@ -27,7 +28,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "TYPESAFE_API_URL" | "ARTWORK_SUBMITTER_SEEDS" | "PUBLIC_POSTHOG_PROJECT_TOKEN" | "PUBLIC_POSTHOG_HOST" | "TYPESAFE_API_KEY" | "ANTHROPIC_API_KEY" | "ARTWORK_SEED_SECRET" | "STRIPE_SECRET_KEY" | "STRIPE_PUBLISHABLE_KEY" | "STRIPE_SPONSOR_PRODUCT" | "STRIPE_WEBHOOK_SECRET">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "TYPESAFE_API_URL" | "ARTWORK_SUBMITTER_SEEDS" | "PUBLIC_POSTHOG_PROJECT_TOKEN" | "PUBLIC_POSTHOG_HOST" | "TYPESAFE_API_KEY" | "ANTHROPIC_API_KEY" | "ARTWORK_SEED_SECRET" | "STRIPE_SECRET_KEY" | "STRIPE_PUBLISHABLE_KEY" | "STRIPE_SPONSOR_PRODUCT" | "STRIPE_WEBHOOK_SECRET" | "POSTMARK_SERVER_TOKEN">> {}
 }
 declare module "*.txt" {
 	const value: string;
